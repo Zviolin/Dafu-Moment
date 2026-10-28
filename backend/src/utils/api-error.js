@@ -10,11 +10,13 @@ class ApiError extends Error {
      * @param {number} status - HTTP 状态码
      * @param {string} msg - 用户可读文案
      * @param {number} biz - 五位业务码（响应体 code 字段）
+     * @param {*} [data] - 随错误回带的业务数据（如 409 重复打卡带既有 checkinId；error.js 渲染层已输出该字段）
      */
-    constructor(status, msg, biz) {
+    constructor(status, msg, biz, data) {
         super(msg);
         this.status = status;
         this.biz = biz;
+        this.data = data;
     }
 }
 
@@ -36,7 +38,7 @@ const err = {
     forbidden: (msg = '无权操作') => new ApiError(403, msg, 40301),
     banned: (msg = '账号当前状态不可进行该操作') => new ApiError(403, msg, 40302),
     not_found: (msg = '内容不存在') => new ApiError(404, msg, 40401),
-    conflict: (msg = '操作冲突') => new ApiError(409, msg, 40402),
+    conflict: (msg = '操作冲突', data) => new ApiError(409, msg, 40402, data),
     too_many: (msg = '手速太快啦，休息一下') => new ApiError(429, msg, 42901),
     unavailable: (msg = '服务暂不可用，请稍后再试') => new ApiError(503, msg, 50301),
 };

@@ -45,7 +45,7 @@ function parse_tags(v) {
  * 点位列表（03 §5.3）：type 筛选 + 维度排序 + 可选分页
  * 旧口径 GET /canteens 传 page=null 返回全量数组（保持前端兼容）；
  * 文档口径 GET /api/points 传 page 返回 {list, total, page, size}
- * @param {number|null} type - 点位类型：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他
+ * @param {number|null} type - 点位类型：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖
  * @param {string} sort - 排序键，见 POINT_SORTS
  * @param {number|null} page - null 不分页（旧接口）；数字则按每页 10 条分页
  * @returns {Promise<Array|{list: Array, total: number, page: number, size: number}>}
@@ -95,8 +95,9 @@ async function list_canteens(type, sort = 'comprehensive', page = null) {
 }
 
 /**
- * 点位地图（03 §5.3）：在架且有坐标的点位按 campus 分组
- * @returns {Promise<Array<{area: string, points: Array<{id, name, lat, lng, type}>}>>}
+ * 点位地图（03 §5.3 + T-31 档口级标记）：在架且有坐标的点位按 campus 分组，
+ * 另有导览坐标的营业档口出档口级标记；标记带 kind（canteen/station），前端按 kind 分流详情页
+ * @returns {Promise<Array<{area: string, points: Array<{id, name, lat, lng, type, kind, canteenId?}>}>>}
  */
 async function points_map() {
     const rows = await query(
@@ -104,16 +105,31 @@ async function points_map() {
          WHERE enabled = 1 AND lat IS NOT NULL AND lng IS NOT NULL
          ORDER BY campus, id`
     );
+    const stations = await query(
+        `SELECT s.id, s.name, s.lat, s.lng, s.canteen_id, c.campus, c.type
+         FROM station s JOIN canteen c ON c.id = s.canteen_id
+         WHERE s.status < 2 AND c.enabled = 1 AND s.lat IS NOT NULL AND s.lng IS NOT NULL
+         ORDER BY s.id`
+    );
     const areas = [];
     const byCampus = new Map();
-    for (const r of rows) {
-        if (!byCampus.has(r.campus)) {
-            const group = { area: r.campus, points: [] };
-            byCampus.set(r.campus, group);
+    const group_of = (campus) => {
+        if (!byCampus.has(campus)) {
+            const group = { area: campus, points: [] };
+            byCampus.set(campus, group);
             areas.push(group);
         }
-        byCampus.get(r.campus).points.push({
-            id: r.id, name: r.name, lat: Number(r.lat), lng: Number(r.lng), type: Number(r.type),
+        return byCampus.get(campus);
+    };
+    for (const r of rows) {
+        group_of(r.campus).points.push({
+            id: r.id, name: r.name, lat: Number(r.lat), lng: Number(r.lng), type: Number(r.type), kind: 'canteen',
+        });
+    }
+    for (const s of stations) {
+        group_of(s.campus).points.push({
+            id: s.id, name: s.name, lat: Number(s.lat), lng: Number(s.lng),
+            type: Number(s.type), kind: 'station', canteenId: s.canteen_id,
         });
     }
     return areas;
@@ -540,7 +556,88 @@ async function rankings(period = 'week', dim = 'hot', limit = 10) {
     }));
 }
 
+/* ================= 档口级横向对比（15-差距文档 AC07） ================= */
+
+/**
+ * 档口轻量列表（AC07 对比选择器池）：在架档口全量，带所属点位名与聚合摘要
+ * @returns {Promise<Array<{id,name,category,status,canteenId,canteenName,ratingAvg,reviewCount}>>}
+ */
+async function list_stations() {
+    const rows = await query(
+        `SELECT s.id, s.name, s.category, s.status, s.canteen_id,
+                c.name AS canteen_name,
+                IFNULL(sm.rating_avg, 0) AS rating_avg, IFNULL(sm.review_count, 0) AS review_count
+         FROM station s JOIN canteen c ON c.id = s.canteen_id
+         LEFT JOIN review_summary sm ON sm.subject_type = 1 AND sm.subject_id = s.id
+         WHERE s.status < 2 AND c.enabled = 1
+         ORDER BY s.id`
+    );
+    return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        category: r.category,
+        status: Number(r.status),
+        canteenId: r.canteen_id,
+        canteenName: r.canteen_name,
+        ratingAvg: Number(r.rating_avg),
+        reviewCount: Number(r.review_count),
+    }));
+}
+
+/**
+ * 档口横向对比（AC07）：按 ids 批量取档口 + 聚合摘要，返回顺序与入参一致
+ * 分项均分 dimScores = dim_sums[k] / review_count（两位小数，与点位维度排序同口径）；
+ * 维度键为动态集合（校内档口天然含 queue 排队分，外卖档口无），无评价档口 dimScores={}
+ * @param {number[]} ids - 2~4 个档口 id（路由层已校验格式与个数）
+ * @returns {Promise<Array>}
+ */
+async function compare_stations(ids) {
+    const placeholders = ids.map(() => '?').join(',');
+    const rows = await query(
+        `SELECT s.id, s.name, s.category, s.status, s.cover_object_key, s.canteen_id,
+                c.name AS canteen_name, c.type AS canteen_type,
+                sm.rating_avg, sm.review_count, sm.dim_sums
+         FROM station s JOIN canteen c ON c.id = s.canteen_id
+         LEFT JOIN review_summary sm ON sm.subject_type = 1 AND sm.subject_id = s.id
+         WHERE s.id IN (${placeholders}) AND s.status < 2`,
+        ids
+    );
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    // 任一不存在或已下架 → 404（不部分返回，避免误导对比）
+    for (const id of ids) {
+        if (!byId.has(id)) throw err.not_found(`档口 ${id} 不存在或已下架`);
+    }
+    return ids.map((id) => {
+        const r = byId.get(id);
+        const reviewCount = Number(r.review_count) || 0;
+        let dimSums = r.dim_sums;
+        if (typeof dimSums === 'string') {
+            try { dimSums = JSON.parse(dimSums); } catch { dimSums = {}; }
+        }
+        const dimScores = {};
+        if (reviewCount > 0 && dimSums) {
+            for (const [k, v] of Object.entries(dimSums)) {
+                dimScores[k] = Number((Number(v) / reviewCount).toFixed(2));
+            }
+        }
+        return {
+            id: r.id,
+            name: r.name,
+            category: r.category,
+            status: Number(r.status),
+            coverObjectKey: r.cover_object_key || null,
+            canteenId: r.canteen_id,
+            canteenName: r.canteen_name,
+            canteenType: Number(r.canteen_type),
+            ratingAvg: Number(r.rating_avg) || 0,
+            reviewCount,
+            dimScores,
+        };
+    });
+}
+
 module.exports = {
     list_canteens, points_map, canteen_detail, station_detail,
     filter_dishes, dish_detail, list_categories, search_all, recommendations, rankings,
+    list_stations, compare_stations,
 };

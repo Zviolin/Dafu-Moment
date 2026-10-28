@@ -166,8 +166,13 @@ async function review_quotes(dishes, stations = []) {
 
 /* ---------------- LLM 调用（多供应商：OpenAI 兼容 / Anthropic 原生） ---------------- */
 
-/** 点位类型中文说明（0 校内食堂，>0 周边商圈/学生街等） */
-function type_text(t) { return Number(t) === 0 ? '校内食堂' : '周边点位'; }
+/** 点位类型中文说明（0 校内食堂 / 4 外卖 / 其余周边点位；AC01） */
+function type_text(t) {
+    const n = Number(t);
+    if (n === 0) return '校内食堂';
+    if (n === 4) return '外卖';
+    return '周边点位';
+}
 
 /**
  * 组装候选数据 JSON（仅真实字段；r44 起带口味/忌口标签，供模型参考避开忌口）

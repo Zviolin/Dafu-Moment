@@ -29,6 +29,10 @@ export const api_content = {
     canteens: (params) => http.get('/canteens', { params }),
     canteen_detail: (id) => http.get(`/canteens/${id}`),
     station_detail: (id) => http.get(`/stations/${id}`),
+    // 档口轻量列表（AC07 对比选择器池）：在架档口全量 + 所属点位名 + 聚合分
+    stations: () => http.get('/stations'),
+    // 档口横向对比（AC07）：ids 为 2~4 个档口 id 数组，按入参顺序返回含 dimScores 的对比行
+    stations_compare: (ids) => http.get('/stations/compare', { params: { ids: ids.join(',') } }),
     dishes: (params) => http.get('/dishes', { params }),
     dish_detail: (id) => http.get(`/dishes/${id}`),
     categories: () => http.get('/categories'),
@@ -42,6 +46,8 @@ export const api_content = {
     rankings: (params) => http.get('/rankings', { params }),
     // 点位提交（新点位 / 新窗口 / 改信息）
     submit_point: (data) => http.post('/points-submit', data),
+    // 我的点位提交记录（T-30；AC09 审核状态回写）：分页 {page,size}
+    my_point_submits: (params) => http.get('/me/point-submits', { params }),
 };
 
 export const api_review = {
@@ -80,11 +86,28 @@ export const api_ai = {
 
 export const api_favorite = {
     set: (data) => http.post('/favorites', data),
-    mine: () => http.get('/me/favorites'),
+    // 我的收藏（T-09：params 支持 {listType, groupId} 过滤，均空则全量）
+    mine: (params) => http.get('/me/favorites', { params }),
     // 单个对象收藏状态（详情页初始态）：{favored}
     status: (targetType, targetId) => http.get('/favorites/status', { params: { targetType, targetId } }),
     // 取消收藏（RESTful 删除）
     remove: (targetType, targetId) => http.delete(`/favorites/${targetType}/${targetId}`),
+    // 收藏分组（T-09；AC06）：列表带 fav_count；删组后组内收藏回落「想吃」
+    groups: () => http.get('/me/favorite-groups'),
+    create_group: (name) => http.post('/me/favorite-groups', { name }),
+    rename_group: (id, name) => http.put(`/me/favorite-groups/${id}`, { name }),
+    delete_group: (id) => http.delete(`/me/favorite-groups/${id}`),
+};
+
+/* 打卡（T-01；03 §5.9）：一人一点位一天一条；重复提交 409 + data.checkinId，带 again:true 另记一条 */
+export const api_checkin = {
+    create: (data) => http.post('/checkin', data),
+    list: (params) => http.get('/checkin', { params }),
+    // 日历聚合：month 为 'YYYY-MM'，返 {days:[{checkinDate,count,visibility,dishIds}]}
+    calendar: (month) => http.get('/checkin/calendar', { params: { month } }),
+    // 统计：{totalDays, monthDays, continuousDays, monthCanteens}，无记录各项为 0
+    stats: () => http.get('/checkin/stats'),
+    remove: (id) => http.delete(`/checkin/${id}`),
 };
 
 export const api_notification = {
@@ -94,6 +117,8 @@ export const api_notification = {
 
 export const api_report = {
     create: (data) => http.post('/reports', data),
+    // 我的举报记录（T-30）：分页 {page,size}，status open/resolved/rejected
+    mine: (params) => http.get('/me/reports', { params }),
 };
 
 /* 个人贴图库（r52 手账贴纸）：上传自动抠图 / 列表 / 删除 */

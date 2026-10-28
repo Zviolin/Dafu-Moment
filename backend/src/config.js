@@ -73,6 +73,11 @@ const config = {
         UPLOAD_PER_H: 30,       // 上传 张/时/人
         AI_PER_H: 20,           // AI 提问 次/时/人
         POINT_SUBMIT_PER_H: 5,  // 点位提交 次/时/人
+        // 打卡（15-差距文档 T-01；AC10）
+        CHECKIN_PHOTOS_MAX: 9,  // 单次打卡图片上限（「另记一条」合并后同样受此限）
+        // 收藏分组（15-差距文档 T-09；AC06）
+        FAVORITE_GROUP_MAX: 20, // 每人自定义分组上限
+        FAVORITE_GROUP_NAME_MAX: 32, // 分组名长度上限（字）
         EXPORT_PER_H: 3,        // 个人数据导出 次/时/人
         COMMENT_PER_H: 30,      // 发表评论 次/时/人
         TASK_CLAIM_PER_H: 30,   // 任务领取 次/时/人

@@ -95,7 +95,7 @@ async function create_canteen(actorId, input) {
     const lng = num_or_null(input.lng) ?? CANTEEN_DEFAULT_POS[1];
     if (Math.abs(lat) > 90 || Math.abs(lng) > 180) throw err.invalid('坐标不合法');
     const type = Number(input.type === undefined || input.type === null || input.type === '' ? 0 : input.type);
-    assert([0, 1, 2, 3].includes(type), '点位类型不合法');
+    assert([0, 1, 2, 3, 4].includes(type), '点位类型不合法');
     const tags = normalize_tags(input.tags);
     const r = await query(
         'INSERT INTO canteen (name, campus, location, type, avg_price, lat, lng, cover_object_key, tags, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -116,7 +116,7 @@ async function update_canteen(id, input) {
     let type = null;
     if (input.type !== undefined && input.type !== null && input.type !== '') {
         type = Number(input.type);
-        assert([0, 1, 2, 3].includes(type), '点位类型不合法');
+        assert([0, 1, 2, 3, 4].includes(type), '点位类型不合法');
     }
     const tags = normalize_tags(input.tags);
     await query(

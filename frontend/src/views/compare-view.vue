@@ -8,9 +8,15 @@
             <b class="title">横向对比</b>
         </div>
 
+        <!-- 1.5 对比模式 Tab（AC07：点位 / 档口） -->
+        <div class="cmode fade-up">
+            <span class="cmode-btn" :class="{ on: mode === 'canteen' }" @click="switch_mode('canteen')">点位对比</span>
+            <span class="cmode-btn" :class="{ on: mode === 'station' }" @click="switch_mode('station')">档口对比</span>
+        </div>
+
         <!-- 2. 对象选择器：从真实点位池点选，2~4 个 -->
-        <div class="card picker fade-up">
-            <b class="picker-title">选择对比对象（2~4 个）</b>
+        <div v-if="mode === 'canteen'" class="card picker fade-up">
+            <b class="picker-title">选择对比点位（2~4 个）</b>
             <div v-if="pool.length" class="picker-chips">
                 <span
                     v-for="p in pool" :key="p.id"
@@ -21,8 +27,21 @@
             <div v-else class="picker-empty">暂无点位数据，请稍后重试</div>
         </div>
 
+        <!-- 2b. 档口选择器（AC07）：档口池来自 GET /stations 轻量列表 -->
+        <div v-else class="card picker fade-up">
+            <b class="picker-title">选择对比档口（2~4 个）</b>
+            <div v-if="spool.length" class="picker-chips">
+                <span
+                    v-for="s in spool" :key="s.id"
+                    class="pchip" :class="{ on: s_selected.includes(s.id) }"
+                    @click="toggle_sobj(s.id)"
+                >{{ s.name }} · {{ s.canteenName }}</span>
+            </div>
+            <div v-else class="picker-empty">暂无档口数据，请稍后重试</div>
+        </div>
+
         <!-- 3. 对比表：表头对象 + 字段行（细横线分隔，缺数据显示 —） -->
-        <div v-if="selected_objs.length >= 2" class="card cmp fade-up" :style="{ '--cols': selected_objs.length }">
+        <div v-if="mode === 'canteen' && selected_objs.length >= 2" class="card cmp fade-up" :style="{ '--cols': selected_objs.length }">
             <!-- 表头：图片 + 名称 + 综合分，点击进详情 -->
             <div class="crow head">
                 <span class="k"></span>
@@ -69,24 +88,77 @@
                 <span v-for="o in selected_objs" :key="o.id" class="v"><span class="go-link" @click="go_detail(o)">详情 ›</span></span>
             </div>
         </div>
-        <div v-else class="empty-tip fade-up">请从上方选择 2~4 个对象开始对比</div>
+        <div v-else-if="mode === 'canteen'" class="empty-tip fade-up">请从上方选择 2~4 个点位开始对比</div>
+
+        <!-- 3b. 档口对比表（AC07）：维度分项为选中档口的并集动态行，缺分项显示 — -->
+        <div v-if="mode === 'station' && s_objs.length >= 2" class="card cmp fade-up" :style="{ '--cols': s_objs.length }">
+            <!-- 表头：图片 + 名称 + 综合分，点击进档口详情 -->
+            <div class="crow head">
+                <span class="k"></span>
+                <span v-for="o in s_objs" :key="o.id" class="cobj" @click="go_sdetail(o)">
+                    <img v-if="o.img" :src="o.img" :alt="o.name">
+                    <span v-else class="cobj-ph">{{ o.name[0] }}</span>
+                    <b>{{ o.name }}</b>
+                    <span class="st">★ {{ o.score_text }}</span>
+                </span>
+            </div>
+            <!-- 所属点位 -->
+            <div class="crow">
+                <span class="k">所属点位</span>
+                <span v-for="o in s_objs" :key="o.id" class="v">{{ o.canteen_text }}</span>
+            </div>
+            <!-- 品类 -->
+            <div class="crow">
+                <span class="k">品类</span>
+                <span v-for="o in s_objs" :key="o.id" class="v">{{ o.category_text }}</span>
+            </div>
+            <!-- 营业状态 -->
+            <div class="crow">
+                <span class="k">状态</span>
+                <span v-for="o in s_objs" :key="o.id" class="v">{{ o.status_text }}</span>
+            </div>
+            <!-- 综合分（越高越好） -->
+            <div class="crow">
+                <span class="k">综合分</span>
+                <span v-for="o in s_objs" :key="o.id" class="v" :class="{ best: s_is_best('score', o) }">{{ o.score_text }}</span>
+            </div>
+            <!-- 评价数（越多越好） -->
+            <div class="crow">
+                <span class="k">评价数</span>
+                <span v-for="o in s_objs" :key="o.id" class="v" :class="{ best: s_is_best('review_count', o) }">{{ o.review_count }}</span>
+            </div>
+            <!-- 维度分项均分（动态并集，越高越好；校内档口含排队分） -->
+            <div v-for="k in s_dim_keys" :key="k" class="crow">
+                <span class="k">{{ dim_name[k] || k }}</span>
+                <span v-for="o in s_objs" :key="o.id" class="v" :class="{ best: s_is_best_dim(k, o) }">{{ o.dims[k] !== undefined ? fmt_score(o.dims[k]) : '—' }}</span>
+            </div>
+            <!-- 操作：档口详情 -->
+            <div class="crow">
+                <span class="k">操作</span>
+                <span v-for="o in s_objs" :key="o.id" class="v"><span class="go-link" @click="go_sdetail(o)">详情 ›</span></span>
+            </div>
+        </div>
+        <div v-else-if="mode === 'station'" class="empty-tip fade-up">请从上方选择 2~4 个档口开始对比</div>
 
         <!-- 4. 底部操作与说明 -->
         <div class="foot-actions fade-up">
             <span class="card act-btn" @click="clear_all">清空</span>
         </div>
         <div class="addtip">
-            仅展示真实点位数据 · 最多对比 4 个<br>
-            人均价越低越好 · 综合分与档口数越高越好 · 数据来源于全站已发布评价
+            <template v-if="mode === 'canteen'">仅展示真实点位数据 · 最多对比 4 个<br>
+            人均价越低越好 · 综合分与档口数越高越好 · 数据来源于全站已发布评价</template>
+            <template v-else>仅展示真实档口数据 · 最多对比 4 个<br>
+            综合分、评价数与各维度分越高越好 · 分项为已发布评价的维度均分</template>
         </div>
     </div>
 </template>
 
 <script setup>
 /**
- * 横向对比（P07 暖纸奶油风）：2~4 个真实点位横向对比表
- * 数据源：api_content.canteens()（在校点位聚合：人均价 / 综合分 / 档口数 / 标签）；
- * 接口失败或数据不足时展示友好空态，不回退演示数据；详情跳转使用真实点位 id。
+ * 横向对比（P07 暖纸奶油风）：2~4 个真实点位/档口横向对比表（AC07 加档口级）
+ * 点位模式数据源：api_content.canteens()（点位聚合：人均价 / 综合分 / 档口数 / 标签）；
+ * 档口模式数据源：api_content.stations() 候选池 + api_content.stations_compare() 对比行（含维度分项均分）；
+ * 接口失败或数据不足时展示友好空态，不回退演示数据；详情跳转使用真实 id。
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -157,9 +229,14 @@ function toggle_obj(id) {
     selected.value.push(id);
 }
 
-/** 清空对比对象 */
+/** 清空当前模式的对比对象 */
 function clear_all() {
-    selected.value = [];
+    if (mode.value === 'canteen') {
+        selected.value = [];
+    } else {
+        s_selected.value = [];
+        s_rows.value = [];
+    }
 }
 
 /**
@@ -184,12 +261,147 @@ function go_detail(o) {
     router.push(`/canteen/${o.id}`);
 }
 
+/* ================= AC07 档口级对比 ================= */
+
+// 对比模式：canteen 点位（原口径）/ station 档口（AC07）
+const mode = ref('canteen');
+// 档口候选池（GET /stations 轻量全量）
+const spool = ref([]);
+// 已选档口 id（点选顺序即对比列顺序）
+const s_selected = ref([]);
+// 档口对比行（GET /stations/compare 返回，含 dimScores 维度分项均分）
+const s_rows = ref([]);
+// 维度 key → 中文名（/dimensions 全量配置；缺失时回退显示 key）
+const dim_name = ref({});
+
+/**
+ * 切换对比模式（点位/档口两套选择互不影响）
+ * @param {'canteen'|'station'} m
+ */
+function switch_mode(m) {
+    mode.value = m;
+}
+
+/**
+ * 拉档口候选池 + 维度配置名映射；接口失败置空展示空态，不回退演示数据
+ */
+async function load_spool() {
+    try {
+        const list = await api_content.stations();
+        spool.value = Array.isArray(list) ? list : [];
+    } catch {
+        spool.value = [];
+    }
+    try {
+        const dims = await api_content.dimensions();
+        const m = {};
+        for (const d of Array.isArray(dims) ? dims : []) m[d.key] = d.name;
+        dim_name.value = m;
+    } catch { /* 维度名缺失不阻塞主流程，行标签回退显示 key */ }
+}
+
+/**
+ * 点选 / 取消档口（上限 4 个）；选择 ≥2 时拉取对比数据
+ * @param {number} id - 档口 id
+ */
+async function toggle_sobj(id) {
+    const i = s_selected.value.indexOf(id);
+    if (i >= 0) {
+        s_selected.value.splice(i, 1);
+    } else {
+        if (s_selected.value.length >= 4) return;
+        s_selected.value.push(id);
+    }
+    await load_scompare();
+}
+
+/**
+ * 拉取档口对比行（接口按入参顺序返回，与点选顺序一致）；不足 2 个清空表格
+ */
+async function load_scompare() {
+    if (s_selected.value.length < 2) { s_rows.value = []; return; }
+    try {
+        s_rows.value = await api_content.stations_compare(s_selected.value);
+    } catch {
+        s_rows.value = [];
+    }
+}
+
+/**
+ * 档口对比行 → 视图模型（综合分为 0 置 null，便于「最优」判断与缺省显示）
+ * @param {Object} r - /stations/compare 返回行
+ */
+function map_station(r) {
+    const score = Number(r.ratingAvg) > 0 ? Number(r.ratingAvg) : null;
+    return {
+        id: r.id,
+        name: r.name,
+        img: r.coverObjectKey ? cover_url(r.coverObjectKey) : '',
+        canteen_text: r.canteenName || '—',
+        category_text: r.category || '—',
+        status_text: Number(r.status) === 0 ? '营业中' : '休摊中',
+        score,
+        score_text: score != null ? fmt_score(score) : '—',
+        review_count: Number(r.reviewCount) || 0,
+        dims: r.dimScores || {},
+    };
+}
+
+/** 档口对比模型列表（接口已按点选顺序返回） */
+const s_objs = computed(() => s_rows.value.map(map_station));
+
+/** 选中档口的维度并集（保持先出现顺序，动态行渲染用） */
+const s_dim_keys = computed(() => {
+    const keys = [];
+    for (const o of s_objs.value) {
+        for (const k of Object.keys(o.dims)) {
+            if (!keys.includes(k)) keys.push(k);
+        }
+    }
+    return keys;
+});
+
+/**
+ * 档口数值字段是否最优（越高越好；空值不参与也不高亮）
+ * @param {'score'|'review_count'} field
+ * @param {Object} o
+ */
+function s_is_best(field, o) {
+    if (s_objs.value.length < 2 || o[field] == null) return false;
+    const vals = s_objs.value.map((x) => x[field]).filter((v) => v != null);
+    if (vals.length < 2) return false;
+    const best = Math.max(...vals);
+    return best > 0 && o[field] === best;
+}
+
+/**
+ * 维度分项是否最优（仅在带该分项的档口间比较，≥2 个才高亮）
+ * @param {string} k - 维度 key
+ * @param {Object} o
+ */
+function s_is_best_dim(k, o) {
+    const v = o.dims[k];
+    if (s_objs.value.length < 2 || v === undefined) return false;
+    const vals = s_objs.value.map((x) => x.dims[k]).filter((x) => x !== undefined).map(Number);
+    if (vals.length < 2) return false;
+    const best = Math.max(...vals);
+    return best > 0 && Number(v) === best;
+}
+
+/**
+ * 详情跳转：档口 → /station/:id（真实 id）
+ * @param {{id:number}} o
+ */
+function go_sdetail(o) {
+    router.push(`/station/${o.id}`);
+}
+
 /** 返回上一页 */
 function go_back() {
     router.back();
 }
 
-onMounted(load_pool);
+onMounted(() => { load_pool(); load_spool(); });
 </script>
 
 <style scoped>
@@ -204,6 +416,22 @@ onMounted(load_pool);
 }
 .back { position: absolute; left: 0; }
 .title { font-size: 16px; }
+
+/* ===== 对比模式 Tab（AC07：点位 / 档口） ===== */
+.cmode { display: flex; gap: 8px; margin-top: 12px; }
+.cmode-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px; font-weight: 700;
+    padding: 8px 0;
+    border-radius: 8px;
+    background: #FBF4E4;
+    border: 1px solid #E8D5C0;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+}
+.cmode-btn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* ===== 对象选择器 ===== */
 .picker { margin-top: 14px; }
@@ -295,5 +523,7 @@ onMounted(load_pool);
     /* 选择器 chips 与清空按钮同步放大 */
     .pchip { font-size: 12px; padding: 7px 16px; }
     .act-btn { font-size: 12.5px; padding: 10px 28px; }
+    /* 模式 Tab 同步放大 */
+    .cmode-btn { font-size: 13px; padding: 10px 0; }
 }
 </style>

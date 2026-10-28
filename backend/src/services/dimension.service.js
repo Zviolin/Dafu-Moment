@@ -35,7 +35,7 @@ async function all_dimensions() {
 
 /**
  * 按点位类型取适用维度（有序，表单渲染用）
- * @param {number} canteenType - 0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他
+ * @param {number} canteenType - 0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖
  */
 async function dims_for_type(canteenType) {
     const dims = await all_dimensions();

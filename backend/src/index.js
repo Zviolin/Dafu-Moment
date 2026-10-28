@@ -13,8 +13,9 @@ const { of } = require('./utils/logger');
 const log = of('[boot]');
 
 // Legacy entry must never add old columns into an authoritative3.0 database.
+// 3.0 标记表用 location / rating_detail；check_in 自 T-01 起旧链也有（15-差距文档），不再是 3.0 独有
 async function reject_db3_in_legacy() {
-    const rows=await query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('location','rating_detail','check_in')");
+    const rows=await query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('location','rating_detail')");
     if(rows.length)throw new Error('检测到数据库3.0：旧版启动入口已停止，禁止运行旧seed或自动ALTER。请使用 npm run start:db3；前端及完整功能切换见docs/db3。');
 }
 

@@ -1,10 +1,19 @@
 -- =====================================================================
--- 大福食刻 · MySQL 初始化脚本（22 表，依据 03-详细设计 §二 v2.0）
+-- 大福食刻 · MySQL 初始化脚本（24 表，依据 03-详细设计 §二 v2.0 + 15-差距文档 T-01/T-09）
 -- 引擎 InnoDB / utf8mb4；时间一律 DATETIME（服务器时间）
 -- v2.0 口径：点位四类型（canteen.type）+ 维度配置驱动分项评分 + AI 会话留痕
 --           删除排队热度 / 榜单快照旧表；收藏仅保留「想吃」语义
 -- v2.1 口径：user.last_login_at / canteen.created_by+tags / dish.is_recommended /
 --           review.like_count + review_like 点赞表（03 §2 表设计补齐）
+-- v2.2 口径：check_in 打卡表（一人一点位一天一条，uk_check_in_dup 幂等硬约束）+
+--           journal.check_in_id 可空列（15-差距文档 T-01；AC10/AC11/AC12）
+-- v2.3 口径：favorite_group 收藏分组表 + favorite.group_id 可空列，
+--           favorite.list_type 扩 0 想吃 / 1 常吃 / 2 自定义（须配 group_id）
+--           （15-差距文档 T-09；AC06；表名/列名照设计文档 favorite_group 原名）
+-- v2.4 口径：canteen.type 扩第 5 类「外卖」（值 4；15-差距文档 AC01），
+--           列仍 TINYINT 无需扩宽，仅注释口径更新；review_dimension.applicable_types 同步含 4
+-- v2.5 口径：station 加导览坐标 lat/lng（GCJ-02，可空；15-差距文档 T-31；AC08/G10），
+--           /points/map 标记带 kind（canteen/station）出档口级标记；不落设计文档 map_location 表
 -- 注意：中文数据行一律由 seed.js 参数化插入（initdb 通道按 latin1 解析会损坏中文）
 -- =====================================================================
 
@@ -31,11 +40,11 @@ CREATE TABLE IF NOT EXISTS `user` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间（审计/看板趋势基准）'
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- 2. 点位表（校内食堂 + 永嘉天地 + 学生街 + 周边统一建模，type 区分）
+-- 2. 点位表（校内食堂 + 永嘉天地 + 学生街 + 周边其他 + 外卖统一建模，type 区分）
 CREATE TABLE IF NOT EXISTS `canteen` (
     `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
     `name` VARCHAR(64) NOT NULL UNIQUE COMMENT '如「旗山校区·京元餐厅」',
-    `type` TINYINT NOT NULL DEFAULT 0 COMMENT '0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他',
+    `type` TINYINT NOT NULL DEFAULT 0 COMMENT '0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖（AC01）',
     `campus` VARCHAR(32) NOT NULL DEFAULT '旗山校区' COMMENT '所属校区',
     `location` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '楼栋/方位描述',
     `avg_price` DECIMAL(6, 1) NULL COMMENT '人均消费（元）',
@@ -56,6 +65,8 @@ CREATE TABLE IF NOT EXISTS `station` (
     `cover_object_key` VARCHAR(255) NULL COMMENT '封面图 MinIO objectKey',
     `status` TINYINT NOT NULL DEFAULT 0 COMMENT '0 营业 / 1 休摊 / 2 下架',
     `manager_user_id` BIGINT NULL COMMENT '档口负责人',
+    `lat` DECIMAL(10, 6) NULL COMMENT '导览纬度（GCJ-02；档口级地图标记用，NULL 则不出档口标记）',
+    `lng` DECIMAL(10, 6) NULL COMMENT '导览经度（GCJ-02；同上）',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     KEY `idx_canteen` (`canteen_id`, `status`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -83,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `review_dimension` (
     `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
     `dimension_key` VARCHAR(32) NOT NULL UNIQUE COMMENT '维度键，写入 review.dimension_scores',
     `dimension_name` VARCHAR(32) NOT NULL COMMENT '展示名，如「口味」',
-    `applicable_types` JSON NOT NULL COMMENT '适用的点位类型数组，如 [0,1,2,3]',
+    `applicable_types` JSON NOT NULL COMMENT '适用的点位类型数组，如 [0,1,2,3,4]',
     `weight` DECIMAL(3, 2) NOT NULL DEFAULT 1.00 COMMENT '聚合总分权重',
     `sort` INT NOT NULL DEFAULT 0 COMMENT '表单展示顺序'
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -137,12 +148,13 @@ CREATE TABLE IF NOT EXISTS `review_summary` (
     PRIMARY KEY (`subject_type`, `subject_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- 9. 收藏表（仅「想吃」一种语义，一对象一条）
+-- 9. 收藏表（一对象一条；T-09 起三分组：想吃 / 常吃 / 自定义）
 CREATE TABLE IF NOT EXISTS `favorite` (
     `user_id` BIGINT NOT NULL COMMENT '所属用户ID（user.id）',
     `subject_type` TINYINT NOT NULL COMMENT '目标类型：0菜品、1档口、2点位',
     `subject_id` INT NOT NULL COMMENT '目标ID，由subject_type指定目标表',
-    `list_type` TINYINT NOT NULL DEFAULT 0 COMMENT '0 想吃（唯一收藏语义，保留列位兼容）',
+    `list_type` TINYINT NOT NULL DEFAULT 0 COMMENT '0 想吃 / 1 常吃 / 2 自定义（须配 group_id）（15-差距文档 T-09 扩展）',
+    `group_id` BIGINT NULL COMMENT '自定义分组ID（favorite_group.id；list_type=2 时必填，其余为 NULL）',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`user_id`, `subject_type`, `subject_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -310,8 +322,35 @@ CREATE TABLE IF NOT EXISTS `journal` (
     `layout` JSON NOT NULL COMMENT '画布块数组 [{kind,sticker,x,y,w,rot,text,color,size}]（画布 750x1000）',
     `cover` VARCHAR(255) NULL COMMENT '封面贴纸对象键（列表缩略）',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `check_in_id` BIGINT NULL COMMENT '关联打卡（check_in.id，可空；15-差距文档 T-01 补列）',
     KEY `idx_user_date` (`user_id`, `date`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '美食手账（贴纸排版画布）';
+
+-- 22. 打卡表（15-差距文档 T-01；03 §5.9；AC10/AC11/AC12）
+CREATE TABLE IF NOT EXISTS `check_in` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '打卡人（user.id）',
+    `canteen_id` INT NOT NULL COMMENT '打卡点位（canteen.id；设计文档 location_id 的落库映射）',
+    `check_in_date` DATE NOT NULL COMMENT '打卡日期（+08:00 当日，应用层生成 YYYY-MM-DD 写入）',
+    `visibility` TINYINT NOT NULL DEFAULT 1 COMMENT '可见范围：1 公开 / 2 仅自己 / 3 匿名',
+    `note` VARCHAR(200) NOT NULL DEFAULT '' COMMENT '打卡备注',
+    `photos` JSON NULL COMMENT '图片 objectKey 数组（MinIO 键，不存 URL，最多 9 张）',
+    `dish_ids` JSON NULL COMMENT '关联菜品 id 数组（「另记一条」往这里追加，不新建记录）',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY `uk_check_in_dup` (`user_id`, `canteen_id`, `check_in_date`) COMMENT '一人一点位一天一条（幂等硬约束；删除为物理删，软删会占住唯一键挡住当天再打卡）',
+    KEY `idx_user_date` (`user_id`, `check_in_date`) COMMENT '日历聚合与统计查询'
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '打卡（一人一点位一天一条）';
+
+-- 23. 收藏分组表（15-差距文档 T-09；AC06；表名/列名照设计文档 favorite_group 原名）
+-- 口径登记：「想吃」「常吃」为 favorite.list_type 内置语义（0/1），不落本表；
+--           3.0 设计的 is_default/deleted_at 旧链不落（内置组不走表、删除为物理删，组内收藏回落「想吃」）
+CREATE TABLE IF NOT EXISTS `favorite_group` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '分组标识',
+    `user_id` BIGINT NOT NULL COMMENT '分组归属用户（user.id）',
+    `group_name` VARCHAR(64) NOT NULL COMMENT '分组名（自定义）',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY `uk_favorite_group` (`user_id`, `group_name`) COMMENT '同人组名唯一（创建幂等硬约束）'
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '收藏自定义分组';
 
 -- =========================================================
 -- 敏感词种子改为 seed.js 参数化插入（initdb 通道按 latin1 解析 SQL 文本会损坏中文）

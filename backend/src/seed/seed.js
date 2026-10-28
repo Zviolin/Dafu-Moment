@@ -109,14 +109,15 @@ const TASTE = ['偏辣', '清淡', '少油', '香辣', '咸鲜', '酸甜', '浓�
 const TABOO = ['清真', '素食', '无香菜', '无葱蒜'];
 
 /* ===== 评分维度配置（与 review_dimension 表口径一致，seed 时参数化插入） ===== */
+/* AC01：外卖（type=4）适用口味/份量/价格/配送/包装，不适用排队/环境（堂食维度） */
 const DIMENSIONS = [
-    { key: 'taste', name: '口味', weight: 1.5, types: [0, 1, 2, 3], sort: 1 },
-    { key: 'portion', name: '份量', weight: 1.0, types: [0, 1, 2, 3], sort: 2 },
-    { key: 'price', name: '价格实惠', weight: 1.0, types: [0, 1, 2, 3], sort: 3 },
+    { key: 'taste', name: '口味', weight: 1.5, types: [0, 1, 2, 3, 4], sort: 1 },
+    { key: 'portion', name: '份量', weight: 1.0, types: [0, 1, 2, 3, 4], sort: 2 },
+    { key: 'price', name: '价格实惠', weight: 1.0, types: [0, 1, 2, 3, 4], sort: 3 },
     { key: 'queue', name: '排队时间', weight: 1.0, types: [0], sort: 4 },
     { key: 'env', name: '环境', weight: 1.0, types: [0], sort: 5 },
-    { key: 'delivery', name: '配送速度', weight: 1.0, types: [1, 2, 3], sort: 6 },
-    { key: 'package', name: '包装', weight: 0.5, types: [1, 2, 3], sort: 7 },
+    { key: 'delivery', name: '配送速度', weight: 1.0, types: [1, 2, 3, 4], sort: 6 },
+    { key: 'package', name: '包装', weight: 0.5, types: [1, 2, 3, 4], sort: 7 },
 ];
 
 /* ===== 评价语料：参考大众点评/美团真实点评风格人工撰写（拟真口径） ===== */
@@ -199,7 +200,7 @@ function rand_dim_score() {
 
 /**
  * 按点位类型生成一套分项得分与加权总分（overall = Σ(score×weight)/Σweight，四舍五入 1 位）
- * @param {number} canteenType - 点位类型：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他
+ * @param {number} canteenType - 点位类型：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖
  * @returns {{scores: Object, overall: number}}
  */
 function gen_scores(canteenType) {
@@ -277,10 +278,13 @@ async function seed_if_empty() {
             : (c.type === 2
                 ? OFF_CAMPUS_STATIONS
                 : [...STATION_TPL].sort(() => rand() - 0.5).slice(0, 7).map(([stName, category]) => ({ name: stName, category, dishes: null })));
-        for (const st of stations) {
+        for (const [si, st] of stations.entries()) {
+            // 档口导览坐标（T-31/AC08）：承所属点位坐标 + 按档口序号的确定性小偏移（±0.0008°≈±80m，防标记重叠）
+            const stLat = c.lat == null ? null : Number(c.lat) + ((si % 5) - 2) * 0.0004;
+            const stLng = c.lng == null ? null : Number(c.lng) + ((Math.floor(si / 5) % 5) - 2) * 0.0004;
             const rs = await query(
-                'INSERT INTO station (canteen_id, name, category, cover_object_key) VALUES (?, ?, ?, ?)',
-                [canteenId, st.name, st.category, CATEGORY_COVER[st.category] || 'preset:rice']
+                'INSERT INTO station (canteen_id, name, category, cover_object_key, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
+                [canteenId, st.name, st.category, CATEGORY_COVER[st.category] || 'preset:rice', stLat, stLng]
             );
             const stationId = rs.insertId;
             const dishes = st.dishes || (() => {

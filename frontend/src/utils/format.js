@@ -2,8 +2,8 @@
  * 格式化工具：日期 / 分数色阶 / 对象类型 / 评价状态
  */
 export const SUBJECT_TYPE_NAME = { 0: '菜品', 1: '窗口', 2: '食堂' };
-// 点位四类型文案（canteen.type：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他）
-export const CANTEEN_TYPE_NAME = { 0: '校内食堂', 1: '永嘉天地', 2: '学生街', 3: '周边其他' };
+// 点位五类型文案（canteen.type：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖（AC01））
+export const CANTEEN_TYPE_NAME = { 0: '校内食堂', 1: '永嘉天地', 2: '学生街', 3: '周边其他', 4: '外卖' };
 export const REVIEW_STATUS = {
     0: { text: '已发布', type: 'success' },
     1: { text: '待人工', type: 'warning' },

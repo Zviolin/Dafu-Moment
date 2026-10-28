@@ -96,7 +96,7 @@ let map = null;
 const markers = [];
 
 /**
- * 点位类型名（0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他）
+ * 点位类型名（0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖）
  * @param {number} t
  */
 function type_name(t) {

@@ -33,6 +33,8 @@ const draftSvc = require('../services/draft.service');
 const commentSvc = require('../services/comment.service');
 const taskSvc = require('../services/task.service');
 const titleSvc = require('../services/title.service');
+// 2.0 主库打卡实现（3.0 的 location/check_in_dish 版本在 checkin.service.js，由 v3 路由使用）
+const checkin = require('../services/checkin-legacy.service');
 const adminSvc = require('../services/admin.service');
 const managerSvc = require('../services/manager.service');
 const { minioClient } = require('../db/minio');
@@ -241,7 +243,7 @@ async function handle_points_list(req, res, paginate) {
 }
 
 /**
- * 点位列表（兼容旧前端：全量数组；type 筛选：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他）
+ * 点位列表（兼容旧前端：全量数组；type 筛选：0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖）
  */
 router.get('/canteens', async (req, res, next) => {
     try { await handle_points_list(req, res, false); } catch (e) { next(e); }
@@ -284,6 +286,29 @@ router.get('/points/:id/reviews', auth_optional(), async (req, res, next) => {
         const sort = String(req.query.sort || 'new');
         const page = page_int(req.query.page, 1);
         ok(res, await review.list_reviews(2, subjectId, sort, page, 20, req.user ? req.user.id : null));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 档口轻量列表（AC07 对比选择器池）：在架档口全量 + 所属点位名 + 聚合分
+ */
+router.get('/stations', async (_req, res, next) => {
+    try { ok(res, await content.list_stations()); } catch (e) { next(e); }
+});
+
+/**
+ * 档口横向对比（AC07）：ids=逗号分隔 2~4 个档口 id，按入参顺序返回对比行（含维度分项均分）
+ * 注意必须先于 /stations/:id 注册，避免 compare 被当作 id
+ */
+router.get('/stations/compare', async (req, res, next) => {
+    try {
+        const raw = String(req.query.ids || '').trim();
+        assert(raw.length > 0, 'ids 不能为空');
+        const ids = raw.split(',').map((s) => Number(s.trim()));
+        assert(ids.every((n) => Number.isInteger(n) && n > 0), 'ids 需为正整数');
+        assert(new Set(ids).size === ids.length, 'ids 不能重复');
+        assert(ids.length >= 2 && ids.length <= 4, '对比对象需 2~4 个');
+        ok(res, await content.compare_stations(ids));
     } catch (e) { next(e); }
 });
 
@@ -484,7 +509,7 @@ router.post('/reviews/:id/appeal', write_required(), async (req, res, next) => {
 });
 
 /**
- * 收藏（想吃）：listType 仅 0，传 null/undefined 取消
+ * 收藏（T-09 三分组）：listType 0 想吃 / 1 常吃 / 2 自定义分组（须配 groupId），传 null/undefined 取消
  * 收藏菜品成功 → fire-and-forget 自动抠菜品主图入个人贴图库（手账贴纸素材，r52）
  */
 router.post('/favorites', write_required(), async (req, res, next) => {
@@ -492,9 +517,10 @@ router.post('/favorites', write_required(), async (req, res, next) => {
         const subjectType = Number(req.body.subjectType);
         const subjectId = Number(req.body.subjectId);
         const listType = req.body.listType === null || req.body.listType === undefined ? null : Number(req.body.listType);
-        const result = await userData.set_favorite(req.user.id, { subjectType, subjectId, listType });
+        const groupId = req.body.groupId === null || req.body.groupId === undefined ? null : Number(req.body.groupId);
+        const result = await userData.set_favorite(req.user.id, { subjectType, subjectId, listType, groupId });
         // 仅收藏动作（非取消）且对象是菜品时异步抠图；失败静默不影响收藏
-        if (listType === 0 && subjectType === 0) {
+        if (listType !== null && subjectType === 0) {
             const dish = await query_one('SELECT name, cover_object_key AS img FROM dish WHERE id = ?', [subjectId]);
             if (dish && dish.img) sticker.extract_from_object_key(dish.img, req.user.id, dish.name);
         }
@@ -573,6 +599,70 @@ router.delete('/journal/:id', write_required(), async (req, res, next) => {
     try { ok(res, await journal.remove(req.user.id, Number(req.params.id))); } catch (e) { next(e); }
 });
 
+/* ---------------- 打卡（15-差距文档 T-01；03 §5.9；AC10/AC11/AC12） ---------------- */
+
+/**
+ * 提交打卡（一人一点位一天一条，uk_check_in_dup 兜底幂等）
+ * 请求体 {canteenId, visibility=1公开/2仅自己/3匿名, note≤200, photos≤9, dishIds[], again?}
+ * 返回 {checkinId, checkinDate}；当天重复提交 → 409 + 40402 + data.checkinId；
+ * again=true → 「另记一条」：菜品/图片并入当天既有记录（不新建），返回 {checkinId, dishIds}
+ */
+router.post('/checkin', write_required(), async (req, res, next) => {
+    try {
+        const b = req.body || {};
+        const canteen_id = Number(b.canteenId);
+        assert(Number.isInteger(canteen_id) && canteen_id > 0, 'canteenId 需为正整数');
+        const visibility = b.visibility === undefined ? 1 : Number(b.visibility);
+        assert([1, 2, 3].includes(visibility), 'visibility 需为 1 公开 / 2 仅自己 / 3 匿名');
+        const note = typeof b.note === 'string' ? b.note.trim().slice(0, 200) : '';
+        const photos = Array.isArray(b.photos) ? b.photos : [];
+        assert(photos.length <= N.CHECKIN_PHOTOS_MAX, `图片最多 ${N.CHECKIN_PHOTOS_MAX} 张`);
+        assert(photos.every((p) => typeof p === 'string' && p.length > 0 && p.length <= 255), 'photos 需为图片 objectKey 数组');
+        const dish_ids = Array.isArray(b.dishIds) ? b.dishIds.map(Number).filter((n) => Number.isInteger(n) && n > 0) : [];
+        ok(res, b.again
+            ? await checkin.append_checkin(req.user.id, { canteen_id, dish_ids, photos, note })
+            : await checkin.create_checkin(req.user.id, { canteen_id, visibility, note, photos, dish_ids }));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 我的打卡记录（03 §5.9）：分页四键 {list,total,page,size}，canteenId 可选筛选，时间倒序
+ */
+router.get('/checkin', auth_required(), async (req, res, next) => {
+    try {
+        const page = page_int(req.query.page, 1);
+        const size = Math.min(page_int(req.query.size, 10), 50);
+        const canteen_id = req.query.canteenId === undefined ? null : Number(req.query.canteenId);
+        assert(canteen_id === null || (Number.isInteger(canteen_id) && canteen_id > 0), 'canteenId 需为正整数');
+        ok(res, await checkin.list_checkins(req.user.id, { canteen_id, page, size }));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 打卡日历（03 §5.9 日历聚合）：month=YYYY-MM，返 {days:[{checkinDate,count,visibility,dishIds}]}，无数据返空数组
+ */
+router.get('/checkin/calendar', auth_required(), async (req, res, next) => {
+    try {
+        const month = String(req.query.month || '');
+        assert(/^\d{4}-\d{2}$/.test(month), 'month 需为 YYYY-MM 格式');
+        ok(res, await checkin.checkin_calendar(req.user.id, month));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 打卡统计（AC12）：{totalDays, monthDays, continuousDays, monthCanteens}，全部数字，无记录为 0
+ */
+router.get('/checkin/stats', auth_required(), async (req, res, next) => {
+    try { ok(res, await checkin.checkin_stats(req.user.id)); } catch (e) { next(e); }
+});
+
+/**
+ * 删除打卡（物理删，删后当天可再打卡）：记录不存在 404；非本人 403 + 40301
+ */
+router.delete('/checkin/:id', write_required(), async (req, res, next) => {
+    try { ok(res, await checkin.delete_checkin(req.user.id, Number(req.params.id))); } catch (e) { next(e); }
+});
+
 /**
  * 收藏状态查询（03 §5.5）：{favored: bool}（读操作，仅要求登录）
  */
@@ -597,9 +687,10 @@ router.delete('/favorites/:targetType/:targetId', write_required(), async (req, 
 
 /**
  * 我的收藏查询（需登录：直接读 req.user.id，未登录由 auth_required 拦 401）
+ * T-09：query 支持 listType / groupId 过滤（均空则全量）
  */
 router.get('/favorites', auth_required(), async (req, res, next) => {
-    try { ok(res, await userData.my_favorites(req.user.id)); } catch (e) { next(e); }
+    try { ok(res, await userData.my_favorites(req.user.id, req.query)); } catch (e) { next(e); }
 });
 
 /**
@@ -642,7 +733,69 @@ router.get('/me/reviews', auth_required(), async (req, res, next) => {
     try { ok(res, await review.my_reviews(req.user.id)); } catch (e) { next(e); }
 });
 router.get('/me/favorites', auth_required(), async (req, res, next) => {
-    try { ok(res, await userData.my_favorites(req.user.id)); } catch (e) { next(e); }
+    try { ok(res, await userData.my_favorites(req.user.id, req.query)); } catch (e) { next(e); }
+});
+
+/* ---------------- 收藏分组（15-差距文档 T-09；AC06） ---------------- */
+
+/**
+ * 我的分组列表（带每组收藏数 fav_count）
+ */
+router.get('/me/favorite-groups', auth_required(), async (req, res, next) => {
+    try { ok(res, await userData.list_favorite_groups(req.user.id)); } catch (e) { next(e); }
+});
+
+/**
+ * 新建分组：名字 trim 后 1-32 字，禁占用内置名「想吃」「常吃」；每人上限 FAVORITE_GROUP_MAX；同名 409
+ */
+router.post('/me/favorite-groups', write_required(), async (req, res, next) => {
+    try { ok(res, await userData.create_favorite_group(req.user.id, req.body.name)); } catch (e) { next(e); }
+});
+
+/**
+ * 改名分组（仅本人，越权按 404 不暴露存在性）
+ */
+router.put('/me/favorite-groups/:id', write_required(), async (req, res, next) => {
+    try {
+        const id = Number(req.params.id);
+        assert(Number.isInteger(id) && id > 0, '分组 ID 不合法');
+        ok(res, await userData.rename_favorite_group(req.user.id, id, req.body.name));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 删除分组（物理删）：组内收藏事务内回落「想吃」（list_type=0, group_id=NULL）
+ */
+router.delete('/me/favorite-groups/:id', write_required(), async (req, res, next) => {
+    try {
+        const id = Number(req.params.id);
+        assert(Number.isInteger(id) && id > 0, '分组 ID 不合法');
+        ok(res, await userData.delete_favorite_group(req.user.id, id));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 我的点位提交记录（15-差距文档 T-30；AC09 状态回写：0 待审 / 1 通过 / 2 驳回 + 审核意见）
+ * 分页四键 {list,total,page,size}，按提交时间倒序
+ */
+router.get('/me/point-submits', auth_required(), async (req, res, next) => {
+    try {
+        const page = page_int(req.query.page, 1);
+        const size = Math.min(page_int(req.query.size, 10), 50);
+        ok(res, await userData.my_point_submits(req.user.id, { page, size }));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 我的举报记录（15-差距文档 T-30：open/resolved/rejected + handled_at）
+ * 分页四键 {list,total,page,size}，按提交时间倒序
+ */
+router.get('/me/reports', auth_required(), async (req, res, next) => {
+    try {
+        const page = page_int(req.query.page, 1);
+        const size = Math.min(page_int(req.query.size, 10), 50);
+        ok(res, await userData.my_reports(req.user.id, { page, size }));
+    } catch (e) { next(e); }
 });
 
 /**
