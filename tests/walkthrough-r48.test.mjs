@@ -105,10 +105,11 @@ await case_r('A1', 'boot 播种生效：现库 9 供应商三链接与核实后�
     assert(map.openai.console_url === '' && map.openai.model_doc_url === '', '自定义项应无文档链接');
 });
 
-await case_r('A2', 'GET /api/ai/providers 返回 10 项且链接字段与新值一致', async () => {
+await case_r('A2', 'GET /api/ai/providers 返回 ≥10 项且链接字段与新值一致', async () => {
     const r = await (await fetch(`${API}/api/ai/providers`, { headers: user.H })).json();
     assert(r.code === 0 && Array.isArray(r.data), `列表异常: ${JSON.stringify(r).slice(0, 120)}`);
-    assert(r.data.length === 10, `应 10 项: ${r.data.length}`);
+    // 供应商会随迭代增加，只校验「不少于基线 10 项」，具体项按 EXPECT 逐项核对
+    assert(r.data.length >= 10, `应 ≥10 项: ${r.data.length}`);
     const map = Object.fromEntries(r.data.map((p) => [p.providerKey, p]));
     for (const [key, exp] of Object.entries(EXPECT)) {
         const p = map[key];
@@ -125,7 +126,7 @@ await case_r('A2', 'GET /api/ai/providers 返回 10 项且链接字段与新值�
 });
 
 await case_r('A4', '后台可配置：管理员拉取 /admin/ai-providers 列表含新增项且可改', async () => {
-    const admin = await login_api('admin', 'admin123');
+    const admin = await login_api('admin', (process.env.DAFU_ADMIN_PASSWORD || 'admin123'));
     const r = await (await fetch(`${API}/api/admin/ai-providers`, { headers: admin.H })).json();
     assert(r.code === 0 && Array.isArray(r.data), `后台列表异常: ${JSON.stringify(r).slice(0, 120)}`);
     const map = Object.fromEntries(r.data.map((p) => [p.providerKey, p]));

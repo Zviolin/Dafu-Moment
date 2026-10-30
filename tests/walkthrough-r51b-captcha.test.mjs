@@ -10,7 +10,7 @@
  * 运行：node tests/walkthrough-r51b-captcha.test.mjs（需 dafu 全容器运行中，:8095）
  */
 import { createRequire } from 'module';
-const require = createRequire('C:/WINDOWS/TEMP/27pw/anchor.js');
+const require = createRequire(import.meta.url) /* 解析到 tests/node_modules，避免依赖已被清理的临时目录 */;
 const { chromium } = require('playwright-core');
 
 const BASE = 'http://localhost:8095';

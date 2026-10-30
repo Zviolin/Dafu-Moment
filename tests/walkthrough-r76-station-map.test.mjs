@@ -4,9 +4,10 @@
  *       档口坐标落在所属点位 ±0.001° 内（回填偏移口径）/ 无坐标点位与档口均不出标记
  * 运行：node tests/walkthrough-r76-station-map.test.mjs
  * 前置：docker compose 后端在跑且 DEBUG=true；005 迁移已执行（station.lat/lng + 存量回填）；种子含坐标点位
- * 幂等：管理端建的点位/档口名带随机后缀，只增不改
+ * 幂等：管理端建的点位/档口名带随机后缀，末尾 IT-04 统一回收夹具
  */
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 const SUF = Date.now().toString(36);
 let TOKEN_ADMIN = '';
@@ -65,7 +66,8 @@ function all_points(areas) { return areas.flatMap((a) => a.points); }
 console.log('=== r76 导览图档口级标记走查（T-31 / AC08） ===');
 
 await case_it('IT-00', '准备：管理员登录；/points/map 结构合法且 kind 值域正确', async () => {
-    const lm = await post('/api/auth/login', { username: 'admin', password: 'admin123', ...(await captcha_body()) });
+    // 管理员口令已轮换，统一由环境变量注入，缺省保留旧演示口令
+    const lm = await post('/api/auth/login', { username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), ...(await captcha_body()) });
     TOKEN_ADMIN = lm.token;
     const areas = await get('/api/points/map');
     assert(Array.isArray(areas) && areas.length > 0, 'areas 为空');
@@ -107,6 +109,11 @@ await case_it('IT-03', '新建点位（服务端默认坐标）出点位级标�
     const pts = all_points(await get('/api/points/map'));
     assert(pts.some((p) => p.kind === 'canteen' && p.id === NEW_CID), '新点位（默认坐标）应出点位级标记');
     assert(!pts.some((p) => p.kind === 'station' && p.id === st.id), '无坐标档口不应出档口级标记');
+});
+
+await case_it('IT-04', '收尾：删除本走查建的点位与档口', async () => {
+    const r = cleanup_fixtures({ prefixes: ['r76'] });
+    assert(r.canteens >= 1, `未清理到点位：${JSON.stringify(r)}`);
 });
 
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);

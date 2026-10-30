@@ -4,8 +4,10 @@
  *       列表 / 日历 / 统计口径（AC12）/ 越权删除 403 / 不存在 404 / 删除后当天可再打卡
  * 运行：node tests/walkthrough-r71-checkin.test.mjs
  * 前置：docker compose up -d --build 且服务健康（API http://localhost:8095，后端 DEBUG=true 回显验证码）
- * 幂等：两个测试用户随机命名注册；产生的打卡记录在走查末尾全部删除
+ * 幂等：两个测试用户随机命名注册；产生的打卡记录与临时账号在走查末尾全部删除
  */
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
+
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
 
 /** 测试账号（随机后缀保证可重复执行） */
@@ -209,9 +211,15 @@ await case_it('IT-12', '不存在的 canteenId 打卡 → 404 + 40401', async ()
     assert(r.json.code === 40401, `业务码应 40401，实际 ${r.json.code}`);
 });
 
-/* 自清理：删掉走查残留的打卡记录 */
+/* 自清理：删掉走查残留的打卡记录与临时账号（r81 补：原先只删打卡，账号会留在库里） */
 if (LAST_ID) {
     try { await del(`/api/checkin/${LAST_ID}`, TOKEN_A); } catch { /* 清理失败不影响结果 */ }
+}
+try {
+    // 统一走夹具回收工具，覆盖打卡/福宝/任务/金币等派生数据
+    cleanup_fixtures({ prefixes: [], usernames: [USER_A, USER_B] });
+} catch (e) {
+    console.log(`  [WARN] 收尾清理失败（不影响断言结果）：${String(e.message || e).slice(0, 120)}`);
 }
 
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);

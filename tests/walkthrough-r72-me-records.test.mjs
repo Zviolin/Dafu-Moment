@@ -4,9 +4,10 @@
  *       重复举报 409 / 未登录 401 / 空账号空列表
  * 运行：node tests/walkthrough-r72-me-records.test.mjs
  * 前置：docker compose 后端在跑且 DEBUG=true（验证码回显）
- * 幂等：测试用户随机命名注册；提交/举报记录只增不改（只读接口无清理端点，属预期留痕）
+ * 幂等：测试用户随机命名注册；末尾 IT-08 统一回收临时账号及其提交/举报记录
  */
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 const USER_A = `it_${Date.now().toString(36)}`;
 const USER_B = `it_${Date.now().toString(36)}b`;
@@ -125,5 +126,12 @@ await case_it('IT-07', '空账号记录 → 分页四键 + total=0 + 空数组',
     assert(d2.total === 0 && Array.isArray(d2.list) && d2.list.length === 0, 'reports 应为空列表');
 });
 
+await case_it('IT-08', '收尾：删除本走查的临时账号及其提交/举报记录', async () => {
+    const r = cleanup_fixtures({ prefixes: [], usernames: [USER_A, USER_B] });
+    assert(r.users >= 2, `未清理到临时账号：${JSON.stringify(r)}`);
+});
+
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);
+// Windows + undici 直接 process.exit 可能撞 libuv 句柄关闭竞态，先让事件循环排空再退出
+await new Promise((r) => setTimeout(r, 300));
 process.exit(fail ? 1 : 0);

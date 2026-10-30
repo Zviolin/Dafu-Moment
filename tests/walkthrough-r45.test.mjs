@@ -78,7 +78,7 @@ async function login_api(username, password) {
     assert(r.data && r.data.token, `${username} 登录失败: ${JSON.stringify(r).slice(0, 100)}`);
     return { H: { authorization: `Bearer ${r.data.token}`, 'content-type': 'application/json' }, token: r.data.token, user: r.data.user };
 }
-const admin = await login_api('admin', 'admin123');
+const admin = await login_api('admin', (process.env.DAFU_ADMIN_PASSWORD || 'admin123'));
 const user = await login_api('zhangwl', '123456');
 
 /* 幂等：记录 zhangwl 原配置 */

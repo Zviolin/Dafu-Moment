@@ -5,9 +5,10 @@
  *       不适用维度 422 / 点位提交 payload.type=4 放行、type=5 拒
  * 运行：node tests/walkthrough-r75-takeout-type.test.mjs
  * 前置：docker compose 后端在跑且 DEBUG=true；004 迁移已执行；种子含 admin/admin123
- * 幂等：点位/档口/菜品名带随机后缀，只增不改
+ * 幂等：点位/档口/菜品名带随机后缀，末尾 IT-08 统一回收夹具与临时账号
  */
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 const SUF = Date.now().toString(36);
 const USER_A = `it_${SUF}`;
@@ -71,7 +72,8 @@ await case_it('IT-00', '准备：注册用户 A + 管理员登录', async () => 
     await post('/api/auth/register', { username: USER_A, password: TEST_PWD, nickname: '走查甲', ...(await captcha_body()) });
     const la = await post('/api/auth/login', { username: USER_A, password: TEST_PWD, ...(await captcha_body()) });
     TOKEN_A = la.token;
-    const lm = await post('/api/auth/login', { username: 'admin', password: 'admin123', ...(await captcha_body()) });
+    // 管理员口令已轮换，统一由环境变量注入，缺省保留旧演示口令
+    const lm = await post('/api/auth/login', { username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), ...(await captcha_body()) });
     TOKEN_ADMIN = lm.token;
 });
 
@@ -137,6 +139,11 @@ await case_it('IT-07', '管理端建 type=5 点位 → 422；改型 type=4 合�
     assert(put4.status === 200 && put4.json.code === 0, `改 type=4 应 200，实际 ${put4.status}/${put4.json.code}`);
     const put5 = await request('PUT', `/api/admin/canteens/${CID}`, { name: `r75外卖小站${SUF}`, type: 5 }, TOKEN_ADMIN);
     assert(put5.status === 422 && put5.json.code === 40001, `改 type=5 应 422/40001，实际 ${put5.status}/${put5.json.code}`);
+});
+
+await case_it('IT-08', '收尾：删除本走查建的点位/档口/菜品与临时账号', async () => {
+    const r = cleanup_fixtures({ prefixes: ['r75'], usernames: [USER_A] });
+    assert(r.canteens >= 1, `未清理到点位：${JSON.stringify(r)}`);
 });
 
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);

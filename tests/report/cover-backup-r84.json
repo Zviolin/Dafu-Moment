@@ -1,0 +1,1309 @@
+{
+ "generated_at": "2026-10-29T11:51:59.639Z",
+ "dish": [
+  {
+   "id": 1,
+   "name": "锅包肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 2,
+   "name": "酸辣鸡杂",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 3,
+   "name": "地三鲜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 4,
+   "name": "东北大拉皮",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 5,
+   "name": "羊肉串",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 6,
+   "name": "牛肋条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 7,
+   "name": "油边",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 8,
+   "name": "蚕蛹",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 9,
+   "name": "梅菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 10,
+   "name": "鲜肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 11,
+   "name": "瘦肉锅盔",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 12,
+   "name": "炸蘑菇（六合一）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 13,
+   "name": "年糕",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 14,
+   "name": "鸡柳",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 15,
+   "name": "片皮鸭卷",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 16,
+   "name": "烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 17,
+   "name": "香酥鸭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 18,
+   "name": "豆花",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 19,
+   "name": "椰奶冰",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 20,
+   "name": "清补凉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 21,
+   "name": "油边",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 22,
+   "name": "牛肉串",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 23,
+   "name": "鸡腿",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 24,
+   "name": "三叉骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 25,
+   "name": "鸡肉条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 26,
+   "name": "锅贴",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 27,
+   "name": "重庆小面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 28,
+   "name": "牛肉拌面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 29,
+   "name": "肉酱拌面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 30,
+   "name": "肉夹馍",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 31,
+   "name": "拌扁肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 32,
+   "name": "凉皮",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 33,
+   "name": "泡芙",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 34,
+   "name": "麻薯",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 35,
+   "name": "蛋挞",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 36,
+   "name": "面包",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 37,
+   "name": "清远鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 38,
+   "name": "走地鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 39,
+   "name": "天九湾炝肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 40,
+   "name": "山里炝粉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 41,
+   "name": "莆田卤面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 42,
+   "name": "栗酥饼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 43,
+   "name": "芋泥饼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 44,
+   "name": "榴莲饼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 45,
+   "name": "沙姜焗鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 46,
+   "name": "豉汁排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 47,
+   "name": "松板肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 48,
+   "name": "蒜苗五花",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 49,
+   "name": "南乳鸡翅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 50,
+   "name": "脆卤肥肠",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 51,
+   "name": "麻婆豆腐",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 52,
+   "name": "脆皮鸭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 53,
+   "name": "水煮鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 54,
+   "name": "红糖糍粑",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 55,
+   "name": "甘蔗汁",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 56,
+   "name": "雪梨汁",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 57,
+   "name": "西瓜汁",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 58,
+   "name": "炒板栗",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 59,
+   "name": "洪濑鸡爪",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 60,
+   "name": "卤味拼盘",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 61,
+   "name": "牛肉羹",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 62,
+   "name": "牛肉粉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 63,
+   "name": "羊肉米线",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 64,
+   "name": "凉拌米线",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 65,
+   "name": "东北烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 66,
+   "name": "火鸡面烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 67,
+   "name": "五花肉烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 68,
+   "name": "烤黑鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 69,
+   "name": "干锅包菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 70,
+   "name": "椒盐掌中宝",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 71,
+   "name": "桥头排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 72,
+   "name": "桥头炸肉条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 73,
+   "name": "桥头掌中宝",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 74,
+   "name": "鸡汤干豆腐",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 75,
+   "name": "锅包肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 76,
+   "name": "溜肉段",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 77,
+   "name": "手工水饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 78,
+   "name": "麻婆豆腐",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 79,
+   "name": "火爆腰花",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 80,
+   "name": "椒麻猪舌",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 81,
+   "name": "红糖糍粑",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 82,
+   "name": "牛杂煲",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 83,
+   "name": "萝卜牛杂汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 84,
+   "name": "（银粟芝士",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 85,
+   "name": "黑胡椒蛋黄",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 86,
+   "name": "鲜橙琥珀",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 87,
+   "name": "牧场酱",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 88,
+   "name": "蜂蜜山葵）炸鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 89,
+   "name": "塔塔酱洋葱炸鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 90,
+   "name": "薯条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 91,
+   "name": "烤羊腿",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 92,
+   "name": "烤羊排",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 93,
+   "name": "烤油边",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 94,
+   "name": "黑椒牛肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 95,
+   "name": "宫后",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 96,
+   "name": "牛板筋",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 97,
+   "name": "烤菠萝",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 98,
+   "name": "西瓜牛奶冰",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 99,
+   "name": "芒果豆乳年糕牛奶冰",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 100,
+   "name": "牛肉面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 101,
+   "name": "虾饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 102,
+   "name": "盐酥鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 103,
+   "name": "甜不辣",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 104,
+   "name": "卤鸭腿",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 105,
+   "name": "炸猪排",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 106,
+   "name": "鸭腿",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 107,
+   "name": "干煸炒面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 108,
+   "name": "羊肉抓饭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 109,
+   "name": "过油肉炒面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 110,
+   "name": "馕",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 111,
+   "name": "烤羊心",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 112,
+   "name": "红柳羊肉串",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 113,
+   "name": "油封姜母鸭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 114,
+   "name": "牛排配薯条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 115,
+   "name": "千层面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 116,
+   "name": "培根菌菇奶油意面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 117,
+   "name": "牛肋条",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 118,
+   "name": "松板肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 119,
+   "name": "鸡软骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 120,
+   "name": "京葱鸡肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 121,
+   "name": "鳗鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 122,
+   "name": "明太子西葫芦",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 123,
+   "name": "和牛汉堡肉盖饭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 124,
+   "name": "松板肉饭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 125,
+   "name": "鸡生蚝（烧鸟）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 126,
+   "name": "锅包肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 127,
+   "name": "肉段",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 128,
+   "name": "地三鲜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 129,
+   "name": "豆角土豆排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 130,
+   "name": "掌中宝",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 131,
+   "name": "火焰牛排",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 132,
+   "name": "黑虎虾",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 133,
+   "name": "印尼小管",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 134,
+   "name": "自制奶茶",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 135,
+   "name": "猪肝粥",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 136,
+   "name": "海鲜粥",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 137,
+   "name": "皮蛋瘦肉粥",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 138,
+   "name": "炒猪头肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 139,
+   "name": "肥肠烤鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 140,
+   "name": "特色清江团鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 141,
+   "name": "烙锅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 142,
+   "name": "香油田鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 143,
+   "name": "荔枝肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 144,
+   "name": "南煎肝",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 145,
+   "name": "醉排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 146,
+   "name": "葱油拆骨肉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 147,
+   "name": "海蛎汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 148,
+   "name": "大葱水饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 149,
+   "name": "荠菜水饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 150,
+   "name": "拌猪耳朵",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 151,
+   "name": "拌皮冻",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 152,
+   "name": "肉馅/素馅水煎包",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 153,
+   "name": "胡辣汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 154,
+   "name": "煎包",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 155,
+   "name": "茶叶蛋",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 156,
+   "name": "巴沙鱼汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 157,
+   "name": "鳗鱼汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 158,
+   "name": "鱼丸",
+   "cover_object_key": "preset:rice"
+  }
+ ],
+ "station": [
+  {
+   "id": 1,
+   "name": "盛茂源东北饺子馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 2,
+   "name": "夜贰两东北串吧",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 3,
+   "name": "文博家锅盔",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 4,
+   "name": "猪师弟空气年糕",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 5,
+   "name": "陈记片皮鸭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 6,
+   "name": "壹品豆花",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 7,
+   "name": "便宜坊（原光阴的故事）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 8,
+   "name": "临榆炸鸡腿（学生街店）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 9,
+   "name": "台湾锅贴",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 10,
+   "name": "重庆小面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 11,
+   "name": "刘记肉夹馍",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 12,
+   "name": "可可烘焙",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 13,
+   "name": "广式养生鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 14,
+   "name": "莆田卤面·天九湾炝肉·山里炝粉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 15,
+   "name": "栗栗烘焙-栗酥饼（福大店）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 16,
+   "name": "江一福·按时吃饭·啫啫煲",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 17,
+   "name": "周麻婆·新川式家常菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 18,
+   "name": "鲜榨果汁·现炒板栗",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 19,
+   "name": "洪濑鸡爪",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 20,
+   "name": "云南铜锅牛羊肉米线",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 21,
+   "name": "达叔肉夹馍·烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 22,
+   "name": "成都纸包鱼烧烤大排档",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 23,
+   "name": "桥头排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 24,
+   "name": "北方饭店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 25,
+   "name": "川册·川味小馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 26,
+   "name": "李夏记牛腩煲（原广式牛杂）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 27,
+   "name": "焦焦牧场·鲜牛奶炸鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 28,
+   "name": "116炭火",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 29,
+   "name": "fufu牛奶冰",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 30,
+   "name": "傻师傅台湾厨房",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 31,
+   "name": "新疆石榴花美食馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 32,
+   "name": "禾西Restaurant",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 33,
+   "name": "大福的烧鸟·居酒屋",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 34,
+   "name": "有饭料理店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 35,
+   "name": "唐小厨东北菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 36,
+   "name": "福大阿毛烧烤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 37,
+   "name": "周家粥铺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 38,
+   "name": "黔味烤鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 39,
+   "name": "邱阳破店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 40,
+   "name": "山东水饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 41,
+   "name": "何记河南正宗水煎包胡辣汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 42,
+   "name": "依云煎包店",
+   "cover_object_key": "preset:rice"
+  }
+ ],
+ "canteen": [
+  {
+   "id": 1,
+   "name": "玫瑰园食惠餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 2,
+   "name": "丁香园品膳餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 3,
+   "name": "桃李园餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 4,
+   "name": "佳客来西餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 5,
+   "name": "海棠园京元餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 6,
+   "name": "丹桂园朝阳餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 7,
+   "name": "茉莉园聚誉餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 8,
+   "name": "百合园立品餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 9,
+   "name": "紫竹园到口餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 10,
+   "name": "紫荆园捷祥餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 11,
+   "name": "牡丹园清谷餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 12,
+   "name": "芙蓉园兴安餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 13,
+   "name": "福州麦当劳国宾大道DT餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 14,
+   "name": "福州麦当劳上街镇国宾大道餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 15,
+   "name": "福州麦当劳闽侯上街国宾大道(梅园酒店)餐厅",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 16,
+   "name": "盛茂源东北饺子馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 17,
+   "name": "夜贰两东北串吧",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 18,
+   "name": "文博家锅盔",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 19,
+   "name": "猪师弟空气年糕",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 20,
+   "name": "陈记片皮鸭",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 21,
+   "name": "壹品豆花",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 22,
+   "name": "便宜坊（原光阴的故事）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 23,
+   "name": "临榆炸鸡腿（学生街店）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 24,
+   "name": "台湾锅贴",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 25,
+   "name": "重庆小面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 26,
+   "name": "刘记肉夹馍",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 27,
+   "name": "可可烘焙",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 28,
+   "name": "广式养生鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 29,
+   "name": "莆田卤面·天九湾炝肉·山里炝粉",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 30,
+   "name": "栗栗烘焙-栗酥饼（福大店）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 31,
+   "name": "江一福·按时吃饭·啫啫煲",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 32,
+   "name": "周麻婆·新川式家常菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 33,
+   "name": "鲜榨果汁·现炒板栗",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 34,
+   "name": "十里后院·快递夜市",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 35,
+   "name": "洪濑鸡爪",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 36,
+   "name": "云南铜锅牛羊肉米线",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 37,
+   "name": "达叔肉夹馍·烤冷面",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 38,
+   "name": "卤百味",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 39,
+   "name": "成都纸包鱼烧烤大排档",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 40,
+   "name": "桥头排骨",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 41,
+   "name": "北方饭店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 42,
+   "name": "川册·川味小馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 43,
+   "name": "李夏记牛腩煲（原广式牛杂）",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 44,
+   "name": "焦焦牧场·鲜牛奶炸鸡",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 45,
+   "name": "116炭火",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 46,
+   "name": "fufu牛奶冰",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 47,
+   "name": "傻师傅台湾厨房",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 48,
+   "name": "新疆石榴花美食馆",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 49,
+   "name": "禾西Restaurant",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 50,
+   "name": "大福的烧鸟·居酒屋",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 51,
+   "name": "有饭料理店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 52,
+   "name": "唐小厨东北菜",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 53,
+   "name": "福大阿毛烧烤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 54,
+   "name": "周家粥铺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 55,
+   "name": "黔味烤鱼",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 56,
+   "name": "邱阳破店",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 57,
+   "name": "山东水饺",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 58,
+   "name": "何记河南正宗水煎包胡辣汤",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 59,
+   "name": "KEFI来乐食堂",
+   "cover_object_key": "preset:rice"
+  },
+  {
+   "id": 60,
+   "name": "依云煎包店",
+   "cover_object_key": "preset:rice"
+  }
+ ]
+}

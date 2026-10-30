@@ -55,7 +55,7 @@ assert(login.data && login.data.token, `API 登录失败: ${JSON.stringify(login
 const cap2 = await (await fetch(`${BASE}/api/auth/captcha`)).json();
 const admin_login = await (await fetch(`${BASE}/api/auth/login`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'admin123', captchaId: cap2.data.captchaId, captchaCode: cap2.data.debugCode }),
+    body: JSON.stringify({ username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), captchaId: cap2.data.captchaId, captchaCode: cap2.data.debugCode }),
 })).json();
 assert(admin_login.data && admin_login.data.token, `admin 登录失败: ${JSON.stringify(admin_login).slice(0, 120)}`);
 

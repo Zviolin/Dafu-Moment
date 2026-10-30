@@ -2,15 +2,25 @@
  * 大福食刻 DAFU MOMENT API 集成测试（IT 编号用例，node 直跑无框架）
  * 运行：node tests/api-integration.test.mjs
  * 前置：docker compose up -d --build 且服务健康（API http://localhost:3000 / 前端 http://localhost:8095）
- * v2.0 口径：维度化评分（dimensionScores/overall_score/rating_avg）、点位四类型、
+ * v2.0 口径：维度化评分（dimensionScores/overall_score/rating_avg）、点位五类型（含外卖 4）、
  *           AI 助手与自配、点位众包提交；排队与榜单用例已随功能删除
  * 幂等：测试用户随机命名注册，评价用例后自删清理，AI 配置用例后清空密钥
  */
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 /** 测试账号（随机后缀保证可重复执行） */
 const TEST_USER = `it_${Date.now().toString(36)}`;
 const TEST_PWD = 'it123456';
+
+// 兜底清理：脚本中途抛错（如管理员登录 422）时，末尾的 IT-CLEAN 用例不会执行，
+// 临时账号会残留在库内污染线上数据。此处挂 exit 钩子保证任何退出路径都回收。
+process.on('exit', () => {
+    try {
+        cleanup_fixtures({ prefixes: [], usernames: [TEST_USER] });
+    } catch { /* 清理失败不掩盖主流程结果 */ }
+});
+
 let USER_TOKEN = '';   // 测试学生 token
 let ADMIN_TOKEN = '';  // 种子管理员 token
 /** 共享样本（用例间按声明顺序复用） */
@@ -121,7 +131,7 @@ console.log('=== 大福食刻 API 集成测试（v2.0 口径） ===');
 {
     const d = await post('/api/auth/register', { username: TEST_USER, password: TEST_PWD, nickname: '集成测试员', ...(await captcha_body()) });
     USER_TOKEN = d.token;
-    const ad = await post('/api/auth/login', { username: 'admin', password: 'admin123', ...(await captcha_body()) });
+    const ad = await post('/api/auth/login', { username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), ...(await captcha_body()) });
     ADMIN_TOKEN = ad.token;
     const canteens = await get('/api/canteens');
     const c0 = canteens.find((c) => Number(c.type) === 0);
@@ -141,24 +151,24 @@ await case_it('IT-B2', 'POST /auth/register 随机测试用户注册成功并返
     assert(USER_TOKEN && USER_TOKEN.length > 20, 'token 缺失');
 });
 
-await case_it('IT-B3', 'POST /auth/login 种子学生可登录', async () => {
-    const d = await post('/api/auth/login', { username: 'zhangwl', password: '123456', ...(await captcha_body()) });
+await case_it('IT-B3', 'POST /auth/login 学生账号（本次注册）可登录', async () => {
+    const d = await post('/api/auth/login', { username: TEST_USER, password: TEST_PWD, ...(await captcha_body()) });
     assert(d.token && d.token.length > 20, 'token 缺失');
     assert(d.user && d.user.nickname, 'user 昵称缺失');
 });
 
 await case_it('IT-B4', 'POST /auth/login 种子管理员登录 role=1', async () => {
-    const d = await post('/api/auth/login', { username: 'admin', password: 'admin123', ...(await captcha_body()) });
+    const d = await post('/api/auth/login', { username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), ...(await captcha_body()) });
     assert(d.user.role === 1, `role=${d.user.role}`);
 });
 
 console.log('[分组] 浏览域回归（v2.0 契约）');
 
-await case_it('IT-R1', 'GET /canteens 点位列表含四类型 type 字段（0-3）', async () => {
+await case_it('IT-R1', 'GET /canteens 点位列表含五类型 type 字段（0-4，含外卖 AC01）', async () => {
     const list = await get('/api/canteens');
     assert(Array.isArray(list) && list.length >= 1, `点位数=${list && list.length}`);
     for (const c of list) {
-        assert([0, 1, 2, 3].includes(Number(c.type)), `type 异常: ${c.name} type=${c.type}`);
+        assert([0, 1, 2, 3, 4].includes(Number(c.type)), `type 异常: ${c.name} type=${c.type}`);
     }
     assert(list.some((c) => Number(c.type) === 0), '缺校内食堂（type=0）');
 });
@@ -193,12 +203,19 @@ await case_it('IT-C1', 'GET /categories 返回品类聚合且含已知品类', a
     }
 });
 
-await case_it('IT-C2', 'GET /dishes?category=汉堡简餐 全部命中该品类', async () => {
-    const data = await get('/api/dishes?category=' + encodeURIComponent('汉堡简餐') + '&pageSize=50');
-    assert(data.total > 0, 'total=0');
+await case_it('IT-C2', 'GET /dishes?category=热门品类 全部命中该品类', async () => {
+    // 品类由真实数据聚合而来（旧硬编码「汉堡简餐」已不在当前菜单），取 /categories 首个真实品类
+    const cats = await get('/api/categories');
+    const cat = (cats.find((c) => Number(c.count) > 0) || {}).name;
+    assert(cat, '无可用真实品类');
+    const data = await get('/api/dishes?category=' + encodeURIComponent(cat) + '&pageSize=50');
+    assert(data.total > 0, `category=${cat} total=0`);
+    // 品类挂在档口上：按档口列表反查该品类下的合法档口集合，逐条断言不越界
+    const st = await get('/api/stations');
+    const allowed = new Set(st.filter((s) => String(s.category) === cat).map((s) => Number(s.id)));
+    assert(allowed.size > 0, `档口列表未找到品类「${cat}」`);
     for (const d of data.list) {
-        assert(String(d.category || '').includes('汉堡简餐') || String(d.station_name || '').includes('塔斯汀')
-            || String(d.station_name || '').includes('华莱士'), `越界: ${d.station_name}`);
+        assert(allowed.has(Number(d.station_id)), `越界: ${d.name} station_id=${d.station_id}`);
     }
 });
 
@@ -421,13 +438,13 @@ await case_it('IT-X1', 'GET /auth/captcha 验证码结构 + 一次性校验', as
     assert(d.captchaId && d.captchaId.length >= 8, 'captchaId 缺失');
     assert(String(d.imageBase64).startsWith('data:image/svg+xml'), 'imageBase64 非 SVG data URI');
     // 用 debugCode 登录成功后该验证码即被删除 → 同码重放必须失败
-    const body = { username: 'zhangwl', password: '123456', captchaId: d.captchaId, captchaCode: d.debugCode };
+    const body = { username: TEST_USER, password: TEST_PWD, captchaId: d.captchaId, captchaCode: d.debugCode };
     await post('/api/auth/login', body);
     await expect_4xx('POST', '/api/auth/login', body, undefined);
 });
 
 await case_it('IT-X2', 'POST /auth/login 缺验证码被拒', async () => {
-    await expect_4xx('POST', '/api/auth/login', { username: 'zhangwl', password: '123456' }, undefined);
+    await expect_4xx('POST', '/api/auth/login', { username: TEST_USER, password: TEST_PWD }, undefined);
 });
 
 await case_it('IT-X3', 'GET /users/:id/profile 他人个人主页（公开）', async () => {
@@ -478,6 +495,10 @@ await case_it('IT-X6', 'GET /points 文档口径分页 + sort 校验 + /points/m
     assert(Array.isArray(map) && map.length >= 1, '/points/map 非数组');
     const g = map[0];
     assert(g.area && Array.isArray(g.points) && g.points[0].name !== undefined, `map 分组契约异常: ${JSON.stringify(g).slice(0, 120)}`);
+});
+
+await case_it('IT-CLEAN', '收尾：删除本次注册的临时账号及其派生数据', async () => {
+    cleanup_fixtures({ prefixes: [], usernames: [TEST_USER] });
 });
 
 // 汇总

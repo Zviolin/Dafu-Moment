@@ -5,9 +5,13 @@
  *       无评价档口 ratingAvg=0 且 dimScores={} / GET /stations 轻量列表含新建档口且字段齐全
  * 运行：node tests/walkthrough-r77-station-compare.test.mjs
  * 前置：docker compose 后端在跑且 DEBUG=true；种子已导入
- * 幂等：点位/档口/用户名带随机后缀，评价只增不改
+ * 幂等：点位/档口/用户名带随机后缀；收尾删除本次创建的评价 / 档口 / 点位 / 临时账号
+ *       （r81 补：原先只增不删，会在线上库留下「r77点位/档口」，破坏 60 点位 / 42 档口口径）
  */
+import { execSync } from 'child_process';
+
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 const SUF = Date.now().toString(36);
 let TOKEN_ADMIN = '';
@@ -87,7 +91,8 @@ function scores_of(pattern) {
 console.log('=== r77 档口级横向对比走查（AC07） ===');
 
 await case_it('IT-00', '准备：管理员建点位（type 0）+ 档口×3；取 type 0 维度配置（应含 queue）', async () => {
-    const lm = await post('/api/auth/login', { username: 'admin', password: 'admin123', ...(await captcha_body()) });
+    // 管理员口令已轮换，统一由环境变量注入，缺省保留旧演示口令
+    const lm = await post('/api/auth/login', { username: 'admin', password: (process.env.DAFU_ADMIN_PASSWORD || 'admin123'), ...(await captcha_body()) });
     TOKEN_ADMIN = lm.token;
     const c = await post('/api/admin/canteens', { name: `r77点位${SUF}`, type: 0 }, TOKEN_ADMIN);
     CID = c.id;
@@ -176,6 +181,28 @@ await case_it('IT-06', 'GET /stations 轻量列表：含新建档口且字段齐
     assert(a.canteenId === CID && typeof a.canteenName === 'string' && a.canteenName.length > 0, '所属点位字段缺失');
     assert(a.category === '便当' && a.status === 0, 'category/status 不符');
     assert(a.reviewCount === 2 && typeof a.ratingAvg === 'number' && a.ratingAvg > 0, '聚合分未同步');
+});
+
+/* 自清理：删除本次创建的评价 / 档口 / 点位 / 临时账号（避免污染全量验收的 60/42 口径） */
+if (CID) {
+    try {
+        execSync(
+            `docker exec dafu-mysql mysql -uroot -pdafu_root_2026 --default-character-set=utf8mb4 dafu -e "` +
+            `DELETE rl FROM review_like rl JOIN review r ON r.id=rl.review_id WHERE r.subject_type=1 AND r.subject_id IN (${STA},${STB},${STC}); ` +
+            `DELETE FROM review WHERE subject_type=1 AND subject_id IN (${STA},${STB},${STC}); ` +
+            `DELETE FROM station WHERE canteen_id=${CID}; ` +
+            `DELETE FROM canteen WHERE id=${CID}; ` +
+            `DELETE FROM user WHERE username LIKE 'it_${SUF}_%';"`,
+            { stdio: 'pipe' }
+        );
+    } catch (e) {
+        console.log(`  [WARN] 收尾清理失败（不影响断言结果）：${String(e.message || e).slice(0, 120)}`);
+    }
+}
+
+await case_it('IT-08', '收尾兜底：按前缀再扫一遍（前置自清理已删过则为 0）', async () => {
+    const r = cleanup_fixtures({ prefixes: ['r77'], usernames: [`it_${SUF}`] });
+    console.log(`  [INFO] 兜底清理：点位 ${r.canteens} / 档口 ${r.stations} / 菜品 ${r.dishes} / 账号 ${r.users}`);
 });
 
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);

@@ -110,7 +110,7 @@ async function shot(page, day, label, url_path) {
 }
 
 const student = await login('zhangwl', '123456');
-const admin = await login('admin', 'admin123');
+const admin = await login('admin', (process.env.DAFU_ADMIN_PASSWORD || 'admin123'));
 const browser = await chromium.launch({ executablePath: EXE, headless: true });
 
 for (const stage of STAGES) {

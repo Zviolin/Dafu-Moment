@@ -1,6 +1,6 @@
 // 交互原型 10 页跳转探针
-const createRequire = require('C:/WINDOWS/TEMP/27pw/x.js');
-const { chromium } = createRequire('C:/WINDOWS/TEMP/27pw/x.js')('playwright-core');
+const { createRequire } = require('module');
+const { chromium } = createRequire(__filename)('playwright-core');
 const EXE = 'C:\\Users\\Zviolin\\AppData\\Local\\ms-playwright\\chromium-1208\\chrome-win64\\chrome.exe';
 const URL = 'http://localhost:8899/%E5%A4%A7%E7%A6%8F%E9%A3%9F%E5%88%BB-%E4%BA%A4%E4%BA%92%E5%8E%9F%E5%9E%8B.html';
 

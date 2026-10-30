@@ -5,9 +5,10 @@
  *       删组后组内收藏回落「想吃」/ 未登录 401
  * 运行：node tests/walkthrough-r74-favorite-groups.test.mjs
  * 前置：docker compose 后端在跑且 DEBUG=true（验证码回显）；003 迁移已执行（favorite_group 表 + favorite.group_id）
- * 幂等：测试用户随机命名注册；分组/收藏只增不改（删组用例只清自己的数据，属预期留痕）
+ * 幂等：测试用户随机命名注册；末尾 IT-16 统一回收临时账号及其分组/收藏记录
  */
 const BASE = process.env.LB_BASE || 'http://localhost:8095';
+import { cleanup_fixtures } from './_fixture-cleanup.mjs';
 
 const USER_A = `it_${Date.now().toString(36)}`;
 const USER_B = `it_${Date.now().toString(36)}b`;
@@ -200,6 +201,11 @@ await case_it('IT-15', '未登录访问分组 4 端点 → 401 + 40101', async (
     for (const r of rs) {
         assert(r.status === 401 && r.json.code === 40101, `应 401/40101，实际 ${r.status}/${r.json.code}`);
     }
+});
+
+await case_it('IT-16', '收尾：删除本走查的临时账号及其分组/收藏记录', async () => {
+    const r = cleanup_fixtures({ prefixes: [], usernames: [USER_A, USER_B] });
+    assert(r.users >= 2, `未清理到临时账号：${JSON.stringify(r)}`);
 });
 
 console.log(`\n结果：${pass} 通过 / ${fail} 失败`);

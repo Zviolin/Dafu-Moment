@@ -1,0 +1,784 @@
+<?xml version="1.0"?>
+
+<resultset statement="SELECT id,name,type,campus,location,avg_price,business_hours,lat,lng,tags FROM canteen ORDER BY id
+" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <row>
+	<field name="id">1</field>
+	<field name="name">玫瑰园食惠餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区三区（一楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">06:00-19:30</field>
+	<field name="lat">26.052602</field>
+	<field name="lng">119.192754</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">2</field>
+	<field name="name">丁香园品膳餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区一区（一楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">06:00-23:30</field>
+	<field name="lat">26.056609</field>
+	<field name="lng">119.192141</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">3</field>
+	<field name="name">桃李园餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location"></field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.057600</field>
+	<field name="lng">119.196200</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">4</field>
+	<field name="name">佳客来西餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location"></field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.057000</field>
+	<field name="lng">119.194000</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">5</field>
+	<field name="name">海棠园京元餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location"></field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.056700</field>
+	<field name="lng">119.192700</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">6</field>
+	<field name="name">丹桂园朝阳餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区一区（二楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">09:00-19:30</field>
+	<field name="lat">26.056434</field>
+	<field name="lng">119.192239</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">7</field>
+	<field name="name">茉莉园聚誉餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区一区（二楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">06:00-19:30</field>
+	<field name="lat">26.056484</field>
+	<field name="lng">119.192740</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">8</field>
+	<field name="name">百合园立品餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区一区（三楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">09:00-19:30</field>
+	<field name="lat">26.056428</field>
+	<field name="lng">119.192043</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">9</field>
+	<field name="name">紫竹园到口餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location"></field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.053000</field>
+	<field name="lng">119.192000</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">10</field>
+	<field name="name">紫荆园捷祥餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区三区（一楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">06:00-19:30</field>
+	<field name="lat">26.052634</field>
+	<field name="lng">119.192056</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">11</field>
+	<field name="name">牡丹园清谷餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区三区（二楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">09:00-23:30</field>
+	<field name="lat">26.053033</field>
+	<field name="lng">119.192056</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">12</field>
+	<field name="name">芙蓉园兴安餐厅</field>
+	<field name="type">0</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">福州大学生活区三区（二楼）</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours">09:00-19:30</field>
+	<field name="lat">26.053002</field>
+	<field name="lng">119.192754</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">13</field>
+	<field name="name">福州麦当劳国宾大道DT餐厅</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">福建省福州市闽侯县上街镇国宾大道233号博仕家园B区的2-2#的101-104商业、129-132复式商业的商铺</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.065400</field>
+	<field name="lng">119.185800</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">14</field>
+	<field name="name">福州麦当劳上街镇国宾大道餐厅</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">福建省福州市闽侯县上街镇国宾大道268号永辉城市生活广场16#楼</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.064800</field>
+	<field name="lng">119.184000</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">15</field>
+	<field name="name">福州麦当劳闽侯上街国宾大道(梅园酒店)餐厅</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">福建省福州市闽侯县上街镇国宾大道350号梅园上街广场1-1#楼一层1号商铺</field>
+	<field name="avg_price" xsi:nil="true" />
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.064200</field>
+	<field name="lng">119.185200</field>
+	<field name="tags">[]</field>
+  </row>
+
+  <row>
+	<field name="id">16</field>
+	<field name="name">盛茂源东北饺子馆</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街A1区学府北路10-27号｜营业 10:00-13:30,16:00-21:30</field>
+	<field name="avg_price">34.0</field>
+	<field name="business_hours">10:00-13:30,16:00-21:30</field>
+	<field name="lat">26.059750</field>
+	<field name="lng">119.192387</field>
+	<field name="tags">[&quot;东北菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;, &quot;适合聚餐&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">17</field>
+	<field name="name">夜贰两东北串吧</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街C2区溪源宫路3-12号｜营业 16:00-次日02:00</field>
+	<field name="avg_price">68.0</field>
+	<field name="business_hours">16:00-次日02:00</field>
+	<field name="lat">26.059812</field>
+	<field name="lng">119.191741</field>
+	<field name="tags">[&quot;东北菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;可外卖&quot;, &quot;适合聚餐&quot;, &quot;烧烤&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">18</field>
+	<field name="name">文博家锅盔</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">福州大学（旗山校区）西1门附近｜营业 17:30-00:00</field>
+	<field name="avg_price">6.0</field>
+	<field name="business_hours">17:30-00:00</field>
+	<field name="lat">26.059101</field>
+	<field name="lng">119.192275</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">19</field>
+	<field name="name">猪师弟空气年糕</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区｜营业 暂无营业时间，一般晚上营业</field>
+	<field name="avg_price">10.0</field>
+	<field name="business_hours">暂无营业时间，一般晚上营业</field>
+	<field name="lat">26.059476</field>
+	<field name="lng">119.191932</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;炸物&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">20</field>
+	<field name="name">陈记片皮鸭</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B3区学府北路10-192号｜营业 10:00-次日01:00</field>
+	<field name="avg_price">10.0</field>
+	<field name="business_hours">10:00-次日01:00</field>
+	<field name="lat">26.059418</field>
+	<field name="lng">119.192072</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;可外卖&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">21</field>
+	<field name="name">壹品豆花</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区｜营业 暂无营业时间</field>
+	<field name="avg_price">12.0</field>
+	<field name="business_hours">暂无营业时间</field>
+	<field name="lat">26.059563</field>
+	<field name="lng">119.191983</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;甜品&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">22</field>
+	<field name="name">便宜坊（原光阴的故事）</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街C1区学府北路10-180号｜营业 10:00-22:00</field>
+	<field name="avg_price">69.0</field>
+	<field name="business_hours">10:00-22:00</field>
+	<field name="lat">26.058875</field>
+	<field name="lng">119.191104</field>
+	<field name="tags">[&quot;适合聚餐&quot;, &quot;自助&quot;, &quot;烧烤&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">23</field>
+	<field name="name">临榆炸鸡腿（学生街店）</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街C1区学府北路10-177号｜营业 10:00-22:00</field>
+	<field name="avg_price">18.0</field>
+	<field name="business_hours">10:00-22:00</field>
+	<field name="lat">26.059463</field>
+	<field name="lng">119.191412</field>
+	<field name="tags">[&quot;可外卖&quot;, &quot;一人食&quot;, &quot;炸物&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">24</field>
+	<field name="name">台湾锅贴</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">福州大学（旗山校区）西1门附近｜营业 11:30-19:00</field>
+	<field name="avg_price">10.0</field>
+	<field name="business_hours">11:30-19:00</field>
+	<field name="lat">26.057947</field>
+	<field name="lng">119.192984</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;一人食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">25</field>
+	<field name="name">重庆小面</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B2区学府北路10号｜营业 暂无</field>
+	<field name="avg_price">10.0</field>
+	<field name="business_hours">暂无</field>
+	<field name="lat">26.058969</field>
+	<field name="lng">119.192413</field>
+	<field name="tags">[&quot;川菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;面条&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">26</field>
+	<field name="name">刘记肉夹馍</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街A2区B8-1学府北路10号｜营业 10:00-13:00,16:00-22:30</field>
+	<field name="avg_price">8.0</field>
+	<field name="business_hours">10:00-13:00,16:00-22:30</field>
+	<field name="lat">26.058895</field>
+	<field name="lng">119.192060</field>
+	<field name="tags">[&quot;陕西菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;可外卖&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">27</field>
+	<field name="name">可可烘焙</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-110号｜营业 08:00--23:30</field>
+	<field name="avg_price">13.0</field>
+	<field name="business_hours">08:00--23:30</field>
+	<field name="lat">26.059093</field>
+	<field name="lng">119.192090</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;可外卖&quot;, &quot;甜品&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">28</field>
+	<field name="name">广式养生鸡</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街A1区学府北路10-22号｜营业 10:00-次日01:00</field>
+	<field name="avg_price">62.0</field>
+	<field name="business_hours">10:00-次日01:00</field>
+	<field name="lat">26.059660</field>
+	<field name="lng">119.192416</field>
+	<field name="tags">[&quot;广东菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">29</field>
+	<field name="name">莆田卤面·天九湾炝肉·山里炝粉</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区08店面学府北路10-92号｜营业 10:00-13:30,16:00-22:00</field>
+	<field name="avg_price">15.0</field>
+	<field name="business_hours">10:00-13:30,16:00-22:00</field>
+	<field name="lat">26.058848</field>
+	<field name="lng">119.191871</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">30</field>
+	<field name="name">栗栗烘焙-栗酥饼（福大店）</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区学府北路10-106号｜营业 10:30-21:30</field>
+	<field name="avg_price">14.0</field>
+	<field name="business_hours">10:30-21:30</field>
+	<field name="lat">26.058681</field>
+	<field name="lng">119.191289</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;甜品&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">31</field>
+	<field name="name">江一福·按时吃饭·啫啫煲</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-127号｜营业 10:00-22:00</field>
+	<field name="avg_price">22.0</field>
+	<field name="business_hours">10:00-22:00</field>
+	<field name="lat">26.058872</field>
+	<field name="lng">119.191394</field>
+	<field name="tags">[&quot;粤菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;, &quot;一人食&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">32</field>
+	<field name="name">周麻婆·新川式家常菜</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-193号｜营业 11:00-14:00,17:00-21:00</field>
+	<field name="avg_price">41.0</field>
+	<field name="business_hours">11:00-14:00,17:00-21:00</field>
+	<field name="lat">26.059256</field>
+	<field name="lng">119.190841</field>
+	<field name="tags">[&quot;川菜&quot;, &quot;闽菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">33</field>
+	<field name="name">鲜榨果汁·现炒板栗</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区学府北路10-228号｜营业 11:00-00:00</field>
+	<field name="avg_price">11.0</field>
+	<field name="business_hours">11:00-00:00</field>
+	<field name="lat">26.059496</field>
+	<field name="lng">119.191872</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;小吃&quot;, &quot;甜品&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">34</field>
+	<field name="name">十里后院·快递夜市</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区学府北路10-228号｜营业 12:00-21:00</field>
+	<field name="avg_price">11.0</field>
+	<field name="business_hours">12:00-21:00</field>
+	<field name="lat">26.058902</field>
+	<field name="lng">119.190969</field>
+	<field name="tags">[&quot;粤菜&quot;, &quot;日式&quot;, &quot;一人食&quot;, &quot;可外卖&quot;, &quot;小吃&quot;, &quot;甜品&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">35</field>
+	<field name="name">洪濑鸡爪</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-73号｜营业 10:00-21:00</field>
+	<field name="avg_price">15.0</field>
+	<field name="business_hours">10:00-21:00</field>
+	<field name="lat">26.059729</field>
+	<field name="lng">119.192053</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">36</field>
+	<field name="name">云南铜锅牛羊肉米线</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-235号｜营业 09:00-23:30</field>
+	<field name="avg_price">17.0</field>
+	<field name="business_hours">09:00-23:30</field>
+	<field name="lat">26.059437</field>
+	<field name="lng">119.191842</field>
+	<field name="tags">[&quot;滇菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">37</field>
+	<field name="name">达叔肉夹馍·烤冷面</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街B1区学府北路10号｜营业 16:00-00:30</field>
+	<field name="avg_price">13.0</field>
+	<field name="business_hours">16:00-00:30</field>
+	<field name="lat">26.059530</field>
+	<field name="lng">119.191927</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">38</field>
+	<field name="name">卤百味</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10号</field>
+	<field name="avg_price">12.0</field>
+	<field name="business_hours" xsi:nil="true" />
+	<field name="lat">26.059418</field>
+	<field name="lng">119.191796</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;卤味&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">39</field>
+	<field name="name">成都纸包鱼烧烤大排档</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街A1区学府北路10号19店面｜营业 16:00-次日02:30</field>
+	<field name="avg_price">71.0</field>
+	<field name="business_hours">16:00-次日02:30</field>
+	<field name="lat">26.059482</field>
+	<field name="lng">119.191017</field>
+	<field name="tags">[&quot;川菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;, &quot;烤鱼&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">40</field>
+	<field name="name">桥头排骨</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-231号｜营业 11:30-13:30,15:30-23:50</field>
+	<field name="avg_price">19.0</field>
+	<field name="business_hours">11:30-13:30,15:30-23:50</field>
+	<field name="lat">26.059456</field>
+	<field name="lng">119.191892</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;可外卖&quot;, &quot;炸物&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">41</field>
+	<field name="name">北方饭店</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">明德路6号万科金域蓝湾1栋115商铺｜营业 10:30-21:00</field>
+	<field name="avg_price">40.0</field>
+	<field name="business_hours">10:30-21:00</field>
+	<field name="lat">26.044361</field>
+	<field name="lng">119.199558</field>
+	<field name="tags">[&quot;东北菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">42</field>
+	<field name="name">川册·川味小馆</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">中海寰宇天下高新大道1-41号｜营业 11:00-14:00,17:00-22:30</field>
+	<field name="avg_price">60.0</field>
+	<field name="business_hours">11:00-14:00,17:00-22:30</field>
+	<field name="lat">26.049093</field>
+	<field name="lng">119.212503</field>
+	<field name="tags">[&quot;川菜&quot;, &quot;堂食&quot;, &quot;适合聚餐&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">43</field>
+	<field name="name">李夏记牛腩煲（原广式牛杂）</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">高新大道1-1号中海寰宇天下42号楼1层125商业｜营业 09:30-21:00</field>
+	<field name="avg_price">18.0</field>
+	<field name="business_hours">09:30-21:00</field>
+	<field name="lat">26.050485</field>
+	<field name="lng">119.214529</field>
+	<field name="tags">[&quot;粤菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">44</field>
+	<field name="name">焦焦牧场·鲜牛奶炸鸡</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">国宾大道179-2号｜营业 10:55-23:59</field>
+	<field name="avg_price">35.0</field>
+	<field name="business_hours">10:55-23:59</field>
+	<field name="lat">26.068503</field>
+	<field name="lng">119.198038</field>
+	<field name="tags">[&quot;韩餐&quot;, &quot;堂食&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;炸物&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">45</field>
+	<field name="name">116炭火</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">国宾大道266-5号家园酒店旁｜营业 16:00-次日02:00</field>
+	<field name="avg_price">90.0</field>
+	<field name="business_hours">16:00-次日02:00</field>
+	<field name="lat">26.068341</field>
+	<field name="lng">119.202088</field>
+	<field name="tags">[&quot;东北菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;适合聚餐&quot;, &quot;烧烤&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">46</field>
+	<field name="name">fufu牛奶冰</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">国宾大道233号博仕后时代购物广场1楼｜营业 11:30-00:00</field>
+	<field name="avg_price">18.0</field>
+	<field name="business_hours">11:30-00:00</field>
+	<field name="lat">26.067415</field>
+	<field name="lng">119.203251</field>
+	<field name="tags">[&quot;堂食&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;甜品&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">47</field>
+	<field name="name">傻师傅台湾厨房</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">源通东路59-56号｜营业 10:30-21:00</field>
+	<field name="avg_price">20.0</field>
+	<field name="business_hours">10:30-21:00</field>
+	<field name="lat">26.072462</field>
+	<field name="lng">119.194016</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">48</field>
+	<field name="name">新疆石榴花美食馆</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">源通东路59-54号｜营业 09:00-次日04:00</field>
+	<field name="avg_price">20.0</field>
+	<field name="business_hours">09:00-次日04:00</field>
+	<field name="lat">26.072562</field>
+	<field name="lng">119.194116</field>
+	<field name="tags">[&quot;新疆菜&quot;, &quot;堂食&quot;, &quot;可外卖&quot;, &quot;一人食&quot;, &quot;适合聚餐&quot;, &quot;烧烤&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">49</field>
+	<field name="name">禾西Restaurant</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">国宾大道350号梅园上街广场4号楼元翔快线旁（近上街地铁站A出口）｜营业 12:00-23:00</field>
+	<field name="avg_price">61.0</field>
+	<field name="business_hours">12:00-23:00</field>
+	<field name="lat">26.076204</field>
+	<field name="lng">119.188656</field>
+	<field name="tags">[&quot;西餐&quot;, &quot;融合菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">50</field>
+	<field name="name">大福的烧鸟·居酒屋</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">源通东路196号理想城二期7号楼1层113｜营业 12:00-23:00</field>
+	<field name="avg_price">62.0</field>
+	<field name="business_hours">12:00-23:00</field>
+	<field name="lat">26.078930</field>
+	<field name="lng">119.198247</field>
+	<field name="tags">[&quot;日式&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;适合聚餐&quot;, &quot;烧鸟&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">51</field>
+	<field name="name">有饭料理店</field>
+	<field name="type">2</field>
+	<field name="campus">旗山校区</field>
+	<field name="location">岐安福大学生街学府北路10-72号｜营业 11:30-14:00,16:30-22:00</field>
+	<field name="avg_price">30.0</field>
+	<field name="business_hours">11:30-14:00,16:30-22:00</field>
+	<field name="lat">26.059651</field>
+	<field name="lng">119.192098</field>
+	<field name="tags">[&quot;日式&quot;, &quot;一人食&quot;, &quot;可外卖&quot;, &quot;堂食&quot;, &quot;烧鸟&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">52</field>
+	<field name="name">唐小厨东北菜</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">上街镇源江路156号-10｜营业 10:30-14:00,17:00-23:00</field>
+	<field name="avg_price">50.0</field>
+	<field name="business_hours">10:30-14:00,17:00-23:00</field>
+	<field name="lat">26.063494</field>
+	<field name="lng">119.184290</field>
+	<field name="tags">[&quot;东北菜&quot;, &quot;一人食&quot;, &quot;适合聚餐&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">53</field>
+	<field name="name">福大阿毛烧烤</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">溪源宫路106-4号｜营业 17:00-次日05:00</field>
+	<field name="avg_price">66.0</field>
+	<field name="business_hours">17:00-次日05:00</field>
+	<field name="lat">26.059935</field>
+	<field name="lng">119.179664</field>
+	<field name="tags">[&quot;融合菜&quot;, &quot;适合聚餐&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;烧烤&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">54</field>
+	<field name="name">周家粥铺</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">岐安花园一期东北2门南120米｜营业 08:00-21:00</field>
+	<field name="avg_price">20.0</field>
+	<field name="business_hours">08:00-21:00</field>
+	<field name="lat">26.046848</field>
+	<field name="lng">119.188737</field>
+	<field name="tags">[&quot;一人食&quot;, &quot;堂食&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">55</field>
+	<field name="name">黔味烤鱼</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">岐安1号二期｜营业 10:00-次日00:30</field>
+	<field name="avg_price">46.0</field>
+	<field name="business_hours">10:00-次日00:30</field>
+	<field name="lat">26.044807</field>
+	<field name="lng">119.191439</field>
+	<field name="tags">[&quot;黔菜&quot;, &quot;适合聚餐&quot;, &quot;堂食&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">56</field>
+	<field name="name">邱阳破店</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">红峰村新上街邱阳9-1号｜营业 10:00-13:30,17:00-20:30</field>
+	<field name="avg_price">50.0</field>
+	<field name="business_hours">10:00-13:30,17:00-20:30</field>
+	<field name="lat">26.083196</field>
+	<field name="lng">119.188961</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;一人食&quot;, &quot;适合聚餐&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">57</field>
+	<field name="name">山东水饺</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">侯官路1-57号｜营业 10:00-22:00</field>
+	<field name="avg_price">18.0</field>
+	<field name="business_hours">10:00-22:00</field>
+	<field name="lat">26.072082</field>
+	<field name="lng">119.209652</field>
+	<field name="tags">[&quot;鲁菜&quot;, &quot;一人食&quot;, &quot;堂食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">58</field>
+	<field name="name">何记河南正宗水煎包胡辣汤</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">国宾大道上街余盛小学南侧｜营业 06:30-19:30</field>
+	<field name="avg_price">10.0</field>
+	<field name="business_hours">06:30-19:30</field>
+	<field name="lat">26.069699</field>
+	<field name="lng">119.207222</field>
+	<field name="tags">[&quot;豫菜&quot;, &quot;一人食&quot;, &quot;堂食&quot;, &quot;小吃&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">59</field>
+	<field name="name">KEFI来乐食堂</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">浦兴路18号｜营业 11:00-13:30,17:00-20:30,周一休息</field>
+	<field name="avg_price">35.0</field>
+	<field name="business_hours">11:00-13:30,17:00-20:30,周一休息</field>
+	<field name="lat">26.060826</field>
+	<field name="lng">119.206217</field>
+	<field name="tags">[&quot;川菜&quot;, &quot;融合菜&quot;, &quot;堂食&quot;, &quot;一人食&quot;, &quot;炒菜&quot;]</field>
+  </row>
+
+  <row>
+	<field name="id">60</field>
+	<field name="name">依云煎包店</field>
+	<field name="type">3</field>
+	<field name="campus">周边</field>
+	<field name="location">新上街与新尚路交叉口东50米（新华盛超市对面）｜营业 06:30-13:30</field>
+	<field name="avg_price">16.0</field>
+	<field name="business_hours">06:30-13:30</field>
+	<field name="lat">26.079615</field>
+	<field name="lng">119.193810</field>
+	<field name="tags">[&quot;闽菜&quot;, &quot;一人食&quot;, &quot;堂食&quot;, &quot;小吃&quot;]</field>
+  </row>
+</resultset>

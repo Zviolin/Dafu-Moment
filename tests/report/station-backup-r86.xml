@@ -1,0 +1,527 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<database name="dafu">
+	<table_structure name="station">
+		<field Field="id" Type="int" Null="NO" Key="PRI" Extra="auto_increment" Comment="ä¸»é”®æ ‡è¯†" />
+		<field Field="canteen_id" Type="int" Null="NO" Key="MUL" Extra="" Comment="æ‰€å±žç‚¹ä½IDï¼ˆcanteen.idï¼‰" />
+		<field Field="name" Type="varchar(64)" Null="NO" Key="" Extra="" Comment="å¦‚ã€Œä¸‰æ¥¼éº»è¾£é¦™é”…ã€" />
+		<field Field="category" Type="varchar(32)" Null="NO" Key="" Default="" Extra="" Comment="å“ç±»ï¼ˆç­›é€‰ç”¨ï¼‰" />
+		<field Field="cover_object_key" Type="varchar(255)" Null="YES" Key="" Extra="" Comment="å°é¢å›¾ MinIO objectKey" />
+		<field Field="status" Type="tinyint" Null="NO" Key="" Default="0" Extra="" Comment="0 è¥ä¸š / 1 ä¼‘æ‘Š / 2 ä¸‹æž¶" />
+		<field Field="manager_user_id" Type="bigint" Null="YES" Key="" Extra="" Comment="æ¡£å£è´Ÿè´£äºº" />
+		<field Field="lat" Type="decimal(10,6)" Null="YES" Key="" Extra="" Comment="å¯¼è§ˆçº¬åº¦ï¼ˆGCJ-02ï¼›æ¡£å£çº§åœ°å›¾æ ‡è®°ç”¨ï¼ŒNULL åˆ™ä¸å‡ºæ¡£å£æ ‡è®°ï¼‰" />
+		<field Field="lng" Type="decimal(10,6)" Null="YES" Key="" Extra="" Comment="å¯¼è§ˆç»åº¦ï¼ˆGCJ-02ï¼›åŒä¸Šï¼‰" />
+		<field Field="created_at" Type="datetime" Null="NO" Key="" Default="CURRENT_TIMESTAMP" Extra="DEFAULT_GENERATED" Comment="åˆ›å»ºæ—¶é—´" />
+		<key Table="station" Non_unique="0" Key_name="PRIMARY" Seq_in_index="1" Column_name="id" Collation="A" Cardinality="42" Null="" Index_type="BTREE" Comment="" Index_comment="" Visible="YES" />
+		<key Table="station" Non_unique="1" Key_name="idx_canteen" Seq_in_index="1" Column_name="canteen_id" Collation="A" Cardinality="42" Null="" Index_type="BTREE" Comment="" Index_comment="" Visible="YES" />
+		<key Table="station" Non_unique="1" Key_name="idx_canteen" Seq_in_index="2" Column_name="status" Collation="A" Cardinality="42" Null="" Index_type="BTREE" Comment="" Index_comment="" Visible="YES" />
+		<options Name="station" Engine="InnoDB" Version="10" Row_format="Dynamic" Rows="42" Avg_row_length="390" Data_length="16384" Max_data_length="0" Index_length="16384" Data_free="0" Auto_increment="105" Create_time="2026-10-28 18:01:11" Update_time="2026-10-29 12:14:23" Collation="utf8mb4_0900_ai_ci" Create_options="" Comment="" />
+	</table_structure>
+	<table_data name="station">
+	<row>
+		<field name="id">1</field>
+		<field name="canteen_id">16</field>
+		<field name="name">盛茂源东北饺子馆</field>
+		<field name="category">东北菜</field>
+		<field name="cover_object_key">cover/202610/e801c3913a0e517f.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058950</field>
+		<field name="lng">119.191587</field>
+		<field name="created_at">2026-10-29 02:01:21</field>
+	</row>
+	<row>
+		<field name="id">2</field>
+		<field name="canteen_id">17</field>
+		<field name="name">夜贰两东北串吧</field>
+		<field name="category">东北菜</field>
+		<field name="cover_object_key">cover/202610/4335b3eb7830a0c6.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.059012</field>
+		<field name="lng">119.190941</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">3</field>
+		<field name="canteen_id">18</field>
+		<field name="name">文博家锅盔</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/f1a7ce2867c05de6.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058301</field>
+		<field name="lng">119.191475</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">4</field>
+		<field name="canteen_id">19</field>
+		<field name="name">猪师弟空气年糕</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/2140ccae223c9b91.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058676</field>
+		<field name="lng">119.191132</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">5</field>
+		<field name="canteen_id">20</field>
+		<field name="name">陈记片皮鸭</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/0732abd22bd8f551.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058618</field>
+		<field name="lng">119.191272</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">6</field>
+		<field name="canteen_id">21</field>
+		<field name="name">壹品豆花</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/bbf5e639ded51d97.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058763</field>
+		<field name="lng">119.191183</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">7</field>
+		<field name="canteen_id">22</field>
+		<field name="name">便宜坊（原光阴的故事）</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/cc6bc29bbcaacfdd.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058075</field>
+		<field name="lng">119.190304</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">8</field>
+		<field name="canteen_id">23</field>
+		<field name="name">临榆炸鸡腿（学生街店）</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/2a7f9c3ca4df9d2f.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058663</field>
+		<field name="lng">119.190612</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">9</field>
+		<field name="canteen_id">24</field>
+		<field name="name">台湾锅贴</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/40bf699290bdc863.webp</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.057147</field>
+		<field name="lng">119.192184</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">10</field>
+		<field name="canteen_id">25</field>
+		<field name="name">重庆小面</field>
+		<field name="category">川菜</field>
+		<field name="cover_object_key">cover/202610/1b5a479fb3d9384b.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058169</field>
+		<field name="lng">119.191613</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">11</field>
+		<field name="canteen_id">26</field>
+		<field name="name">刘记肉夹馍</field>
+		<field name="category">陕西菜</field>
+		<field name="cover_object_key">cover/202610/68dfc156f2d2af03.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058095</field>
+		<field name="lng">119.191260</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">12</field>
+		<field name="canteen_id">27</field>
+		<field name="name">可可烘焙</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/5c3b605d9399d2c5.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058293</field>
+		<field name="lng">119.191290</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">13</field>
+		<field name="canteen_id">28</field>
+		<field name="name">广式养生鸡</field>
+		<field name="category">广东菜</field>
+		<field name="cover_object_key">cover/202610/9dffd2526b0e2903.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058860</field>
+		<field name="lng">119.191616</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">14</field>
+		<field name="canteen_id">29</field>
+		<field name="name">莆田卤面·天九湾炝肉·山里炝粉</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/7e49d407bb7b30f3.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058048</field>
+		<field name="lng">119.191071</field>
+		<field name="created_at">2026-10-29 02:01:22</field>
+	</row>
+	<row>
+		<field name="id">15</field>
+		<field name="canteen_id">30</field>
+		<field name="name">栗栗烘焙-栗酥饼（福大店）</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/4deb6b3503a7b177.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.057881</field>
+		<field name="lng">119.190489</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">16</field>
+		<field name="canteen_id">31</field>
+		<field name="name">江一福·按时吃饭·啫啫煲</field>
+		<field name="category">粤菜</field>
+		<field name="cover_object_key">cover/202610/744e0e7c12088af7.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058072</field>
+		<field name="lng">119.190594</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">17</field>
+		<field name="canteen_id">32</field>
+		<field name="name">周麻婆·新川式家常菜</field>
+		<field name="category">川菜</field>
+		<field name="cover_object_key">cover/202610/ab6d80130a9bbd73.png</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058455</field>
+		<field name="lng">119.190041</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">18</field>
+		<field name="canteen_id">33</field>
+		<field name="name">鲜榨果汁·现炒板栗</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/d618f85c37c5676c.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058696</field>
+		<field name="lng">119.191072</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">19</field>
+		<field name="canteen_id">35</field>
+		<field name="name">洪濑鸡爪</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/463cb0e5bc49efca.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058929</field>
+		<field name="lng">119.191253</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">20</field>
+		<field name="canteen_id">36</field>
+		<field name="name">云南铜锅牛羊肉米线</field>
+		<field name="category">滇菜</field>
+		<field name="cover_object_key">cover/202610/7a5807f605255590.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058637</field>
+		<field name="lng">119.191042</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">21</field>
+		<field name="canteen_id">37</field>
+		<field name="name">达叔肉夹馍·烤冷面</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/c82d6122e02fc21d.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058730</field>
+		<field name="lng">119.191127</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">22</field>
+		<field name="canteen_id">39</field>
+		<field name="name">成都纸包鱼烧烤大排档</field>
+		<field name="category">川菜</field>
+		<field name="cover_object_key">cover/202610/784b0a55b73dae41.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058682</field>
+		<field name="lng">119.190217</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">23</field>
+		<field name="canteen_id">40</field>
+		<field name="name">桥头排骨</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/fffce9e2a9f70f8c.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058656</field>
+		<field name="lng">119.191092</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">24</field>
+		<field name="canteen_id">41</field>
+		<field name="name">北方饭店</field>
+		<field name="category">东北菜</field>
+		<field name="cover_object_key">cover/202610/020ba0952512f2b2.png</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.043561</field>
+		<field name="lng">119.198758</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">25</field>
+		<field name="canteen_id">42</field>
+		<field name="name">川册·川味小馆</field>
+		<field name="category">川菜</field>
+		<field name="cover_object_key">cover/202610/ab6d80130a9bbd73.png</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.048293</field>
+		<field name="lng">119.211703</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">26</field>
+		<field name="canteen_id">43</field>
+		<field name="name">李夏记牛腩煲（原广式牛杂）</field>
+		<field name="category">粤菜</field>
+		<field name="cover_object_key">cover/202610/1a56db5e3f36db74.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.049684</field>
+		<field name="lng">119.213729</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">27</field>
+		<field name="canteen_id">44</field>
+		<field name="name">焦焦牧场·鲜牛奶炸鸡</field>
+		<field name="category">韩餐</field>
+		<field name="cover_object_key">cover/202610/d220e664b44b4a19.png</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.067703</field>
+		<field name="lng">119.197238</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">28</field>
+		<field name="canteen_id">45</field>
+		<field name="name">116炭火</field>
+		<field name="category">东北菜</field>
+		<field name="cover_object_key">cover/202610/3f9ea9148bbb4faa.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.067541</field>
+		<field name="lng">119.201288</field>
+		<field name="created_at">2026-10-29 02:01:23</field>
+	</row>
+	<row>
+		<field name="id">29</field>
+		<field name="canteen_id">46</field>
+		<field name="name">fufu牛奶冰</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/86d796e57631ea90.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.066615</field>
+		<field name="lng">119.202451</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">30</field>
+		<field name="canteen_id">47</field>
+		<field name="name">傻师傅台湾厨房</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/ba553383c02fdb01.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.071662</field>
+		<field name="lng">119.193216</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">31</field>
+		<field name="canteen_id">48</field>
+		<field name="name">新疆石榴花美食馆</field>
+		<field name="category">新疆菜</field>
+		<field name="cover_object_key">cover/202610/8876cd4a251fe87f.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.071762</field>
+		<field name="lng">119.193316</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">32</field>
+		<field name="canteen_id">49</field>
+		<field name="name">禾西Restaurant</field>
+		<field name="category">西餐</field>
+		<field name="cover_object_key">cover/202610/c8ea3d961083b97e.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.075404</field>
+		<field name="lng">119.187856</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">33</field>
+		<field name="canteen_id">50</field>
+		<field name="name">大福的烧鸟·居酒屋</field>
+		<field name="category">日式</field>
+		<field name="cover_object_key">cover/202610/91164b416d1ad518.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.078130</field>
+		<field name="lng">119.197447</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">34</field>
+		<field name="canteen_id">51</field>
+		<field name="name">有饭料理店</field>
+		<field name="category">日式</field>
+		<field name="cover_object_key">cover/202610/7f27576d596668c0.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.058851</field>
+		<field name="lng">119.191298</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">35</field>
+		<field name="canteen_id">52</field>
+		<field name="name">唐小厨东北菜</field>
+		<field name="category">东北菜</field>
+		<field name="cover_object_key">cover/202610/e801c3913a0e517f.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.062694</field>
+		<field name="lng">119.183490</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">36</field>
+		<field name="canteen_id">53</field>
+		<field name="name">福大阿毛烧烤</field>
+		<field name="category">融合菜</field>
+		<field name="cover_object_key">cover/202610/613f07ca55f72028.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.059135</field>
+		<field name="lng">119.178864</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">37</field>
+		<field name="canteen_id">54</field>
+		<field name="name">周家粥铺</field>
+		<field name="category">综合</field>
+		<field name="cover_object_key">cover/202610/f8f94622664360ca.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.046048</field>
+		<field name="lng">119.187937</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">38</field>
+		<field name="canteen_id">55</field>
+		<field name="name">黔味烤鱼</field>
+		<field name="category">黔菜</field>
+		<field name="cover_object_key">cover/202610/6d68cfadad6cc1fa.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.044007</field>
+		<field name="lng">119.190639</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">39</field>
+		<field name="canteen_id">56</field>
+		<field name="name">邱阳破店</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/967bd71da897b2c6.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.082396</field>
+		<field name="lng">119.188161</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">40</field>
+		<field name="canteen_id">57</field>
+		<field name="name">山东水饺</field>
+		<field name="category">鲁菜</field>
+		<field name="cover_object_key">cover/202610/c7862e7c2a167ecc.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.071282</field>
+		<field name="lng">119.208852</field>
+		<field name="created_at">2026-10-29 02:01:24</field>
+	</row>
+	<row>
+		<field name="id">41</field>
+		<field name="canteen_id">58</field>
+		<field name="name">何记河南正宗水煎包胡辣汤</field>
+		<field name="category">豫菜</field>
+		<field name="cover_object_key">cover/202610/d255b181ab428b0d.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.068899</field>
+		<field name="lng">119.206422</field>
+		<field name="created_at">2026-10-29 02:01:25</field>
+	</row>
+	<row>
+		<field name="id">42</field>
+		<field name="canteen_id">60</field>
+		<field name="name">依云煎包店</field>
+		<field name="category">闽菜</field>
+		<field name="cover_object_key">cover/202610/d255b181ab428b0d.jpg</field>
+		<field name="status">0</field>
+		<field name="manager_user_id" xsi:nil="true" />
+		<field name="lat">26.078815</field>
+		<field name="lng">119.193010</field>
+		<field name="created_at">2026-10-29 02:01:25</field>
+	</row>
+	</table_data>
+</database>
+</mysqldump>
