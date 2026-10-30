@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 大福食刻 · 自动抠图微服务（手账贴纸生产线）
-rembg(ISNet-General-Use) 高精度分割：输入任意图片，输出透明底贴纸 PNG
+rembg(U2Net) 分割：只加载一个 170MB 模型，输入任意图片，输出透明底贴纸 PNG
 贴纸质感：均匀白描边（多层放大剪影「倒影」自动成边）+ 轻投影，方形画布居中
 被后端 Node 服务调用：POST /extract (multipart: file) → image/png
 """
 import io
+import os
 
 import cv2
 import numpy as np
@@ -14,16 +15,10 @@ from fastapi.responses import JSONResponse, Response
 from PIL import Image, ImageFilter
 from rembg import new_session, remove
 
-# 进程内复用分割会话：U2Net 快路径（~0.6s/张）；BiRefNet-Lite 高精度兜底
-# （SOTA 精度、CPU 推理 ~20s，仅在快模型明显失败时启用——照片类失败自动重试）
-try:
-    session = new_session("u2net")
-except Exception:
-    session = new_session("isnet-general-use")
-try:
-    session_hq = new_session("birefnet-general-lite")
-except Exception:
-    session_hq = None   # 模型缺失/下载失败时静默降级，主链路不受影响
+# 只加载一个模型：u2net（权重约 170MB，实测待机 841MB、批量峰值 1.39GB）
+# 质量优先；不再加载 isnet / birefnet 兜底。内存不足时可用 MATTING_MODEL=u2netp 切换
+MODEL_NAME = os.getenv("MATTING_MODEL", "u2net")
+session = new_session(MODEL_NAME)
 
 app = FastAPI(title="dafu-matting")
 
@@ -33,8 +28,7 @@ PAD = 12
 MAX_SIDE = 2000
 STROKE_RATIO = 0.10        # 描边厚度 = 主体短边 10%（贴纸风粗白边）
 # 主体占原图比例阈值（实测：坏素材 0.5~0.6%，正常菜品 9%~64%，最低 9.25%）
-RETRY_FG_MIN = 0.01        # 重抠区间下限：占比 <1% 属明显无主体，直接判失败（省去 ~20s 无谓重抠）
-MIN_FG_RATIO = 0.05        # 剔除线：1%~5% 先换 BiRefNet 重抠一次，仍低于 5% 则拒绝出图
+MIN_FG_RATIO = 0.05        # 剔除线：主体占原图低于 5% 判失败，拒绝出图
 
 
 def refine_alpha(cut: Image.Image, src: Image.Image, radius: int = 8, eps: float = 1e-3) -> Image.Image:
@@ -215,14 +209,8 @@ async def extract(file: UploadFile = File(...)):
         return JSONResponse({"error": "invalid image"}, status_code=400)
     img.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)   # 超大图限边
 
-    # 分割去背景（U2Net 快路径）
+    # 分割去背景（只用一个 u2netp 会话）
     cut = remove(img, session=session)
-
-    # 快模型失败检测：前景占比异常（近全图保留 / 主体过小）→ BiRefNet-Lite 高精度重抠一次
-    # 重抠区间 1%~5%：低于 1% 属明显无主体（直接走剔除，不必浪费 ~20s 重抠）
-    fg = float((np.asarray(cut.getchannel("A")) > 127).mean())
-    if session_hq is not None and (fg > 0.95 or RETRY_FG_MIN <= fg < MIN_FG_RATIO):
-        cut = remove(img, session=session_hq)
 
     # 引导滤波精修：mask 边缘对齐图像真实边缘（低分辨率推理放大的锯齿/模糊消除）
     cut = refine_alpha(cut, img)
@@ -238,7 +226,7 @@ async def extract(file: UploadFile = File(...)):
     # 雾晕收紧：清除素材/分割残留的半透明白雾，描边只沿干净轮廓加
     cut = tighten_alpha(cut)
 
-    # 主体占比兜底：重抠后仍占原图比例过小（误抠 UI 碎片/噪点、无有效主体）→ 拒绝出图，
+    # 主体占比兜底：抠图后占原图比例过小（误抠 UI 碎片/噪点、无有效主体）→ 拒绝出图，
     # 由调用方按失败处理（不落库、不展示），避免生成一张空白或极小的坏贴纸
     solid_ratio = float((np.asarray(cut.getchannel("A")) > 127).sum()) / float(img.width * img.height)
     if solid_ratio < MIN_FG_RATIO:

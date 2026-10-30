@@ -1,0 +1,6 @@
+# cloudflared 快速隧道专用空配置
+#
+# 用途：`cloudflared tunnel --url http://localhost:8095 --config deploy/cloudflared-quick.yml`
+# 原理：cloudflared 会默认加载 ~/.cloudflared/config.yml 的命名隧道 ingress，
+#       其中兜底规则是 http_status:404，会把快速隧道的随机域名一并吃成 404；
+#       显式指向这份只有注释的配置，即可让 --url 的快速隧道正常生效。

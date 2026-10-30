@@ -7,7 +7,8 @@ services:
         container_name: dafu-mysql
         restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: dafu_root_2026
+            # 密码走环境变量（.env 已 gitignore）；默认值仅为兼容本地已有数据卷
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-dafu_root_2026}
             MYSQL_DATABASE: dafu
             TZ: Asia/Shanghai
         command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
@@ -15,7 +16,7 @@ services:
             - mysql-data:/var/lib/mysql
             - ./backend/sql:/docker-entrypoint-initdb.d:ro
         healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pdafu_root_2026"]
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD:-dafu_root_2026}"]
             interval: 5s
             timeout: 5s
             retries: 20
@@ -37,8 +38,8 @@ services:
         restart: unless-stopped
         command: server /data --console-address ":9001"
         environment:
-            MINIO_ROOT_USER: dafu-minio
-            MINIO_ROOT_PASSWORD: dafu-minio-2026
+            MINIO_ROOT_USER: ${MINIO_USER:-dafu-minio}
+            MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-dafu-minio-2026}
         volumes:
             - minio-data:/data
         healthcheck:
@@ -54,6 +55,7 @@ services:
         restart: unless-stopped
         environment:
             TZ: Asia/Shanghai
+            MATTING_MODEL: u2net   # 质量优先；u2netp 更省内存但宽幅锅类会留桌面
         volumes:
             # 宿主 rembg 模型缓存直挂（u2net ~170MB，免容器内重复下载，秒级就绪）
             - ${USERPROFILE}/.u2net:/models
@@ -76,16 +78,17 @@ services:
             DB_HOST: mysql
             DB_PORT: "3306"
             DB_USER: root
-            DB_PASSWORD: dafu_root_2026
+            DB_PASSWORD: ${DB_PASSWORD:-dafu_root_2026}
             DB_NAME: dafu
             REDIS_HOST: redis
             REDIS_PORT: "6379"
             MINIO_HOST: minio
             MINIO_PORT: "9000"
-            MINIO_USER: dafu-minio
-            MINIO_PASSWORD: dafu-minio-2026
+            MINIO_USER: ${MINIO_USER:-dafu-minio}
+            MINIO_PASSWORD: ${MINIO_PASSWORD:-dafu-minio-2026}
             MINIO_BUCKET: dafu-images
-            JWT_SECRET: dafu-jwt-secret-2026
+            # 公网暴露必须换掉：默认值仅为兼容本地环境；.env 中配置强随机串
+            JWT_SECRET: ${JWT_SECRET:-dafu-jwt-secret-2026}
             # 调试通道：DEBUG=true 时验证码接口附带明文 debugCode（默认关闭；走查/联调时以
             # PowerShell `$env:DEBUG='true'` 后 `docker compose up -d backend` 显式开启，生产绝不开启）
             DEBUG: ${DEBUG:-false}
@@ -98,6 +101,8 @@ services:
             FZU_CAS_BASE_URL: ${FZU_CAS_BASE_URL:-}
             FZU_CAS_SERVICE: ${FZU_CAS_SERVICE:-}
             FZU_CAS_VALIDATE_PATH: ${FZU_CAS_VALIDATE_PATH:-/serviceValidate}
+            # 演示桩统一初始口令：公网暴露必须改成不公开的强口令（.env 配置）
+            FZU_CAS_INITIAL_PASSWORD: ${FZU_CAS_INITIAL_PASSWORD:-FZU521}
             TZ: Asia/Shanghai
         depends_on:
             mysql:
@@ -109,7 +114,9 @@ services:
             matting:
                 condition: service_healthy
         ports:
-            - "3000:3000"
+            # 仅绑定本机回环：对外只暴露 8095（前端 Nginx 已反代 /api 与 /img）。
+            # 需要局域网/公网访问时不要放开 3000，避免绕过 Nginx 直连 API
+            - "127.0.0.1:3000:3000"
 
     frontend:
         build: ./frontend

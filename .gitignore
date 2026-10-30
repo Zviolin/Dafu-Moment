@@ -28,3 +28,10 @@ Thumbs.db
 data/db3/collection/round2/*.html
 data/db3/collection/round2/*.html.txt
 data/db3/collection/round2/fzu-map-*.js
+.cloudflared.log
+
+# 运行期上传产物（评价封面等，由服务写入 backend/assets，随数据卷变化，不入库）
+backend/assets/
+
+# 部署目录里的本地临时截图（打包/走查用，非交付物）
+deploy/image/
