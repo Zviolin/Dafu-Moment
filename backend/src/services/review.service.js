@@ -226,7 +226,7 @@ async function list_reviews(subjectType, subjectId, sort = 'new', page = 1, page
     const list = await query(
         `SELECT r.id, r.user_id, r.overall_score, r.dimension_scores, r.content, r.is_anonymous,
                 r.tags, r.status, r.status_reason, r.up_count, r.down_count, r.like_count, ${likedSelect}, r.created_at,
-                u.nickname, u.avatar,
+                u.nickname, u.avatar, u.avatar_object_key,
                 (SELECT GROUP_CONCAT(object_key) FROM review_image WHERE review_id = r.id AND status = 0) AS images,
                 (SELECT CONCAT(rr.user_id, '|', rr.content, '|', rr.created_at, '|', u2.nickname)
                    FROM review_reply rr JOIN user u2 ON u2.id = rr.user_id
@@ -264,6 +264,8 @@ function map_review_row(r) {
         userId: anonymous ? 0 : r.user_id,
         nickname: anonymous ? '匿名同学' : r.nickname,
         avatar: anonymous ? -1 : r.avatar,
+        // 自定义头像（MinIO objectKey 裸串，前端需补 /img/ 前缀）；匿名点评一律置空
+        avatar_object_key: anonymous ? null : (r.avatar_object_key || null),
         isAnonymous: anonymous,
         overallScore: Number(r.overall_score),
         dimensionScores: dims || {},
@@ -386,7 +388,7 @@ async function list_user_reviews(userId, viewerId = null, page = 1, pageSize = 1
         `SELECT r.id, r.user_id, r.subject_type, r.subject_id, r.overall_score, r.dimension_scores,
                 r.content, r.is_anonymous, r.tags, r.status, r.status_reason,
                 r.up_count, r.down_count, r.like_count, ${likedSelect}, r.created_at,
-                u.nickname, u.avatar,
+                u.nickname, u.avatar, u.avatar_object_key,
                 CASE r.subject_type WHEN 0 THEN (SELECT name FROM dish WHERE id = r.subject_id)
                                     WHEN 1 THEN (SELECT name FROM station WHERE id = r.subject_id)
                                     ELSE (SELECT name FROM canteen WHERE id = r.subject_id) END AS subject_name,
@@ -417,7 +419,7 @@ async function get_review(id, viewerId = null) {
         : '0 AS liked';
     const params = viewerId ? [viewerId] : [];
     const r = await query_one(
-        `SELECT r.*, ${likedSelect}, u.nickname, u.avatar,
+        `SELECT r.*, ${likedSelect}, u.nickname, u.avatar, u.avatar_object_key,
             (SELECT GROUP_CONCAT(object_key) FROM review_image WHERE review_id = r.id AND status = 0) AS images
          FROM review r JOIN user u ON u.id = r.user_id WHERE r.id = ?`,
         [...params, id]

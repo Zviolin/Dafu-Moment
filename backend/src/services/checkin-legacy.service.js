@@ -79,6 +79,22 @@ async function create_checkin(uid, input) {
             [uid, input.canteen_id, today, input.visibility, input.note,
              JSON.stringify(input.photos), JSON.stringify(input.dish_ids)]
         );
+        // 每日首次打卡赠送 1 个喂养道具，打断「任务给金币、喂食却要道具」的死循环
+        try {
+            const dayCount = await query_one(
+                'SELECT COUNT(*) c FROM check_in WHERE user_id = ? AND check_in_date = ?',
+                [uid, today]
+            );
+            if (Number(dayCount.c) === 1) {
+                await query(
+                    'INSERT INTO pet (user_id, props) VALUES (?, 1) ON DUPLICATE KEY UPDATE props = props + 1',
+                    [uid]
+                );
+            }
+        } catch (e) {
+            // 旧库尚未执行 006 迁移时不影响打卡主流程
+            if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
+        }
         return { checkinId: r.insertId, checkinDate: today };
     } catch (e) {
         if (e && e.code === 'ER_DUP_ENTRY') {

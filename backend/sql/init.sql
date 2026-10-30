@@ -1,5 +1,5 @@
 -- =====================================================================
--- 大福食刻 · MySQL 初始化脚本（24 表，依据 03-详细设计 §二 v2.0 + 15-差距文档 T-01/T-09）
+-- 大福食刻 · MySQL 初始化脚本（35 表，依据 03-详细设计 §二 v2.0 + 15-差距文档 T-01/T-09）
 -- 引擎 InnoDB / utf8mb4；时间一律 DATETIME（服务器时间）
 -- v2.0 口径：点位四类型（canteen.type）+ 维度配置驱动分项评分 + AI 会话留痕
 --           删除排队热度 / 榜单快照旧表；收藏仅保留「想吃」语义
@@ -16,6 +16,10 @@
 --           /points/map 标记带 kind（canteen/station）出档口级标记；不落设计文档 map_location 表
 -- 注意：中文数据行一律由 seed.js 参数化插入（initdb 通道按 latin1 解析会损坏中文）
 -- =====================================================================
+
+-- 连接字符集（r81）：initdb 通道（docker-entrypoint 的 mysql CLI）默认按 latin1 解析脚本，
+-- 不加这行会把 DDL 里的中文默认值写成乱码（pet.name「小福宝」/ canteen.campus「旗山校区」/ dish.price_unit「元」）
+SET NAMES utf8mb4;
 
 CREATE DATABASE IF NOT EXISTS dafu DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE dafu;
@@ -48,6 +52,7 @@ CREATE TABLE IF NOT EXISTS `canteen` (
     `campus` VARCHAR(32) NOT NULL DEFAULT '旗山校区' COMMENT '所属校区',
     `location` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '楼栋/方位描述',
     `avg_price` DECIMAL(6, 1) NULL COMMENT '人均消费（元）',
+    `business_hours` VARCHAR(64) NULL COMMENT '营业时间（真实公开资料口径，如 06:00-19:30；无资料为 NULL）',
     `lat` DECIMAL(10, 6) NULL COMMENT '地图纬度（GCJ-02 火星坐标，后台拖拽校准）',
     `lng` DECIMAL(10, 6) NULL COMMENT '地图经度（GCJ-02 火星坐标，后台拖拽校准）',
     `cover_object_key` VARCHAR(255) NULL COMMENT 'MinIO objectKey',
@@ -77,6 +82,8 @@ CREATE TABLE IF NOT EXISTS `dish` (
     `station_id` INT NOT NULL COMMENT '所属档口ID（station.id）',
     `name` VARCHAR(64) NOT NULL COMMENT '名称',
     `price` DECIMAL(6, 1) NOT NULL DEFAULT 0 COMMENT '元',
+    `price_unit` VARCHAR(16) NOT NULL DEFAULT '元' COMMENT '价格单位：元/份/个…',
+    `is_estimated` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1=价格为依据公开人均估算（真实商铺数据无逐菜标价时）',
     `taste_tags` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '口味：偏辣,少油…',
     `taboo_tags` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '忌口：清真,素食,无香菜,无葱蒜',
     `is_recommended` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '推荐菜标记（管理员标记/聚合修正）',
@@ -351,6 +358,146 @@ CREATE TABLE IF NOT EXISTS `favorite_group` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     UNIQUE KEY `uk_favorite_group` (`user_id`, `group_name`) COMMENT '同人组名唯一（创建幂等硬约束）'
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '收藏自定义分组';
+
+-- 24. 成长任务定义（T-20）
+CREATE TABLE IF NOT EXISTS `task` (
+    `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `task_type` TINYINT NOT NULL COMMENT '1 每日 / 2 成长',
+    `name` VARCHAR(64) NOT NULL COMMENT '任务名',
+    `description` VARCHAR(200) NOT NULL DEFAULT '' COMMENT '任务说明',
+    `action_type` TINYINT NOT NULL COMMENT '1 打卡 / 2 点评 / 3 喂食 / 4 收藏 / 5 互动 / 6 分享',
+    `reward_coins` INT NOT NULL DEFAULT 0 COMMENT '奖励金币',
+    `enabled` TINYINT NOT NULL DEFAULT 1 COMMENT '1 启用',
+    `sort` INT NOT NULL DEFAULT 0 COMMENT '展示顺序',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '成长任务定义';
+
+-- 25. 任务领取记录（每日任务按 claim_date 幂等；成长任务只领一次）
+CREATE TABLE IF NOT EXISTS `task_claim` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `task_id` INT NOT NULL COMMENT '任务ID',
+    `claim_date` DATE NOT NULL COMMENT '领取日期（每日任务按天幂等）',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '1 已完成待领 / 2 已领取',
+    `completed_at` DATETIME NULL COMMENT '完成时间',
+    `claimed_at` DATETIME NULL COMMENT '领取时间',
+    UNIQUE KEY `uk_claim` (`user_id`, `task_id`, `claim_date`),
+    KEY `idx_user` (`user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '任务领取记录';
+
+-- 26. 金币流水（余额取最后一行 balance_after，写时行锁串行）
+CREATE TABLE IF NOT EXISTS `coin_transaction` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `change_type` TINYINT NOT NULL COMMENT '1 收入 / 2 支出',
+    `amount` INT NOT NULL COMMENT '变动数量（正数）',
+    `biz_type` TINYINT NOT NULL DEFAULT 0 COMMENT '1 任务 / 2 宠物喂养 / 3 装扮购买 / 9 其他',
+    `biz_id` BIGINT NULL COMMENT '业务ID',
+    `balance_after` INT NOT NULL COMMENT '变动后余额',
+    `remark` VARCHAR(100) NOT NULL DEFAULT '' COMMENT '备注',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    KEY `idx_user` (`user_id`, `id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '金币流水';
+
+-- 27. 宠物（每用户一只，懒创建；低龄账号点亮天数按创建日计算）
+CREATE TABLE IF NOT EXISTS `pet` (
+    `user_id` BIGINT PRIMARY KEY COMMENT '用户ID',
+    `name` VARCHAR(32) NOT NULL DEFAULT '小福宝' COMMENT '宠物名',
+    `exp` INT NOT NULL DEFAULT 0 COMMENT '经验值（每次喂食 +10）',
+    `props` INT NOT NULL DEFAULT 0 COMMENT '喂养道具数（每日签到 +1）',
+    `dress_id` VARCHAR(16) NULL COMMENT '当前装扮ID（pet_dress.id）',
+    `feed_total` INT NOT NULL DEFAULT 0 COMMENT '累计喂食次数',
+    `adopted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '领养时间（点亮天数起算）',
+    `last_fed_at` DATETIME NULL COMMENT '最近喂食时间',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '宠物养成';
+
+-- 28. 装扮目录
+CREATE TABLE IF NOT EXISTS `pet_dress` (
+    `id` VARCHAR(16) PRIMARY KEY COMMENT '装扮ID',
+    `name` VARCHAR(32) NOT NULL COMMENT '装扮名',
+    `price` INT NOT NULL DEFAULT 0 COMMENT '金币价格',
+    `min_level` INT NOT NULL DEFAULT 1 COMMENT '解锁等级',
+    `image` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '角标/图标',
+    `sort` INT NOT NULL DEFAULT 0 COMMENT '展示顺序'
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '宠物装扮目录';
+
+-- 29. 用户已拥有装扮
+CREATE TABLE IF NOT EXISTS `user_dress` (
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `dress_id` VARCHAR(16) NOT NULL COMMENT '装扮ID',
+    `acquired_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '获得时间',
+    PRIMARY KEY (`user_id`, `dress_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '用户装扮';
+
+-- 30. 喂食记录（任务「给福宝喂食一次」按此计数）
+CREATE TABLE IF NOT EXISTS `feed_record` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `cost_type` VARCHAR(8) NOT NULL COMMENT 'prop 道具 / coin 金币',
+    `cost_amount` INT NOT NULL DEFAULT 0 COMMENT '消耗数量',
+    `fed_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '喂食时间',
+    KEY `idx_user_time` (`user_id`, `fed_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '宠物喂食记录';
+
+-- 31. 社区动态（真实发布，用于「分享一条美食动态」任务）
+CREATE TABLE IF NOT EXISTS `post` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '作者ID',
+    `content` VARCHAR(1000) NOT NULL DEFAULT '' COMMENT '正文',
+    `images` JSON NULL COMMENT '图片 objectKey 数组',
+    `topics` JSON NULL COMMENT '话题数组',
+    `links` JSON NULL COMMENT '关联点位/档口/菜品 [{kind,id,name}]',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '0 正常 / 1 待审 / 2 下架',
+    `like_count` INT NOT NULL DEFAULT 0 COMMENT '点赞数',
+    `comment_count` INT NOT NULL DEFAULT 0 COMMENT '评论数',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `deleted_at` DATETIME NULL COMMENT '软删除时间',
+    KEY `idx_feed` (`status`, `created_at`),
+    KEY `idx_user` (`user_id`, `created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '社区动态';
+
+-- 32. 动态点赞
+CREATE TABLE IF NOT EXISTS `post_like` (
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `post_id` BIGINT NOT NULL COMMENT '动态ID',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
+    PRIMARY KEY (`user_id`, `post_id`),
+    KEY `idx_post` (`post_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '动态点赞';
+
+-- 33. 社区评论（帖子 + 评价共用；parent_type 1 帖子 / 2 评价）
+CREATE TABLE IF NOT EXISTS `post_comment` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键标识',
+    `user_id` BIGINT NOT NULL COMMENT '评论人',
+    `parent_type` TINYINT NOT NULL COMMENT '1 帖子 / 2 评价',
+    `parent_id` BIGINT NOT NULL COMMENT '父对象ID',
+    `content` VARCHAR(300) NOT NULL COMMENT '评论内容',
+    `reply_to_comment_id` BIGINT NULL COMMENT '回复的根评论ID（单层）',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '0 正常 / 1 删除',
+    `deleted_at` DATETIME NULL COMMENT '软删除时间',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    KEY `idx_parent` (`parent_type`, `parent_id`, `status`),
+    KEY `idx_user` (`user_id`, `created_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '社区评论';
+
+-- =========================================================
+-- 福大统一身份认证账号（r80）：demo 模式托管口令，支持「初始口令 → 本人改密 → 后台重置」闭环
+-- real 模式（已接校方 CAS）不在此校验，仅作本地镜像与口令托管
+CREATE TABLE IF NOT EXISTS `fzu_account` (
+    `uid` VARCHAR(16) NOT NULL COMMENT '学号/工号（统一身份账号唯一键）',
+    `name` VARCHAR(32) NOT NULL COMMENT 'CAS 姓名（demo 模式按学号确定性映射）',
+    `password` VARCHAR(100) NOT NULL COMMENT '统一身份口令 bcrypt 哈希（演示桩托管）',
+    `must_change` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 仍为初始口令，需本人首次登录后修改 / 0 已改密',
+    `user_id` INT NULL COMMENT '关联的本地账号 id（SSO 自动建号或绑定）',
+    `last_login_at` DATETIME NULL COMMENT '最近一次 SSO 登录时间',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '建档时间',
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`uid`),
+    UNIQUE KEY `uk_fzu_user` (`user_id`),
+    KEY `idx_fzu_must_change` (`must_change`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '福大统一身份认证账号（口令托管）';
 
 -- =========================================================
 -- 敏感词种子改为 seed.js 参数化插入（initdb 通道按 latin1 解析 SQL 文本会损坏中文）

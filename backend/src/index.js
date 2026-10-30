@@ -148,20 +148,10 @@ async function ensure_upgrade_columns() {
 }
 
 /**
- * 食区默认落点（GCJ-02 火星坐标；美岐用 poi86 火星坐标 119.191987,26.059497，
- * 早期误用大地坐标 119.187,26.063 会偏约 500 米）——幂等回填，仅填 lat 为 NULL 的行
+ * 点位落点回填已移除（r85）：源库 Dafu-Moment 78 表 SQL 中「桃李园 / 佳客来 / 海棠园京元 / 紫竹园到口」
+ * 与 3 家麦当劳都没有 map_location 记录，早期用关键词硬编码坐标回填会写入无来源的伪坐标，
+ * 且每次重启都会把人工清空的坐标重新填回。现在缺失坐标一律留 NULL，由前端地图按兜底位置示意。
  */
-const CANTEEN_POS = [
-    ['京元', 26.0567, 119.1927], ['丁香园', 26.0559, 119.1920], ['朝阳', 26.0565, 119.1914],
-    ['玫瑰园', 26.0523, 119.1917], ['紫荆园', 26.0528, 119.1926], ['桃李园', 26.0576, 119.1962],
-    ['美岐', 26.0595, 119.1920],
-];
-
-async function seed_default_positions() {
-    for (const [kw, lat, lng] of CANTEEN_POS) {
-        await query('UPDATE canteen SET lat = ?, lng = ? WHERE lat IS NULL AND name LIKE ?', [lat, lng, `%${kw}%`]);
-    }
-}
 
 /**
  * AI 供应商注册表（r45 起）：表 + 默认行幂等初始化（老库升级同享）
@@ -307,8 +297,9 @@ async function main() {
     await ensure_upgrade_columns();
     await ensure_ai_providers();
     await ensure_ai_models();
-    await seed_default_positions();
-    ensure_bucket(); // 异步不阻塞
+    await ensure_bucket(); // 桶不存在/策略失败已内部兜底
+    // 封面自愈（r88）：新部署的 MinIO 是空桶，种子数据引用的封面图随镜像内置，缺什么补什么
+    await require('./seed/seed-media').ensure_seed_media();
     await seed_words();
     await load_dfa_from_db(query);
 

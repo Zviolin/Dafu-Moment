@@ -150,6 +150,17 @@ async function create_comment(userId, parentType, parentId, input) {
         values
     );
     const commentId = r.insertId;
+    // 同步帖子评论数（列表/推荐排序直接读冗余计数）
+    if (parentType === PARENT_POST && await has_table('post')) {
+        await query(
+            `UPDATE post SET comment_count = (
+                SELECT COUNT(*) FROM \`${table}\`
+                WHERE parent_type = 1 AND parent_id = ? AND (status = 0 OR status IS NULL)
+                  AND deleted_at IS NULL
+             ) WHERE id = ?`,
+            [parentId, parentId]
+        );
+    }
 
     // 被评论人通知：父对象作者 + 被回复评论作者（去重、跳过本人）
     const recipients = new Set();
@@ -193,6 +204,20 @@ async function delete_comment(userId, commentId) {
         await query(`UPDATE \`${table}\` SET ${sets} WHERE id = ?`, [commentId]);
     } else {
         await query(`DELETE FROM \`${table}\` WHERE id = ?`, [commentId]);
+    }
+    // 同步帖子评论数
+    if (await has_table('post')) {
+        const parent = await query_one(`SELECT parent_type, parent_id FROM \`${table}\` WHERE id = ?`, [commentId]);
+        if (parent && Number(parent.parent_type) === PARENT_POST) {
+            await query(
+                `UPDATE post SET comment_count = (
+                    SELECT COUNT(*) FROM \`${table}\`
+                    WHERE parent_type = 1 AND parent_id = ? AND (status = 0 OR status IS NULL)
+                      AND deleted_at IS NULL
+                 ) WHERE id = ?`,
+                [parent.parent_id, parent.parent_id]
+            );
+        }
     }
     return { id: commentId };
 }

@@ -1,0 +1,2460 @@
+{
+  "source": "Dafu-Moment data/db3 (main d4d0e48, 最新 PR #3 合并后): sql/03_collected_places.sql + sql/06_estimated_menu_seed.sql + deferred/map/05_collected_map_locations.sql + 公开数据源 qishan.geojson",
+  "places": [
+    {
+      "name": "玫瑰园食惠餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区三区（一楼）",
+      "avg_price": null,
+      "lat": 26.0526024,
+      "lng": 119.1927543,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 5,
+      "stations": [
+        {
+          "name": "食惠烧腊",
+          "category": "卤味"
+        },
+        {
+          "name": "咖喱饭",
+          "category": "米饭套餐"
+        },
+        {
+          "name": "老顺德干蒸菜",
+          "category": "家常炒菜"
+        },
+        {
+          "name": "小街胡同",
+          "category": "综合"
+        },
+        {
+          "name": "塔斯汀",
+          "category": "汉堡简餐"
+        },
+        {
+          "name": "杨国福麻辣烫",
+          "category": "麻辣烫"
+        },
+        {
+          "name": "临榆炸鸡腿",
+          "category": "炸鸡小吃"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-009;GCJ02推定转换;非实测",
+      "business_hours": "06:00-19:30"
+    },
+    {
+      "name": "丁香园品膳餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区一区（一楼）",
+      "avg_price": null,
+      "lat": 26.0566087,
+      "lng": 119.192141,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 3,
+      "stations": [
+        {
+          "name": "隆江猪脚饭",
+          "category": "米饭套餐"
+        },
+        {
+          "name": "肯德基",
+          "category": "炸鸡小吃"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-013;GCJ02推定转换;非实测",
+      "business_hours": "06:00-23:30"
+    },
+    {
+      "name": "桃李园餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "",
+      "avg_price": null,
+      "lat": null,
+      "lng": null,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "佳客来西餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "",
+      "avg_price": null,
+      "lat": null,
+      "lng": null,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "海棠园京元餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "",
+      "avg_price": null,
+      "lat": null,
+      "lng": null,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "丹桂园朝阳餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区一区（二楼）",
+      "avg_price": null,
+      "lat": 26.0564337,
+      "lng": 119.192239,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 3.4,
+      "stations": [
+        {
+          "name": "阿肥发",
+          "category": "小吃"
+        },
+        {
+          "name": "张亮麻辣烫",
+          "category": "麻辣烫"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-014;GCJ02推定转换;非实测",
+      "business_hours": "09:00-19:30"
+    },
+    {
+      "name": "茉莉园聚誉餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区一区（二楼）",
+      "avg_price": null,
+      "lat": 26.0564842,
+      "lng": 119.1927401,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 3.7,
+      "stations": [
+        {
+          "name": "金翼瓦罐套餐",
+          "category": "套餐"
+        },
+        {
+          "name": "老上海馄饨铺",
+          "category": "面点"
+        },
+        {
+          "name": "蜀一蜀二",
+          "category": "家常炒菜"
+        },
+        {
+          "name": "小猪麻辣烫",
+          "category": "麻辣烫"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-016;GCJ02推定转换;非实测",
+      "business_hours": "06:00-19:30"
+    },
+    {
+      "name": "百合园立品餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区一区（三楼）",
+      "avg_price": null,
+      "lat": 26.0564277,
+      "lng": 119.1920429,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 3.2,
+      "stations": [
+        {
+          "name": "酷乐普斯",
+          "category": "综合"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-015;GCJ02推定转换;非实测",
+      "business_hours": "09:00-19:30"
+    },
+    {
+      "name": "紫竹园到口餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "",
+      "avg_price": null,
+      "lat": null,
+      "lng": null,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "紫荆园捷祥餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区三区（一楼）",
+      "avg_price": null,
+      "lat": 26.0526336,
+      "lng": 119.1920557,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 4.8,
+      "stations": [
+        {
+          "name": "烧腊",
+          "category": "卤味"
+        },
+        {
+          "name": "梦想咖喱",
+          "category": "米饭套餐"
+        },
+        {
+          "name": "牛杂面",
+          "category": "面食"
+        },
+        {
+          "name": "麦当劳",
+          "category": "汉堡简餐"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-011;GCJ02推定转换;非实测",
+      "business_hours": "06:00-19:30"
+    },
+    {
+      "name": "牡丹园清谷餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区三区（二楼）",
+      "avg_price": null,
+      "lat": 26.0530333,
+      "lng": 119.1920558,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 4.7,
+      "stations": [
+        {
+          "name": "粤福记烧腊",
+          "category": "卤味"
+        },
+        {
+          "name": "清谷寻味",
+          "category": "综合"
+        },
+        {
+          "name": "乡村炖品",
+          "category": "套餐"
+        },
+        {
+          "name": "猪角",
+          "category": "综合"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-012;GCJ02推定转换;非实测",
+      "business_hours": "09:00-23:30"
+    },
+    {
+      "name": "芙蓉园兴安餐厅",
+      "type": 0,
+      "campus": "旗山校区",
+      "location": "福州大学生活区三区（二楼）",
+      "avg_price": null,
+      "lat": 26.0530021,
+      "lng": 119.1927544,
+      "tags": [
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 4.6,
+      "stations": [
+        {
+          "name": "米婆婆",
+          "category": "综合"
+        },
+        {
+          "name": "重庆面食",
+          "category": "面食"
+        },
+        {
+          "name": "客家牛肉面",
+          "category": "面食"
+        },
+        {
+          "name": "永兴发",
+          "category": "综合"
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-010;GCJ02推定转换;非实测",
+      "business_hours": "09:00-19:30"
+    },
+    {
+      "name": "福州麦当劳国宾大道DT餐厅",
+      "type": 3,
+      "campus": "周边",
+      "location": "福建省福州市闽侯县上街镇国宾大道233号博仕家园B区的2-2#的101-104商业、129-132复式商业的商铺",
+      "avg_price": null,
+      "lat": 26.0654,
+      "lng": 119.1858,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "福州麦当劳上街镇国宾大道餐厅",
+      "type": 3,
+      "campus": "周边",
+      "location": "福建省福州市闽侯县上街镇国宾大道268号永辉城市生活广场16#楼",
+      "avg_price": null,
+      "lat": 26.064799999999998,
+      "lng": 119.184,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "福州麦当劳闽侯上街国宾大道(梅园酒店)餐厅",
+      "type": 3,
+      "campus": "周边",
+      "location": "福建省福州市闽侯县上街镇国宾大道350号梅园上街广场1-1#楼一层1号商铺",
+      "avg_price": null,
+      "lat": 26.0642,
+      "lng": 119.1852,
+      "tags": [],
+      "rating": null,
+      "stations": [],
+      "business_hours": null
+    },
+    {
+      "name": "盛茂源东北饺子馆",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街A1区学府北路10-27号｜营业 10:00-13:30,16:00-21:30",
+      "avg_price": 34,
+      "lat": 26.0597496,
+      "lng": 119.1923869,
+      "tags": [
+        "东北菜",
+        "堂食",
+        "可外卖",
+        "适合聚餐",
+        "炒菜"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "盛茂源东北饺子馆",
+          "category": "东北菜",
+          "dishes": [
+            {
+              "name": "锅包肉",
+              "price": 8.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "酸辣鸡杂",
+              "price": 8.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "地三鲜",
+              "price": 8.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "东北大拉皮",
+              "price": 8.5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-001;GCJ02推定转换;非实测",
+      "business_hours": "10:00-13:30,16:00-21:30"
+    },
+    {
+      "name": "夜贰两东北串吧",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街C2区溪源宫路3-12号｜营业 16:00-次日02:00",
+      "avg_price": 68,
+      "lat": 26.0598124,
+      "lng": 119.1917414,
+      "tags": [
+        "东北菜",
+        "堂食",
+        "一人食",
+        "可外卖",
+        "适合聚餐",
+        "烧烤"
+      ],
+      "rating": 4.3,
+      "stations": [
+        {
+          "name": "夜贰两东北串吧",
+          "category": "东北菜",
+          "dishes": [
+            {
+              "name": "羊肉串",
+              "price": 17,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牛肋条",
+              "price": 17,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "油边",
+              "price": 17,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "蚕蛹",
+              "price": 17,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-002;GCJ02推定转换;非实测",
+      "business_hours": "16:00-次日02:00"
+    },
+    {
+      "name": "文博家锅盔",
+      "type": 3,
+      "campus": "周边",
+      "location": "福州大学（旗山校区）西1门附近｜营业 17:30-00:00",
+      "avg_price": 6,
+      "lat": 26.0591012,
+      "lng": 119.1922749,
+      "tags": [
+        "一人食",
+        "小吃"
+      ],
+      "rating": 4.7,
+      "stations": [
+        {
+          "name": "文博家锅盔",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "梅菜",
+              "price": 2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鲜肉",
+              "price": 2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "瘦肉锅盔",
+              "price": 2,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-003;GCJ02推定转换;非实测",
+      "business_hours": "17:30-00:00"
+    },
+    {
+      "name": "猪师弟空气年糕",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区｜营业 暂无营业时间，一般晚上营业",
+      "avg_price": 10,
+      "lat": 26.0594763,
+      "lng": 119.1919317,
+      "tags": [
+        "一人食",
+        "炸物",
+        "小吃"
+      ],
+      "rating": 4,
+      "stations": [
+        {
+          "name": "猪师弟空气年糕",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "炸蘑菇（六合一）",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "年糕",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鸡柳",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-004;GCJ02推定转换;非实测",
+      "business_hours": "暂无营业时间，一般晚上营业"
+    },
+    {
+      "name": "陈记片皮鸭",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B3区学府北路10-192号｜营业 10:00-次日01:00",
+      "avg_price": 10,
+      "lat": 26.0594182,
+      "lng": 119.1920717,
+      "tags": [
+        "一人食",
+        "可外卖",
+        "小吃"
+      ],
+      "rating": 3.3,
+      "stations": [
+        {
+          "name": "陈记片皮鸭",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "片皮鸭卷",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烤冷面",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "香酥鸭",
+              "price": 3.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-005;GCJ02推定转换;非实测",
+      "business_hours": "10:00-次日01:00"
+    },
+    {
+      "name": "壹品豆花",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区｜营业 暂无营业时间",
+      "avg_price": 12,
+      "lat": 26.0595633,
+      "lng": 119.1919826,
+      "tags": [
+        "一人食",
+        "甜品"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "壹品豆花",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "豆花",
+              "price": 4,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "椰奶冰",
+              "price": 4,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "清补凉",
+              "price": 4,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-006;GCJ02推定转换;非实测",
+      "business_hours": "暂无营业时间"
+    },
+    {
+      "name": "便宜坊（原光阴的故事）",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街C1区学府北路10-180号｜营业 10:00-22:00",
+      "avg_price": 69,
+      "lat": 26.0588752,
+      "lng": 119.1911041,
+      "tags": [
+        "适合聚餐",
+        "自助",
+        "烧烤"
+      ],
+      "rating": 3.6,
+      "stations": [
+        {
+          "name": "便宜坊（原光阴的故事）",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "油边",
+              "price": 34.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牛肉串",
+              "price": 34.5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-007;GCJ02推定转换;非实测",
+      "business_hours": "10:00-22:00"
+    },
+    {
+      "name": "临榆炸鸡腿（学生街店）",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街C1区学府北路10-177号｜营业 10:00-22:00",
+      "avg_price": 18,
+      "lat": 26.0594631,
+      "lng": 119.1914117,
+      "tags": [
+        "可外卖",
+        "一人食",
+        "炸物",
+        "小吃"
+      ],
+      "rating": 3.6,
+      "stations": [
+        {
+          "name": "临榆炸鸡腿（学生街店）",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "鸡腿",
+              "price": 6,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "三叉骨",
+              "price": 6,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鸡肉条",
+              "price": 6,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-008;GCJ02推定转换;非实测",
+      "business_hours": "10:00-22:00"
+    },
+    {
+      "name": "台湾锅贴",
+      "type": 3,
+      "campus": "周边",
+      "location": "福州大学（旗山校区）西1门附近｜营业 11:30-19:00",
+      "avg_price": 10,
+      "lat": 26.0579472,
+      "lng": 119.192984,
+      "tags": [
+        "闽菜",
+        "一人食",
+        "小吃"
+      ],
+      "rating": 3.6,
+      "stations": [
+        {
+          "name": "台湾锅贴",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "锅贴",
+              "price": 10,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-017;GCJ02推定转换;非实测",
+      "business_hours": "11:30-19:00"
+    },
+    {
+      "name": "重庆小面",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B2区学府北路10号｜营业 暂无",
+      "avg_price": 10,
+      "lat": 26.0589694,
+      "lng": 119.1924129,
+      "tags": [
+        "川菜",
+        "堂食",
+        "一人食",
+        "面条"
+      ],
+      "rating": 3.3,
+      "stations": [
+        {
+          "name": "重庆小面",
+          "category": "川菜",
+          "dishes": [
+            {
+              "name": "重庆小面",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "牛肉拌面",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "肉酱拌面",
+              "price": 13,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-018;GCJ02推定转换;非实测",
+      "business_hours": "暂无"
+    },
+    {
+      "name": "刘记肉夹馍",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街A2区B8-1学府北路10号｜营业 10:00-13:00,16:00-22:30",
+      "avg_price": 8,
+      "lat": 26.0588946,
+      "lng": 119.1920599,
+      "tags": [
+        "陕西菜",
+        "堂食",
+        "一人食",
+        "可外卖"
+      ],
+      "rating": 3.6,
+      "stations": [
+        {
+          "name": "刘记肉夹馍",
+          "category": "陕西菜",
+          "dishes": [
+            {
+              "name": "肉夹馍",
+              "price": 10,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "拌扁肉",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "凉皮",
+              "price": 10,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-019;GCJ02推定转换;非实测",
+      "business_hours": "10:00-13:00,16:00-22:30"
+    },
+    {
+      "name": "可可烘焙",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-110号｜营业 08:00--23:30",
+      "avg_price": 13,
+      "lat": 26.0590928,
+      "lng": 119.1920899,
+      "tags": [
+        "一人食",
+        "可外卖",
+        "甜品",
+        "小吃"
+      ],
+      "rating": 3.6,
+      "stations": [
+        {
+          "name": "可可烘焙",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "泡芙",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "麻薯",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "蛋挞",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "面包",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-020;GCJ02推定转换;非实测",
+      "business_hours": "08:00--23:30"
+    },
+    {
+      "name": "广式养生鸡",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街A1区学府北路10-22号｜营业 10:00-次日01:00",
+      "avg_price": 62,
+      "lat": 26.0596596,
+      "lng": 119.1924158,
+      "tags": [
+        "广东菜",
+        "堂食",
+        "适合聚餐"
+      ],
+      "rating": 4.2,
+      "stations": [
+        {
+          "name": "广式养生鸡",
+          "category": "广东菜",
+          "dishes": [
+            {
+              "name": "清远鸡",
+              "price": 31,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "走地鸡",
+              "price": 31,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-021;GCJ02推定转换;非实测",
+      "business_hours": "10:00-次日01:00"
+    },
+    {
+      "name": "莆田卤面·天九湾炝肉·山里炝粉",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区08店面学府北路10-92号｜营业 10:00-13:30,16:00-22:00",
+      "avg_price": 15,
+      "lat": 26.0588478,
+      "lng": 119.1918708,
+      "tags": [
+        "闽菜",
+        "堂食",
+        "可外卖"
+      ],
+      "rating": 4.1,
+      "stations": [
+        {
+          "name": "莆田卤面·天九湾炝肉·山里炝粉",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "天九湾炝肉",
+              "price": 13,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "山里炝粉",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "莆田卤面",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-022;GCJ02推定转换;非实测",
+      "business_hours": "10:00-13:30,16:00-22:00"
+    },
+    {
+      "name": "栗栗烘焙-栗酥饼（福大店）",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区学府北路10-106号｜营业 10:30-21:30",
+      "avg_price": 14,
+      "lat": 26.0586812,
+      "lng": 119.1912889,
+      "tags": [
+        "闽菜",
+        "可外卖",
+        "一人食",
+        "甜品"
+      ],
+      "rating": 4.3,
+      "stations": [
+        {
+          "name": "栗栗烘焙-栗酥饼（福大店）",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "栗酥饼",
+              "price": 4.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "芋泥饼",
+              "price": 4.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "榴莲饼",
+              "price": 4.7,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-023;GCJ02推定转换;非实测",
+      "business_hours": "10:30-21:30"
+    },
+    {
+      "name": "江一福·按时吃饭·啫啫煲",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-127号｜营业 10:00-22:00",
+      "avg_price": 22,
+      "lat": 26.0588722,
+      "lng": 119.1913938,
+      "tags": [
+        "粤菜",
+        "堂食",
+        "适合聚餐",
+        "一人食"
+      ],
+      "rating": 4.8,
+      "stations": [
+        {
+          "name": "江一福·按时吃饭·啫啫煲",
+          "category": "粤菜",
+          "dishes": [
+            {
+              "name": "沙姜焗鸡",
+              "price": 16,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "豉汁排骨",
+              "price": 16,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "松板肉",
+              "price": 18,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "蒜苗五花",
+              "price": 7.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "南乳鸡翅",
+              "price": 7.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "脆卤肥肠",
+              "price": 7.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-024;GCJ02推定转换;非实测",
+      "business_hours": "10:00-22:00"
+    },
+    {
+      "name": "周麻婆·新川式家常菜",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-193号｜营业 11:00-14:00,17:00-21:00",
+      "avg_price": 41,
+      "lat": 26.0592555,
+      "lng": 119.1908408,
+      "tags": [
+        "川菜",
+        "闽菜",
+        "堂食",
+        "适合聚餐"
+      ],
+      "rating": 4,
+      "stations": [
+        {
+          "name": "周麻婆·新川式家常菜",
+          "category": "川菜",
+          "dishes": [
+            {
+              "name": "麻婆豆腐",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "脆皮鸭",
+              "price": 18,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "水煮鱼",
+              "price": 18,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "红糖糍粑",
+              "price": 10,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-025;GCJ02推定转换;非实测",
+      "business_hours": "11:00-14:00,17:00-21:00"
+    },
+    {
+      "name": "鲜榨果汁·现炒板栗",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区学府北路10-228号｜营业 11:00-00:00",
+      "avg_price": 11,
+      "lat": 26.0594964,
+      "lng": 119.1918718,
+      "tags": [
+        "一人食",
+        "小吃",
+        "甜品"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "鲜榨果汁·现炒板栗",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "甘蔗汁",
+              "price": 2.8,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "雪梨汁",
+              "price": 2.8,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "西瓜汁",
+              "price": 2.8,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "炒板栗",
+              "price": 2.8,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-026;GCJ02推定转换;非实测",
+      "business_hours": "11:00-00:00"
+    },
+    {
+      "name": "十里后院·快递夜市",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区学府北路10-228号｜营业 12:00-21:00",
+      "avg_price": 11,
+      "lat": 26.0589024,
+      "lng": 119.1909688,
+      "tags": [
+        "粤菜",
+        "日式",
+        "一人食",
+        "可外卖",
+        "小吃",
+        "甜品"
+      ],
+      "rating": 3.9,
+      "stations": [],
+      "coord_source": "D采集FFM:qishan-027;GCJ02推定转换;非实测",
+      "business_hours": "12:00-21:00"
+    },
+    {
+      "name": "洪濑鸡爪",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-73号｜营业 10:00-21:00",
+      "avg_price": 15,
+      "lat": 26.0597288,
+      "lng": 119.1920529,
+      "tags": [
+        "闽菜",
+        "堂食",
+        "一人食"
+      ],
+      "rating": 3.7,
+      "stations": [
+        {
+          "name": "洪濑鸡爪",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "洪濑鸡爪",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "卤味拼盘",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牛肉羹",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-028;GCJ02推定转换;非实测",
+      "business_hours": "10:00-21:00"
+    },
+    {
+      "name": "云南铜锅牛羊肉米线",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-235号｜营业 09:00-23:30",
+      "avg_price": 17,
+      "lat": 26.0594365,
+      "lng": 119.1918419,
+      "tags": [
+        "滇菜",
+        "堂食",
+        "一人食",
+        "小吃"
+      ],
+      "rating": 4.1,
+      "stations": [
+        {
+          "name": "云南铜锅牛羊肉米线",
+          "category": "滇菜",
+          "dishes": [
+            {
+              "name": "牛肉粉",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "羊肉米线",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "凉拌米线",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-029;GCJ02推定转换;非实测",
+      "business_hours": "09:00-23:30"
+    },
+    {
+      "name": "达叔肉夹馍·烤冷面",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街B1区学府北路10号｜营业 16:00-00:30",
+      "avg_price": 13,
+      "lat": 26.0595299,
+      "lng": 119.1919272,
+      "tags": [
+        "一人食",
+        "小吃"
+      ],
+      "rating": 4.2,
+      "stations": [
+        {
+          "name": "达叔肉夹馍·烤冷面",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "东北烤冷面",
+              "price": 4.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "火鸡面烤冷面",
+              "price": 4.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "五花肉烤冷面",
+              "price": 4.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-030;GCJ02推定转换;非实测",
+      "business_hours": "16:00-00:30"
+    },
+    {
+      "name": "卤百味",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10号",
+      "avg_price": 12,
+      "lat": 26.0594179,
+      "lng": 119.1917959,
+      "tags": [
+        "一人食",
+        "卤味",
+        "小吃"
+      ],
+      "rating": 3.3,
+      "stations": [],
+      "coord_source": "D采集FFM:qishan-031;GCJ02推定转换;非实测",
+      "business_hours": null
+    },
+    {
+      "name": "成都纸包鱼烧烤大排档",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街A1区学府北路10号19店面｜营业 16:00-次日02:30",
+      "avg_price": 71,
+      "lat": 26.0594824,
+      "lng": 119.1910167,
+      "tags": [
+        "川菜",
+        "堂食",
+        "适合聚餐",
+        "烤鱼"
+      ],
+      "rating": 3.8,
+      "stations": [
+        {
+          "name": "成都纸包鱼烧烤大排档",
+          "category": "川菜",
+          "dishes": [
+            {
+              "name": "烤黑鱼",
+              "price": 23.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "干锅包菜",
+              "price": 23.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "椒盐掌中宝",
+              "price": 23.7,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-032;GCJ02推定转换;非实测",
+      "business_hours": "16:00-次日02:30"
+    },
+    {
+      "name": "桥头排骨",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-231号｜营业 11:30-13:30,15:30-23:50",
+      "avg_price": 19,
+      "lat": 26.0594564,
+      "lng": 119.1918918,
+      "tags": [
+        "一人食",
+        "可外卖",
+        "炸物",
+        "小吃"
+      ],
+      "rating": 3.7,
+      "stations": [
+        {
+          "name": "桥头排骨",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "桥头排骨",
+              "price": 6.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "桥头炸肉条",
+              "price": 6.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "桥头掌中宝",
+              "price": 6.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-033;GCJ02推定转换;非实测",
+      "business_hours": "11:30-13:30,15:30-23:50"
+    },
+    {
+      "name": "北方饭店",
+      "type": 3,
+      "campus": "周边",
+      "location": "明德路6号万科金域蓝湾1栋115商铺｜营业 10:30-21:00",
+      "avg_price": 40,
+      "lat": 26.0443608,
+      "lng": 119.1995579,
+      "tags": [
+        "东北菜",
+        "堂食",
+        "适合聚餐",
+        "炒菜"
+      ],
+      "rating": 4.1,
+      "stations": [
+        {
+          "name": "北方饭店",
+          "category": "东北菜",
+          "dishes": [
+            {
+              "name": "鸡汤干豆腐",
+              "price": 10,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "锅包肉",
+              "price": 10,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "溜肉段",
+              "price": 10,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "手工水饺",
+              "price": 10,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-034;GCJ02推定转换;非实测",
+      "business_hours": "10:30-21:00"
+    },
+    {
+      "name": "川册·川味小馆",
+      "type": 3,
+      "campus": "周边",
+      "location": "中海寰宇天下高新大道1-41号｜营业 11:00-14:00,17:00-22:30",
+      "avg_price": 60,
+      "lat": 26.0490932,
+      "lng": 119.2125028,
+      "tags": [
+        "川菜",
+        "堂食",
+        "适合聚餐"
+      ],
+      "rating": 4.3,
+      "stations": [
+        {
+          "name": "川册·川味小馆",
+          "category": "川菜",
+          "dishes": [
+            {
+              "name": "麻婆豆腐",
+              "price": 15,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "火爆腰花",
+              "price": 15,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "椒麻猪舌",
+              "price": 15,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "红糖糍粑",
+              "price": 15,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-035;GCJ02推定转换;非实测",
+      "business_hours": "11:00-14:00,17:00-22:30"
+    },
+    {
+      "name": "李夏记牛腩煲（原广式牛杂）",
+      "type": 3,
+      "campus": "周边",
+      "location": "高新大道1-1号中海寰宇天下42号楼1层125商业｜营业 09:30-21:00",
+      "avg_price": 18,
+      "lat": 26.0504845,
+      "lng": 119.2145288,
+      "tags": [
+        "粤菜",
+        "堂食",
+        "可外卖"
+      ],
+      "rating": 3.7,
+      "stations": [
+        {
+          "name": "李夏记牛腩煲（原广式牛杂）",
+          "category": "粤菜",
+          "dishes": [
+            {
+              "name": "牛杂煲",
+              "price": 9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "萝卜牛杂汤",
+              "price": 9,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-036;GCJ02推定转换;非实测",
+      "business_hours": "09:30-21:00"
+    },
+    {
+      "name": "焦焦牧场·鲜牛奶炸鸡",
+      "type": 3,
+      "campus": "周边",
+      "location": "国宾大道179-2号｜营业 10:55-23:59",
+      "avg_price": 35,
+      "lat": 26.0685027,
+      "lng": 119.1980381,
+      "tags": [
+        "韩餐",
+        "堂食",
+        "可外卖",
+        "一人食",
+        "炸物"
+      ],
+      "rating": 4.4,
+      "stations": [
+        {
+          "name": "焦焦牧场·鲜牛奶炸鸡",
+          "category": "韩餐",
+          "dishes": [
+            {
+              "name": "（银粟芝士",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "黑胡椒蛋黄",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鲜橙琥珀",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牧场酱",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "蜂蜜山葵）炸鸡",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "塔塔酱洋葱炸鱼",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "薯条",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-037;GCJ02推定转换;非实测",
+      "business_hours": "10:55-23:59"
+    },
+    {
+      "name": "116炭火",
+      "type": 3,
+      "campus": "周边",
+      "location": "国宾大道266-5号家园酒店旁｜营业 16:00-次日02:00",
+      "avg_price": 90,
+      "lat": 26.068341,
+      "lng": 119.2020877,
+      "tags": [
+        "东北菜",
+        "堂食",
+        "可外卖",
+        "一人食",
+        "适合聚餐",
+        "烧烤"
+      ],
+      "rating": 3.4,
+      "stations": [
+        {
+          "name": "116炭火",
+          "category": "东北菜",
+          "dishes": [
+            {
+              "name": "烤羊腿",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烤羊排",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烤油边",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "黑椒牛肉",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "宫后",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牛板筋",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烤菠萝",
+              "price": 12.9,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-038;GCJ02推定转换;非实测",
+      "business_hours": "16:00-次日02:00"
+    },
+    {
+      "name": "fufu牛奶冰",
+      "type": 3,
+      "campus": "周边",
+      "location": "国宾大道233号博仕后时代购物广场1楼｜营业 11:30-00:00",
+      "avg_price": 18,
+      "lat": 26.0674151,
+      "lng": 119.203251,
+      "tags": [
+        "堂食",
+        "可外卖",
+        "一人食",
+        "甜品"
+      ],
+      "rating": 4.7,
+      "stations": [
+        {
+          "name": "fufu牛奶冰",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "西瓜牛奶冰",
+              "price": 9,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "芒果豆乳年糕牛奶冰",
+              "price": 9,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-039;GCJ02推定转换;非实测",
+      "business_hours": "11:30-00:00"
+    },
+    {
+      "name": "傻师傅台湾厨房",
+      "type": 3,
+      "campus": "周边",
+      "location": "源通东路59-56号｜营业 10:30-21:00",
+      "avg_price": 20,
+      "lat": 26.0724621,
+      "lng": 119.194016,
+      "tags": [
+        "闽菜",
+        "堂食",
+        "可外卖",
+        "一人食",
+        "小吃"
+      ],
+      "rating": 4.3,
+      "stations": [
+        {
+          "name": "傻师傅台湾厨房",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "牛肉面",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "虾饺",
+              "price": 13,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "盐酥鸡",
+              "price": 13,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "甜不辣",
+              "price": 10,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "卤鸭腿",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "炸猪排",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "鸭腿",
+              "price": 20,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-040;GCJ02推定转换;非实测",
+      "business_hours": "10:30-21:00"
+    },
+    {
+      "name": "新疆石榴花美食馆",
+      "type": 3,
+      "campus": "周边",
+      "location": "源通东路59-54号｜营业 09:00-次日04:00",
+      "avg_price": 20,
+      "lat": 26.0725619,
+      "lng": 119.1941158,
+      "tags": [
+        "新疆菜",
+        "堂食",
+        "可外卖",
+        "一人食",
+        "适合聚餐",
+        "烧烤"
+      ],
+      "rating": 4.2,
+      "stations": [
+        {
+          "name": "新疆石榴花美食馆",
+          "category": "新疆菜",
+          "dishes": [
+            {
+              "name": "干煸炒面",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "羊肉抓饭",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "过油肉炒面",
+              "price": 13,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "馕",
+              "price": 6.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烤羊心",
+              "price": 6.7,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "红柳羊肉串",
+              "price": 6.7,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-041;GCJ02推定转换;非实测",
+      "business_hours": "09:00-次日04:00"
+    },
+    {
+      "name": "禾西Restaurant",
+      "type": 3,
+      "campus": "周边",
+      "location": "国宾大道350号梅园上街广场4号楼元翔快线旁（近上街地铁站A出口）｜营业 12:00-23:00",
+      "avg_price": 61,
+      "lat": 26.0762036,
+      "lng": 119.1886564,
+      "tags": [
+        "西餐",
+        "融合菜",
+        "堂食",
+        "一人食"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "禾西Restaurant",
+          "category": "西餐",
+          "dishes": [
+            {
+              "name": "油封姜母鸭",
+              "price": 15.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "牛排配薯条",
+              "price": 15.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "千层面",
+              "price": 15.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "培根菌菇奶油意面",
+              "price": 15.2,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-042;GCJ02推定转换;非实测",
+      "business_hours": "12:00-23:00"
+    },
+    {
+      "name": "大福的烧鸟·居酒屋",
+      "type": 3,
+      "campus": "周边",
+      "location": "源通东路196号理想城二期7号楼1层113｜营业 12:00-23:00",
+      "avg_price": 62,
+      "lat": 26.0789304,
+      "lng": 119.1982465,
+      "tags": [
+        "日式",
+        "堂食",
+        "一人食",
+        "适合聚餐",
+        "烧鸟"
+      ],
+      "rating": 4.6,
+      "stations": [
+        {
+          "name": "大福的烧鸟·居酒屋",
+          "category": "日式",
+          "dishes": [
+            {
+              "name": "牛肋条",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "松板肉",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鸡软骨",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "京葱鸡肉",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鳗鱼",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "明太子西葫芦",
+              "price": 10.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-043;GCJ02推定转换;非实测",
+      "business_hours": "12:00-23:00"
+    },
+    {
+      "name": "有饭料理店",
+      "type": 2,
+      "campus": "旗山校区",
+      "location": "岐安福大学生街学府北路10-72号｜营业 11:30-14:00,16:30-22:00",
+      "avg_price": 30,
+      "lat": 26.0596512,
+      "lng": 119.1920979,
+      "tags": [
+        "日式",
+        "一人食",
+        "可外卖",
+        "堂食",
+        "烧鸟"
+      ],
+      "rating": 3.7,
+      "stations": [
+        {
+          "name": "有饭料理店",
+          "category": "日式",
+          "dishes": [
+            {
+              "name": "和牛汉堡肉盖饭",
+              "price": 18,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "松板肉饭",
+              "price": 16,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "鸡生蚝（烧鸟）",
+              "price": 30,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-044;GCJ02推定转换;非实测",
+      "business_hours": "11:30-14:00,16:30-22:00"
+    },
+    {
+      "name": "唐小厨东北菜",
+      "type": 3,
+      "campus": "周边",
+      "location": "上街镇源江路156号-10｜营业 10:30-14:00,17:00-23:00",
+      "avg_price": 50,
+      "lat": 26.0634938,
+      "lng": 119.1842899,
+      "tags": [
+        "东北菜",
+        "一人食",
+        "适合聚餐",
+        "炒菜"
+      ],
+      "rating": 4.1,
+      "stations": [
+        {
+          "name": "唐小厨东北菜",
+          "category": "东北菜",
+          "dishes": [
+            {
+              "name": "锅包肉",
+              "price": 12.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "肉段",
+              "price": 12.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "地三鲜",
+              "price": 12.5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "豆角土豆排骨",
+              "price": 12.5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-045;GCJ02推定转换;非实测",
+      "business_hours": "10:30-14:00,17:00-23:00"
+    },
+    {
+      "name": "福大阿毛烧烤",
+      "type": 3,
+      "campus": "周边",
+      "location": "溪源宫路106-4号｜营业 17:00-次日05:00",
+      "avg_price": 66,
+      "lat": 26.0599346,
+      "lng": 119.1796636,
+      "tags": [
+        "融合菜",
+        "适合聚餐",
+        "堂食",
+        "一人食",
+        "烧烤"
+      ],
+      "rating": 4.7,
+      "stations": [
+        {
+          "name": "福大阿毛烧烤",
+          "category": "融合菜",
+          "dishes": [
+            {
+              "name": "掌中宝",
+              "price": 13.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "火焰牛排",
+              "price": 13.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "黑虎虾",
+              "price": 13.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "印尼小管",
+              "price": 13.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "自制奶茶",
+              "price": 13.2,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-046;GCJ02推定转换;非实测",
+      "business_hours": "17:00-次日05:00"
+    },
+    {
+      "name": "周家粥铺",
+      "type": 3,
+      "campus": "周边",
+      "location": "岐安花园一期东北2门南120米｜营业 08:00-21:00",
+      "avg_price": 20,
+      "lat": 26.0468477,
+      "lng": 119.1887372,
+      "tags": [
+        "一人食",
+        "堂食",
+        "炒菜"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "周家粥铺",
+          "category": "综合",
+          "dishes": [
+            {
+              "name": "猪肝粥",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "海鲜粥",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "皮蛋瘦肉粥",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "炒猪头肉",
+              "price": 20,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-047;GCJ02推定转换;非实测",
+      "business_hours": "08:00-21:00"
+    },
+    {
+      "name": "黔味烤鱼",
+      "type": 3,
+      "campus": "周边",
+      "location": "岐安1号二期｜营业 10:00-次日00:30",
+      "avg_price": 46,
+      "lat": 26.0448069,
+      "lng": 119.1914393,
+      "tags": [
+        "黔菜",
+        "适合聚餐",
+        "堂食"
+      ],
+      "rating": 4.6,
+      "stations": [
+        {
+          "name": "黔味烤鱼",
+          "category": "黔菜",
+          "dishes": [
+            {
+              "name": "肥肠烤鱼",
+              "price": 15.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "特色清江团鱼",
+              "price": 15.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "烙锅",
+              "price": 15.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-048;GCJ02推定转换;非实测",
+      "business_hours": "10:00-次日00:30"
+    },
+    {
+      "name": "邱阳破店",
+      "type": 3,
+      "campus": "周边",
+      "location": "红峰村新上街邱阳9-1号｜营业 10:00-13:30,17:00-20:30",
+      "avg_price": 50,
+      "lat": 26.0831961,
+      "lng": 119.1889614,
+      "tags": [
+        "闽菜",
+        "一人食",
+        "适合聚餐",
+        "炒菜"
+      ],
+      "rating": 4.7,
+      "stations": [
+        {
+          "name": "邱阳破店",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "香油田鸡",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "荔枝肉",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "南煎肝",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "醉排骨",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "葱油拆骨肉",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "海蛎汤",
+              "price": 8.3,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-049;GCJ02推定转换;非实测",
+      "business_hours": "10:00-13:30,17:00-20:30"
+    },
+    {
+      "name": "山东水饺",
+      "type": 3,
+      "campus": "周边",
+      "location": "侯官路1-57号｜营业 10:00-22:00",
+      "avg_price": 18,
+      "lat": 26.0720819,
+      "lng": 119.2096518,
+      "tags": [
+        "鲁菜",
+        "一人食",
+        "堂食",
+        "小吃"
+      ],
+      "rating": 4,
+      "stations": [
+        {
+          "name": "山东水饺",
+          "category": "鲁菜",
+          "dishes": [
+            {
+              "name": "大葱水饺",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "荠菜水饺",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "拌猪耳朵",
+              "price": 15,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            },
+            {
+              "name": "拌皮冻",
+              "price": 12,
+              "unit": "份（估算演示价）",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-050;GCJ02推定转换;非实测",
+      "business_hours": "10:00-22:00"
+    },
+    {
+      "name": "何记河南正宗水煎包胡辣汤",
+      "type": 3,
+      "campus": "周边",
+      "location": "国宾大道上街余盛小学南侧｜营业 06:30-19:30",
+      "avg_price": 10,
+      "lat": 26.0696987,
+      "lng": 119.2072221,
+      "tags": [
+        "豫菜",
+        "一人食",
+        "堂食",
+        "小吃"
+      ],
+      "rating": 3.9,
+      "stations": [
+        {
+          "name": "何记河南正宗水煎包胡辣汤",
+          "category": "豫菜",
+          "dishes": [
+            {
+              "name": "肉馅/素馅水煎包",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "胡辣汤",
+              "price": 5,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-051;GCJ02推定转换;非实测",
+      "business_hours": "06:30-19:30"
+    },
+    {
+      "name": "KEFI来乐食堂",
+      "type": 3,
+      "campus": "周边",
+      "location": "浦兴路18号｜营业 11:00-13:30,17:00-20:30,周一休息",
+      "avg_price": 35,
+      "lat": 26.0608256,
+      "lng": 119.2062173,
+      "tags": [
+        "川菜",
+        "融合菜",
+        "堂食",
+        "一人食",
+        "炒菜"
+      ],
+      "rating": 4,
+      "stations": [],
+      "coord_source": "D采集FFM:qishan-052;GCJ02推定转换;非实测",
+      "business_hours": "11:00-13:30,17:00-20:30,周一休息"
+    },
+    {
+      "name": "依云煎包店",
+      "type": 3,
+      "campus": "周边",
+      "location": "新上街与新尚路交叉口东50米（新华盛超市对面）｜营业 06:30-13:30",
+      "avg_price": 16,
+      "lat": 26.0796154,
+      "lng": 119.1938099,
+      "tags": [
+        "闽菜",
+        "一人食",
+        "堂食",
+        "小吃"
+      ],
+      "rating": 3.8,
+      "stations": [
+        {
+          "name": "依云煎包店",
+          "category": "闽菜",
+          "dishes": [
+            {
+              "name": "煎包",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "茶叶蛋",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "巴沙鱼汤",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鳗鱼汤",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            },
+            {
+              "name": "鱼丸",
+              "price": 3.2,
+              "unit": "元",
+              "estimated": true
+            }
+          ]
+        }
+      ],
+      "coord_source": "D采集FFM:qishan-053;GCJ02推定转换;非实测",
+      "business_hours": "06:30-13:30"
+    }
+  ],
+  "data_notes": {
+    "price_caliber": "全部菜品价格为估算口径（无商家核实明码实价）：37 道来自用户授权的「估算演示菜单」，121 道按公开人均与招牌菜折算",
+    "station_caliber": "独立门店的档口名与店铺同名；只有公开菜单数据的门店才建档口，不生成占位档口",
+    "canteen_caliber": "校内食堂（type=0）由源库 location 表的「食堂」类记录转化：地址/营业时间取 03_collected_places.sql 与公开数据源，坐标只取 deferred/map/05_collected_map_locations.sql 的 map_location（12 个食堂中 8 个有坐标），评分/标签按 qishan.geojson 用 coordinate_source_id 关联（此前按简称匹配失败，导致 8 个食堂评分/标签全丢）；桃李园/佳客来/海棠园京元/紫竹园到口 四者在源库与 geojson 中均无坐标、无评分、无标签、无地址，一律留空，不用估算值填充",
+    "coord_caliber": "坐标只允许三种来源：map_location 实测/推定转换、geojson geometry；源数据缺失时留 null，由前端地图按兜底位置示意，不写入伪坐标",
+    "canteen_station_caliber": "校内食堂档口只取 qishan.geojson 中 8 个食堂要素 properties.include.name（共 28 个，含「档口/连锁」标注），源库 78 表 SQL 未插入任何食堂档口与菜单，故档口一律无菜品（不编造菜单）；档口 category 按档口名称归类，仅用于筛选项与封面回退；无 include 的 4 个食堂（桃李园/佳客来/海棠园京元/紫竹园到口）保持无档口"
+  }
+}

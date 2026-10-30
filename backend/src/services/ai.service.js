@@ -215,7 +215,11 @@ async function call_llm(cfg, messages) {
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(config.ai.timeout_ms),
     });
-    if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
+    if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        // 带上供应商返回的错误片段，便于「测试连接」与日志定位 401/404/429 等原因
+        throw new Error(`LLM HTTP ${res.status}${body ? ' ' + body.replace(/\s+/g, ' ').slice(0, 180) : ''}`);
+    }
     const data = await res.json();
     // 响应取值：OpenAI choices[0].message.content；Anthropic content[] 中首个 text 块
     // （M2 系思考模型会把 thinking 块放 content[0]，必须按 type=text 定位，否则取空误降级）
@@ -230,6 +234,94 @@ async function call_llm(cfg, messages) {
     }
     if (!text) throw new Error('LLM 返回为空');
     return text;
+}
+
+/**
+ * 把供应商/网络错误翻译成可操作的中文提示（测试连接按钮与降级原因共用）
+ * @param {string} message - 原始错误信息
+ * @returns {string} 中文原因
+ */
+function explain_llm_error(message) {
+    const m = String(message || '');
+    if (/HTTP 401|HTTP 403/.test(m)) return '密钥无效或无权限（401/403），请检查 API Key';
+    if (/HTTP 404/.test(m)) return '接口地址或模型 ID 不正确（404），请对照官方文档';
+    if (/HTTP 429/.test(m)) return '请求过于频繁或额度已用尽（429）';
+    if (/HTTP 5\d\d/.test(m)) return '供应商服务异常（5xx），请稍后重试';
+    if (/timeout|aborted|超时/i.test(m)) return '请求超时，请检查网络或接口地址';
+    if (/fetch failed|ENOTFOUND|ECONNREFUSED|EAI_AGAIN|ECONNRESET/i.test(m)) {
+        return '网络不可达：容器出网 / DNS 或接口地址错误';
+    }
+    if (/返回为空/.test(m)) return '模型返回空内容，请确认模型 ID 支持对话接口';
+    return '调用失败，请检查配置后重试';
+}
+
+/**
+ * 连通性测试：用给定配置真实发起一次最小对话请求
+ * @param {{protocol:string, base_url:string, api_key:string, model:string}} cfg
+ * @returns {Promise<{ok:boolean, latencyMs:number, model:string, reply?:string, error?:string, hint?:string}>}
+ */
+async function probe_llm(cfg) {
+    if (!cfg.base_url || !/^https?:\/\//.test(cfg.base_url)) throw err.invalid('请填写接口地址（http(s):// 开头）');
+    if (!cfg.model) throw err.invalid('请填写模型 ID');
+    if (!cfg.api_key) throw err.invalid('请填写 API 密钥');
+    const started = Date.now();
+    try {
+        const reply = await call_llm(cfg, [{ role: 'user', content: '连通性测试，请只回复：可用' }]);
+        return { ok: true, latencyMs: Date.now() - started, model: cfg.model, reply: reply.slice(0, 80) };
+    } catch (e) {
+        const error = String(e.message || '调用失败').slice(0, 300);
+        return {
+            ok: false, latencyMs: Date.now() - started, model: cfg.model,
+            error, hint: explain_llm_error(error),
+        };
+    }
+}
+
+/**
+ * 测试用户自配模型：表单值优先，缺省回落到已保存配置（编辑态密钥留空可复用原密钥）
+ * @param {number} userId
+ * @param {Object} input - {id?, provider?, protocol?, baseUrl?, modelId?, apiKey?}
+ * @returns {Promise<Object>} probe_llm 结果
+ */
+async function test_user_model(userId, input) {
+    const id = input.id ? Number(input.id) : null;
+    const row = id
+        ? await query_one(
+            'SELECT provider_key, protocol, base_url, model_id, api_key_cipher FROM ai_model WHERE id = ? AND user_id = ? AND platform_id IS NULL',
+            [id, userId]
+        )
+        : null;
+    if (id && !row) throw err.not_found('模型配置不存在');
+    const provider = String(input.provider || (row ? row.provider_key : '') || '').trim();
+    let base_url = String(input.baseUrl || (row ? row.base_url : '') || '').trim();
+    if (!base_url && provider) {
+        const prov = await query_one('SELECT base_url FROM ai_provider WHERE provider_key = ?', [provider]);
+        if (prov && prov.base_url) base_url = prov.base_url;
+    }
+    const protocol = PROTOCOLS.includes(String(input.protocol || ''))
+        ? String(input.protocol) : (row ? row.protocol : 'openai');
+    const model = String(input.modelId || (row ? row.model_id : '') || '').trim();
+    const api_key = String(input.apiKey || '').trim() || (row ? decrypt_secret(row.api_key_cipher) : '');
+    return probe_llm({ protocol, base_url, api_key, model });
+}
+
+/**
+ * 测试平台托管模型（后台表单：已保存的密钥可复用）
+ * @param {Object} input - {id?, protocol?, baseUrl?, modelId?, apiKey?}
+ * @returns {Promise<Object>} probe_llm 结果
+ */
+async function test_platform_model(input) {
+    const id = input.id ? Number(input.id) : null;
+    const row = id
+        ? await query_one('SELECT protocol, base_url, model_id, api_key_cipher FROM ai_platform_model WHERE id = ?', [id])
+        : null;
+    if (id && !row) throw err.not_found('平台模型不存在');
+    let base_url = String(input.baseUrl || (row ? row.base_url : '') || '').trim();
+    const protocol = PROTOCOLS.includes(String(input.protocol || ''))
+        ? String(input.protocol) : (row ? row.protocol : 'openai');
+    const model = String(input.modelId || (row ? row.model_id : '') || '').trim();
+    const api_key = String(input.apiKey || '').trim() || (row ? decrypt_secret(row.api_key_cipher) : '');
+    return probe_llm({ protocol, base_url, api_key, model });
 }
 
 /**
@@ -319,6 +411,7 @@ async function ask(userId, question) {
 
     let answer = '';
     let degraded = false;
+    let degraded_reason = '';
     const hasProvider = cfg.base_url && cfg.api_key && cfg.model;
     if (hasProvider) {
         const messages = [
@@ -345,11 +438,13 @@ async function ask(userId, question) {
             // 大模型超时/失败 → 降级规则推荐（以 degraded=true 标记降级，不抛业务码，核心链路不受影响）
             console.warn('[ai] LLM 调用失败，降级规则推荐:', e.message);
             degraded = true;
+            degraded_reason = explain_llm_error(e.message);
             answer = rule_answer(dishes, stations, conds);
         }
     } else {
         // 未配置供应商 → 同降级口径：degraded=true 标记 + 规则推荐兜底
         degraded = true;
+        degraded_reason = '尚未配置可用的模型（请到「模型设置」添加并测试连接）';
         answer = rule_answer(dishes, stations, conds);
     }
 
@@ -362,7 +457,7 @@ async function ask(userId, question) {
     } catch (e) {
         console.warn('[ai] 会话留痕失败:', e.message);
     }
-    return { answer, recommendations, degraded };
+    return { answer, recommendations, degraded, degradedReason: degraded ? degraded_reason : '' };
 }
 
 /**
@@ -559,14 +654,16 @@ const MODEL_LIMIT = 6;
 async function normalize_model_input(input) {
     // 供应商必须来自注册表（后台可维护；未知 key 直接拒绝）
     const provider = String(input.provider || '').trim();
-    const prov = await query_one('SELECT provider_key, protocol FROM ai_provider WHERE provider_key = ?', [provider]);
+    const prov = await query_one('SELECT provider_key, protocol, base_url FROM ai_provider WHERE provider_key = ?', [provider]);
     if (!prov) throw err.invalid('未知供应商，请重新选择');
     // 接口类型：前端可手动改（默认随供应商注册表），白名单校验
     const protocol = PROTOCOLS.includes(String(input.protocol || '')) ? String(input.protocol) : prov.protocol;
-    const base_url = String(input.baseUrl || '').trim().slice(0, 200);
+    // 接口地址：留空时回落到供应商注册表（自定义端点必须手填，否则配了也用不起来）
+    const base_url = String(input.baseUrl || prov.base_url || '').trim().slice(0, 200);
     const model_id = String(input.modelId || '').trim().slice(0, 64);
     const display_name = String(input.displayName || '').trim().slice(0, 64);
-    if (base_url && !/^https?:\/\//.test(base_url)) throw err.invalid('接口地址需以 http(s):// 开头');
+    if (!base_url) throw err.invalid('请填写接口地址（该供应商没有默认值，见官方文档）');
+    if (!/^https?:\/\//.test(base_url)) throw err.invalid('接口地址需以 http(s):// 开头');
     if (!model_id) throw err.invalid('请填写模型 ID（见官方模型接入文档）');
     return { provider_key: provider, protocol, base_url, model_id, display_name };
 }
@@ -632,17 +729,20 @@ async function add_model(userId, input) {
     const api_key = String(input.apiKey || '').trim();
     if (!api_key) throw err.invalid('请填写 API 密钥');
     if (api_key.length > 200) throw err.invalid('API 密钥过长');
-    const cnt = await query_one('SELECT COUNT(*) AS n FROM ai_model WHERE user_id = ?', [userId]);
+    // 个人额度只统计自配配置（平台托管模型的引用行不占额度，r89 修正）
+    const cnt = await query_one('SELECT COUNT(*) AS n FROM ai_model WHERE user_id = ? AND platform_id IS NULL', [userId]);
     if (Number(cnt.n) >= MODEL_LIMIT) throw err.invalid(`最多添加 ${MODEL_LIMIT} 个模型，请先删除不用的配置`);
-    // 首个配置自动选中，后续新增不抢占使用中
-    const first = Number(cnt.n) === 0;
+    // 没有任何「使用中」配置（含平台托管）时，新配置自动生效；已有使用中则不抢占（r46 口径）
+    const active = await query_one('SELECT id FROM ai_model WHERE user_id = ? AND is_selected = 1', [userId]);
+    const first = !active;
     const r = await query(
         `INSERT INTO ai_model (user_id, provider_key, protocol, base_url, model_id, display_name, api_key_cipher, is_selected)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [userId, fields.provider_key, fields.protocol, fields.base_url, fields.model_id, fields.display_name,
             encrypt_secret(api_key), first ? 1 : 0]
     );
-    return { id: Number(r.insertId) };
+    // isSelected 回传前端，便于提示「已添加并切换」还是「点使用才生效」
+    return { id: Number(r.insertId), isSelected: first };
 }
 
 /**
@@ -753,4 +853,5 @@ module.exports = {
     admin_list_platform, admin_save_platform, admin_delete_platform,
     list_models, add_model, update_model, delete_model, select_model,
     select_platform_model, remove_platform_model,
+    test_user_model, test_platform_model,
 };

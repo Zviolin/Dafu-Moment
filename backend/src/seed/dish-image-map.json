@@ -1,0 +1,1045 @@
+{
+ "version": "r84-real-dish-covers",
+ "source": "华为云 CodeHub 仓库 dafu-shike（master）assets/dish-images/，150 张真实菜品图",
+ "note": "图片为网络同类菜品示意参考，非门店实拍；object_key 为内容哈希确定性键，可重复上传不产生重复对象",
+ "source_table": "dish-image-source.json（逐图来源页 / 授权状态 / 复筛说明，源自仓库 assets/dish-images/菜名图片对应.json）",
+ "yyyymm": "202610",
+ "dishes": [
+  {
+   "station": "盛茂源东北饺子馆",
+   "dish": "锅包肉",
+   "file": "锅包肉.jpg",
+   "object_key": "cover/202610/e801c3913a0e517f.jpg"
+  },
+  {
+   "station": "盛茂源东北饺子馆",
+   "dish": "酸辣鸡杂",
+   "file": "酸辣鸡杂.png",
+   "object_key": "cover/202610/7f6677b8bb15c99b.png"
+  },
+  {
+   "station": "盛茂源东北饺子馆",
+   "dish": "地三鲜",
+   "file": "地三鲜.png",
+   "object_key": "cover/202610/3016157763229b0f.png"
+  },
+  {
+   "station": "盛茂源东北饺子馆",
+   "dish": "东北大拉皮",
+   "file": "东北大拉皮.jpg",
+   "object_key": "cover/202610/a3d3d8bf555838cc.jpg"
+  },
+  {
+   "station": "夜贰两东北串吧",
+   "dish": "羊肉串",
+   "file": "羊肉串.jpg",
+   "object_key": "cover/202610/4335b3eb7830a0c6.jpg"
+  },
+  {
+   "station": "夜贰两东北串吧",
+   "dish": "牛肋条",
+   "file": "牛肋条.jpg",
+   "object_key": "cover/202610/91164b416d1ad518.jpg"
+  },
+  {
+   "station": "夜贰两东北串吧",
+   "dish": "油边",
+   "file": "油边.jpg",
+   "object_key": "cover/202610/cc6bc29bbcaacfdd.jpg"
+  },
+  {
+   "station": "夜贰两东北串吧",
+   "dish": "蚕蛹",
+   "file": "蚕蛹.jpg",
+   "object_key": "cover/202610/ab22cac518af9071.jpg"
+  },
+  {
+   "station": "文博家锅盔",
+   "dish": "梅菜",
+   "file": "梅菜.jpg",
+   "object_key": "cover/202610/f1a7ce2867c05de6.jpg"
+  },
+  {
+   "station": "文博家锅盔",
+   "dish": "鲜肉",
+   "file": "鲜肉.jpg",
+   "object_key": "cover/202610/e914362ec57e6849.jpg"
+  },
+  {
+   "station": "文博家锅盔",
+   "dish": "瘦肉锅盔",
+   "file": "瘦肉锅盔.jpg",
+   "object_key": "cover/202610/9c79c5bb2c27ba95.jpg"
+  },
+  {
+   "station": "猪师弟空气年糕",
+   "dish": "炸蘑菇（六合一）",
+   "file": "炸蘑菇（六合一）.jpg",
+   "object_key": "cover/202610/2140ccae223c9b91.jpg"
+  },
+  {
+   "station": "猪师弟空气年糕",
+   "dish": "年糕",
+   "file": "年糕.jpg",
+   "object_key": "cover/202610/d292d1d0c846e94a.jpg"
+  },
+  {
+   "station": "猪师弟空气年糕",
+   "dish": "鸡柳",
+   "file": "鸡柳.jpg",
+   "object_key": "cover/202610/9a5631492bf893cb.jpg"
+  },
+  {
+   "station": "陈记片皮鸭",
+   "dish": "片皮鸭卷",
+   "file": "片皮鸭卷.jpg",
+   "object_key": "cover/202610/0732abd22bd8f551.jpg"
+  },
+  {
+   "station": "陈记片皮鸭",
+   "dish": "烤冷面",
+   "file": "烤冷面.jpg",
+   "object_key": "cover/202610/62df8309e1aa3470.jpg"
+  },
+  {
+   "station": "陈记片皮鸭",
+   "dish": "香酥鸭",
+   "file": "香酥鸭.jpg",
+   "object_key": "cover/202610/9953c930f220eee7.jpg"
+  },
+  {
+   "station": "壹品豆花",
+   "dish": "豆花",
+   "file": "豆花.jpg",
+   "object_key": "cover/202610/bbf5e639ded51d97.jpg"
+  },
+  {
+   "station": "壹品豆花",
+   "dish": "椰奶冰",
+   "file": "椰奶冰.jpg",
+   "object_key": "cover/202610/ceb15243fed98b4b.jpg"
+  },
+  {
+   "station": "壹品豆花",
+   "dish": "清补凉",
+   "file": "清补凉.jpg",
+   "object_key": "cover/202610/f3b3609834bbc806.jpg"
+  },
+  {
+   "station": "便宜坊（原光阴的故事）",
+   "dish": "油边",
+   "file": "油边.jpg",
+   "object_key": "cover/202610/cc6bc29bbcaacfdd.jpg"
+  },
+  {
+   "station": "便宜坊（原光阴的故事）",
+   "dish": "牛肉串",
+   "file": "牛肉串.jpg",
+   "object_key": "cover/202610/131561b599945aef.jpg"
+  },
+  {
+   "station": "临榆炸鸡腿（学生街店）",
+   "dish": "鸡腿",
+   "file": "鸡腿.jpg",
+   "object_key": "cover/202610/2a7f9c3ca4df9d2f.jpg"
+  },
+  {
+   "station": "临榆炸鸡腿（学生街店）",
+   "dish": "三叉骨",
+   "file": "三叉骨.webp",
+   "object_key": "cover/202610/0331dfa6f3ea1194.webp"
+  },
+  {
+   "station": "临榆炸鸡腿（学生街店）",
+   "dish": "鸡肉条",
+   "file": "鸡肉条.jpg",
+   "object_key": "cover/202610/10970bce1853657b.jpg"
+  },
+  {
+   "station": "台湾锅贴",
+   "dish": "锅贴",
+   "file": "锅贴.webp",
+   "object_key": "cover/202610/40bf699290bdc863.webp"
+  },
+  {
+   "station": "重庆小面",
+   "dish": "重庆小面",
+   "file": "重庆小面.jpg",
+   "object_key": "cover/202610/1b5a479fb3d9384b.jpg"
+  },
+  {
+   "station": "重庆小面",
+   "dish": "牛肉拌面",
+   "file": "牛肉拌面.jpg",
+   "object_key": "cover/202610/b2d97f5fe378297f.jpg"
+  },
+  {
+   "station": "重庆小面",
+   "dish": "肉酱拌面",
+   "file": "肉酱拌面.webp",
+   "object_key": "cover/202610/21a5ee6e72816a7d.webp"
+  },
+  {
+   "station": "刘记肉夹馍",
+   "dish": "肉夹馍",
+   "file": "肉夹馍.jpg",
+   "object_key": "cover/202610/68dfc156f2d2af03.jpg"
+  },
+  {
+   "station": "刘记肉夹馍",
+   "dish": "拌扁肉",
+   "file": "拌扁肉.jpg",
+   "object_key": "cover/202610/c87abd2088b632b7.jpg"
+  },
+  {
+   "station": "刘记肉夹馍",
+   "dish": "凉皮",
+   "file": "凉皮.jpg",
+   "object_key": "cover/202610/edc8a98b0f72b483.jpg"
+  },
+  {
+   "station": "可可烘焙",
+   "dish": "泡芙",
+   "file": "泡芙.jpg",
+   "object_key": "cover/202610/5c3b605d9399d2c5.jpg"
+  },
+  {
+   "station": "可可烘焙",
+   "dish": "麻薯",
+   "file": "麻薯.webp",
+   "object_key": "cover/202610/d6bbbfeeb1fe294a.webp"
+  },
+  {
+   "station": "可可烘焙",
+   "dish": "蛋挞",
+   "file": "蛋挞.jpg",
+   "object_key": "cover/202610/95a325121e290ecf.jpg"
+  },
+  {
+   "station": "可可烘焙",
+   "dish": "面包",
+   "file": "面包.jpg",
+   "object_key": "cover/202610/81560f9ab028301a.jpg"
+  },
+  {
+   "station": "广式养生鸡",
+   "dish": "清远鸡",
+   "file": "清远鸡.jpg",
+   "object_key": "cover/202610/9dffd2526b0e2903.jpg"
+  },
+  {
+   "station": "广式养生鸡",
+   "dish": "走地鸡",
+   "file": "走地鸡.jpg",
+   "object_key": "cover/202610/a347685122b75440.jpg"
+  },
+  {
+   "station": "莆田卤面·天九湾炝肉·山里炝粉",
+   "dish": "天九湾炝肉",
+   "file": "天九湾炝肉.jpg",
+   "object_key": "cover/202610/7e49d407bb7b30f3.jpg"
+  },
+  {
+   "station": "莆田卤面·天九湾炝肉·山里炝粉",
+   "dish": "山里炝粉",
+   "file": "山里炝粉.jpg",
+   "object_key": "cover/202610/a57451a60d42f414.jpg"
+  },
+  {
+   "station": "莆田卤面·天九湾炝肉·山里炝粉",
+   "dish": "莆田卤面",
+   "file": "莆田卤面.jpg",
+   "object_key": "cover/202610/6f7311601296ee7b.jpg"
+  },
+  {
+   "station": "栗栗烘焙-栗酥饼（福大店）",
+   "dish": "栗酥饼",
+   "file": "栗酥饼.jpg",
+   "object_key": "cover/202610/4deb6b3503a7b177.jpg"
+  },
+  {
+   "station": "栗栗烘焙-栗酥饼（福大店）",
+   "dish": "芋泥饼",
+   "file": "芋泥饼.jpg",
+   "object_key": "cover/202610/259cc8fe7e133354.jpg"
+  },
+  {
+   "station": "栗栗烘焙-栗酥饼（福大店）",
+   "dish": "榴莲饼",
+   "file": "榴莲饼.jpg",
+   "object_key": "cover/202610/9639aa53ad5d11fe.jpg"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "沙姜焗鸡",
+   "file": "沙姜焗鸡.jpg",
+   "object_key": "cover/202610/744e0e7c12088af7.jpg"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "豉汁排骨",
+   "file": "豉汁排骨.jpg",
+   "object_key": "cover/202610/75d4aafd56d618e0.jpg"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "松板肉",
+   "file": "松板肉.webp",
+   "object_key": "cover/202610/ac53046fbdf59f13.webp"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "蒜苗五花",
+   "file": "蒜苗五花.jpg",
+   "object_key": "cover/202610/b1b61ddf575735f6.jpg"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "南乳鸡翅",
+   "file": "南乳鸡翅.jpg",
+   "object_key": "cover/202610/f40eb8dfb2614bdf.jpg"
+  },
+  {
+   "station": "江一福·按时吃饭·啫啫煲",
+   "dish": "脆卤肥肠",
+   "file": "脆卤肥肠.jpg",
+   "object_key": "cover/202610/1d0eb98819af691c.jpg"
+  },
+  {
+   "station": "周麻婆·新川式家常菜",
+   "dish": "麻婆豆腐",
+   "file": "麻婆豆腐.png",
+   "object_key": "cover/202610/ab6d80130a9bbd73.png"
+  },
+  {
+   "station": "周麻婆·新川式家常菜",
+   "dish": "脆皮鸭",
+   "file": "脆皮鸭.jpg",
+   "object_key": "cover/202610/88a41dbcfd4e3fc1.jpg"
+  },
+  {
+   "station": "周麻婆·新川式家常菜",
+   "dish": "水煮鱼",
+   "file": "水煮鱼.jpg",
+   "object_key": "cover/202610/c9dbfd1c09dc7386.jpg"
+  },
+  {
+   "station": "周麻婆·新川式家常菜",
+   "dish": "红糖糍粑",
+   "file": "红糖糍粑.jpg",
+   "object_key": "cover/202610/e9061801f4a03419.jpg"
+  },
+  {
+   "station": "鲜榨果汁·现炒板栗",
+   "dish": "甘蔗汁",
+   "file": "甘蔗汁.jpg",
+   "object_key": "cover/202610/d618f85c37c5676c.jpg"
+  },
+  {
+   "station": "鲜榨果汁·现炒板栗",
+   "dish": "雪梨汁",
+   "file": "雪梨汁.jpg",
+   "object_key": "cover/202610/547b86fa2a2ab9f8.jpg"
+  },
+  {
+   "station": "鲜榨果汁·现炒板栗",
+   "dish": "西瓜汁",
+   "file": "西瓜汁.jpg",
+   "object_key": "cover/202610/6a742d94f58d422f.jpg"
+  },
+  {
+   "station": "鲜榨果汁·现炒板栗",
+   "dish": "炒板栗",
+   "file": "炒板栗.jpg",
+   "object_key": "cover/202610/f5a667b76d3d9b35.jpg"
+  },
+  {
+   "station": "洪濑鸡爪",
+   "dish": "洪濑鸡爪",
+   "file": "洪濑鸡爪.jpg",
+   "object_key": "cover/202610/463cb0e5bc49efca.jpg"
+  },
+  {
+   "station": "洪濑鸡爪",
+   "dish": "卤味拼盘",
+   "file": "卤味拼盘.jpg",
+   "object_key": "cover/202610/1a2a56044ec9b04b.jpg"
+  },
+  {
+   "station": "洪濑鸡爪",
+   "dish": "牛肉羹",
+   "file": "牛肉羹.jpg",
+   "object_key": "cover/202610/cfc52a1ad1695bf9.jpg"
+  },
+  {
+   "station": "云南铜锅牛羊肉米线",
+   "dish": "牛肉粉",
+   "file": "牛肉粉.jpg",
+   "object_key": "cover/202610/7a5807f605255590.jpg"
+  },
+  {
+   "station": "云南铜锅牛羊肉米线",
+   "dish": "羊肉米线",
+   "file": "羊肉米线.jpg",
+   "object_key": "cover/202610/f00cce8c2180b9c3.jpg"
+  },
+  {
+   "station": "云南铜锅牛羊肉米线",
+   "dish": "凉拌米线",
+   "file": "凉拌米线.jpg",
+   "object_key": "cover/202610/3e1b7a532d5b8cd0.jpg"
+  },
+  {
+   "station": "达叔肉夹馍·烤冷面",
+   "dish": "东北烤冷面",
+   "file": "东北烤冷面.jpg",
+   "object_key": "cover/202610/c82d6122e02fc21d.jpg"
+  },
+  {
+   "station": "达叔肉夹馍·烤冷面",
+   "dish": "火鸡面烤冷面",
+   "file": "火鸡面烤冷面.jpg",
+   "object_key": "cover/202610/29099ff4a512859d.jpg"
+  },
+  {
+   "station": "达叔肉夹馍·烤冷面",
+   "dish": "五花肉烤冷面",
+   "file": "五花肉烤冷面.jpg",
+   "object_key": "cover/202610/e8704a24c4714cdd.jpg"
+  },
+  {
+   "station": "成都纸包鱼烧烤大排档",
+   "dish": "烤黑鱼",
+   "file": "烤黑鱼.jpg",
+   "object_key": "cover/202610/784b0a55b73dae41.jpg"
+  },
+  {
+   "station": "成都纸包鱼烧烤大排档",
+   "dish": "干锅包菜",
+   "file": "干锅包菜.jpg",
+   "object_key": "cover/202610/d6a8029d52246b8f.jpg"
+  },
+  {
+   "station": "成都纸包鱼烧烤大排档",
+   "dish": "椒盐掌中宝",
+   "file": "椒盐掌中宝.jpg",
+   "object_key": "cover/202610/939b1eb91bdda8d1.jpg"
+  },
+  {
+   "station": "桥头排骨",
+   "dish": "桥头排骨",
+   "file": "桥头排骨.jpg",
+   "object_key": "cover/202610/fffce9e2a9f70f8c.jpg"
+  },
+  {
+   "station": "桥头排骨",
+   "dish": "桥头炸肉条",
+   "file": "桥头炸肉条.jpg",
+   "object_key": "cover/202610/7ba1207dc6a14bc8.jpg"
+  },
+  {
+   "station": "桥头排骨",
+   "dish": "桥头掌中宝",
+   "file": "桥头掌中宝.jpg",
+   "object_key": "cover/202610/a6e797a6e5056fae.jpg"
+  },
+  {
+   "station": "北方饭店",
+   "dish": "鸡汤干豆腐",
+   "file": "鸡汤干豆腐.png",
+   "object_key": "cover/202610/020ba0952512f2b2.png"
+  },
+  {
+   "station": "北方饭店",
+   "dish": "锅包肉",
+   "file": "锅包肉.jpg",
+   "object_key": "cover/202610/e801c3913a0e517f.jpg"
+  },
+  {
+   "station": "北方饭店",
+   "dish": "溜肉段",
+   "file": "溜肉段.jpg",
+   "object_key": "cover/202610/d6de36d246c52b12.jpg"
+  },
+  {
+   "station": "北方饭店",
+   "dish": "手工水饺",
+   "file": "手工水饺.jpg",
+   "object_key": "cover/202610/1443d17eb0de205a.jpg"
+  },
+  {
+   "station": "川册·川味小馆",
+   "dish": "麻婆豆腐",
+   "file": "麻婆豆腐.png",
+   "object_key": "cover/202610/ab6d80130a9bbd73.png"
+  },
+  {
+   "station": "川册·川味小馆",
+   "dish": "火爆腰花",
+   "file": "火爆腰花.jpg",
+   "object_key": "cover/202610/64f6384a4ccd29fe.jpg"
+  },
+  {
+   "station": "川册·川味小馆",
+   "dish": "椒麻猪舌",
+   "file": "椒麻猪舌.jpg",
+   "object_key": "cover/202610/aae88cc0ba040c36.jpg"
+  },
+  {
+   "station": "川册·川味小馆",
+   "dish": "红糖糍粑",
+   "file": "红糖糍粑.jpg",
+   "object_key": "cover/202610/e9061801f4a03419.jpg"
+  },
+  {
+   "station": "李夏记牛腩煲（原广式牛杂）",
+   "dish": "牛杂煲",
+   "file": "牛杂煲.jpg",
+   "object_key": "cover/202610/1a56db5e3f36db74.jpg"
+  },
+  {
+   "station": "李夏记牛腩煲（原广式牛杂）",
+   "dish": "萝卜牛杂汤",
+   "file": "萝卜牛杂汤.jpg",
+   "object_key": "cover/202610/8731be88b0a6a8af.jpg"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "（银粟芝士",
+   "file": "银粟之誓炸鸡.png",
+   "object_key": "cover/202610/d220e664b44b4a19.png"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "黑胡椒蛋黄",
+   "file": "黑胡椒蛋黄炸鸡.jpg",
+   "object_key": "cover/202610/b0fa0642dacd5a9b.jpg"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "鲜橙琥珀",
+   "file": "鲜橙琥珀炸鸡.png",
+   "object_key": "cover/202610/b5296b19b89cddaa.png"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "牧场酱",
+   "file": "牧场酱炸鸡.png",
+   "object_key": "cover/202610/a2aae7a6e877ee4d.png"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "蜂蜜山葵）炸鸡",
+   "file": "蜂蜜山葵炸鸡.png",
+   "object_key": "cover/202610/dafa75a4754426a2.png"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "塔塔酱洋葱炸鱼",
+   "file": "塔塔酱洋葱炸鱼.jpg",
+   "object_key": "cover/202610/de08f4d7a1396bbb.jpg"
+  },
+  {
+   "station": "焦焦牧场·鲜牛奶炸鸡",
+   "dish": "薯条",
+   "file": "薯条.jpg",
+   "object_key": "cover/202610/8faabde9f94fec8a.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "烤羊腿",
+   "file": "烤羊腿.jpg",
+   "object_key": "cover/202610/3f9ea9148bbb4faa.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "烤羊排",
+   "file": "烤羊排.jpg",
+   "object_key": "cover/202610/132043366d971766.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "烤油边",
+   "file": "烤油边.jpg",
+   "object_key": "cover/202610/cc6bc29bbcaacfdd.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "黑椒牛肉",
+   "file": "黑椒牛肉.jpg",
+   "object_key": "cover/202610/639bf3880abadfe4.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "宫后",
+   "file": "宫后.jpg",
+   "object_key": "cover/202610/cd99abf589ce6932.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "牛板筋",
+   "file": "牛板筋.jpg",
+   "object_key": "cover/202610/7cc2b8397ae3b375.jpg"
+  },
+  {
+   "station": "116炭火",
+   "dish": "烤菠萝",
+   "file": "烤菠萝.webp",
+   "object_key": "cover/202610/7bf509e1d3103624.webp"
+  },
+  {
+   "station": "fufu牛奶冰",
+   "dish": "西瓜牛奶冰",
+   "file": "西瓜牛奶冰.jpg",
+   "object_key": "cover/202610/86d796e57631ea90.jpg"
+  },
+  {
+   "station": "fufu牛奶冰",
+   "dish": "芒果豆乳年糕牛奶冰",
+   "file": "芒果豆乳年糕牛奶冰.png",
+   "object_key": "cover/202610/1ebb4fd0bed17cc9.png"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "牛肉面",
+   "file": "牛肉面.jpg",
+   "object_key": "cover/202610/ba553383c02fdb01.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "虾饺",
+   "file": "虾饺.jpg",
+   "object_key": "cover/202610/ef28c059764bc49d.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "盐酥鸡",
+   "file": "盐酥鸡.jpg",
+   "object_key": "cover/202610/d39ad1cc1530180c.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "甜不辣",
+   "file": "甜不辣.jpg",
+   "object_key": "cover/202610/8a9f8d73962aa405.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "卤鸭腿",
+   "file": "卤鸭腿.jpg",
+   "object_key": "cover/202610/c367e70a1457e68e.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "炸猪排",
+   "file": "炸猪排.jpg",
+   "object_key": "cover/202610/2adab63f43f53e9b.jpg"
+  },
+  {
+   "station": "傻师傅台湾厨房",
+   "dish": "鸭腿",
+   "file": "鸭腿.jpg",
+   "object_key": "cover/202610/c367e70a1457e68e.jpg"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "干煸炒面",
+   "file": "干煸炒面.jpg",
+   "object_key": "cover/202610/8876cd4a251fe87f.jpg"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "羊肉抓饭",
+   "file": "羊肉抓饭.jpg",
+   "object_key": "cover/202610/ebb4c664b3212884.jpg"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "过油肉炒面",
+   "file": "过油肉炒面.webp",
+   "object_key": "cover/202610/ded12b8eba07820b.webp"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "馕",
+   "file": "馕.jpg",
+   "object_key": "cover/202610/584ef82ce5b6df0a.jpg"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "烤羊心",
+   "file": "烤羊心.jpg",
+   "object_key": "cover/202610/1d3c60e0b3c74767.jpg"
+  },
+  {
+   "station": "新疆石榴花美食馆",
+   "dish": "红柳羊肉串",
+   "file": "红柳羊肉串.jpg",
+   "object_key": "cover/202610/dfb256e1f3683338.jpg"
+  },
+  {
+   "station": "禾西Restaurant",
+   "dish": "油封姜母鸭",
+   "file": "油封姜母鸭.jpg",
+   "object_key": "cover/202610/c8ea3d961083b97e.jpg"
+  },
+  {
+   "station": "禾西Restaurant",
+   "dish": "牛排配薯条",
+   "file": "牛排配薯条.jpg",
+   "object_key": "cover/202610/71b3451b2c83f420.jpg"
+  },
+  {
+   "station": "禾西Restaurant",
+   "dish": "千层面",
+   "file": "千层面.jpg",
+   "object_key": "cover/202610/85596dd537ccac63.jpg"
+  },
+  {
+   "station": "禾西Restaurant",
+   "dish": "培根菌菇奶油意面",
+   "file": "培根菌菇奶油意面.jpg",
+   "object_key": "cover/202610/ceaadcbbda6ca67e.jpg"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "牛肋条",
+   "file": "牛肋条.jpg",
+   "object_key": "cover/202610/91164b416d1ad518.jpg"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "松板肉",
+   "file": "松板肉.webp",
+   "object_key": "cover/202610/ac53046fbdf59f13.webp"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "鸡软骨",
+   "file": "鸡软骨.jpg",
+   "object_key": "cover/202610/34c3940a1685c6da.jpg"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "京葱鸡肉",
+   "file": "京葱鸡肉.jpg",
+   "object_key": "cover/202610/aa41e7926b3477bc.jpg"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "鳗鱼",
+   "file": "鳗鱼.jpg",
+   "object_key": "cover/202610/db7b79eb36a57a8d.jpg"
+  },
+  {
+   "station": "大福的烧鸟·居酒屋",
+   "dish": "明太子西葫芦",
+   "file": "明太子西葫芦.jpg",
+   "object_key": "cover/202610/11b21a9cdd90426b.jpg"
+  },
+  {
+   "station": "有饭料理店",
+   "dish": "和牛汉堡肉盖饭",
+   "file": "和牛汉堡肉盖饭.jpg",
+   "object_key": "cover/202610/7f27576d596668c0.jpg"
+  },
+  {
+   "station": "有饭料理店",
+   "dish": "松板肉饭",
+   "file": "松板肉饭.jpg",
+   "object_key": "cover/202610/d208e8f282147196.jpg"
+  },
+  {
+   "station": "有饭料理店",
+   "dish": "鸡生蚝（烧鸟）",
+   "file": "鸡生蚝（烧鸟）.jpg",
+   "object_key": "cover/202610/8c15755dbba6cd8a.jpg"
+  },
+  {
+   "station": "唐小厨东北菜",
+   "dish": "锅包肉",
+   "file": "锅包肉.jpg",
+   "object_key": "cover/202610/e801c3913a0e517f.jpg"
+  },
+  {
+   "station": "唐小厨东北菜",
+   "dish": "肉段",
+   "file": "肉段.jpg",
+   "object_key": "cover/202610/72065e63b1037b76.jpg"
+  },
+  {
+   "station": "唐小厨东北菜",
+   "dish": "地三鲜",
+   "file": "地三鲜.png",
+   "object_key": "cover/202610/3016157763229b0f.png"
+  },
+  {
+   "station": "唐小厨东北菜",
+   "dish": "豆角土豆排骨",
+   "file": "豆角土豆排骨.jpg",
+   "object_key": "cover/202610/676e13a6e8ace6c5.jpg"
+  },
+  {
+   "station": "福大阿毛烧烤",
+   "dish": "掌中宝",
+   "file": "掌中宝.jpg",
+   "object_key": "cover/202610/613f07ca55f72028.jpg"
+  },
+  {
+   "station": "福大阿毛烧烤",
+   "dish": "火焰牛排",
+   "file": "火焰牛排.jpg",
+   "object_key": "cover/202610/882537ce9e05190c.jpg"
+  },
+  {
+   "station": "福大阿毛烧烤",
+   "dish": "黑虎虾",
+   "file": "黑虎虾.jpg",
+   "object_key": "cover/202610/7dcb1c14e2d2f3d8.jpg"
+  },
+  {
+   "station": "福大阿毛烧烤",
+   "dish": "印尼小管",
+   "file": "印尼小管.jpg",
+   "object_key": "cover/202610/f1d5bdca7e61b455.jpg"
+  },
+  {
+   "station": "福大阿毛烧烤",
+   "dish": "自制奶茶",
+   "file": "自制奶茶.jpg",
+   "object_key": "cover/202610/83cd28eb8bddca4f.jpg"
+  },
+  {
+   "station": "周家粥铺",
+   "dish": "猪肝粥",
+   "file": "猪肝粥.jpg",
+   "object_key": "cover/202610/f8f94622664360ca.jpg"
+  },
+  {
+   "station": "周家粥铺",
+   "dish": "海鲜粥",
+   "file": "海鲜粥.jpg",
+   "object_key": "cover/202610/09e85bf92815441e.jpg"
+  },
+  {
+   "station": "周家粥铺",
+   "dish": "皮蛋瘦肉粥",
+   "file": "皮蛋瘦肉粥.jpg",
+   "object_key": "cover/202610/14ea6efcc5491506.jpg"
+  },
+  {
+   "station": "周家粥铺",
+   "dish": "炒猪头肉",
+   "file": "炒猪头肉.jpg",
+   "object_key": "cover/202610/db6abba8701eb057.jpg"
+  },
+  {
+   "station": "黔味烤鱼",
+   "dish": "肥肠烤鱼",
+   "file": "肥肠烤鱼.jpg",
+   "object_key": "cover/202610/6d68cfadad6cc1fa.jpg"
+  },
+  {
+   "station": "黔味烤鱼",
+   "dish": "特色清江团鱼",
+   "file": "特色清江团鱼.png",
+   "object_key": "cover/202610/9e8b3356e35797ee.png"
+  },
+  {
+   "station": "黔味烤鱼",
+   "dish": "烙锅",
+   "file": "烙锅.jpg",
+   "object_key": "cover/202610/810bc769c8b34925.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "香油田鸡",
+   "file": "香油田鸡.jpg",
+   "object_key": "cover/202610/967bd71da897b2c6.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "荔枝肉",
+   "file": "荔枝肉.jpg",
+   "object_key": "cover/202610/bcdb8b130beeeb17.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "南煎肝",
+   "file": "南煎肝.jpg",
+   "object_key": "cover/202610/d90925154cef3238.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "醉排骨",
+   "file": "醉排骨.jpg",
+   "object_key": "cover/202610/05dd7c0a12a69398.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "葱油拆骨肉",
+   "file": "葱油拆骨肉.jpg",
+   "object_key": "cover/202610/13256747703130dc.jpg"
+  },
+  {
+   "station": "邱阳破店",
+   "dish": "海蛎汤",
+   "file": "海蛎汤.jpg",
+   "object_key": "cover/202610/16c704eb07d9d62b.jpg"
+  },
+  {
+   "station": "山东水饺",
+   "dish": "大葱水饺",
+   "file": "大葱水饺.jpg",
+   "object_key": "cover/202610/c7862e7c2a167ecc.jpg"
+  },
+  {
+   "station": "山东水饺",
+   "dish": "荠菜水饺",
+   "file": "荠菜水饺.jpg",
+   "object_key": "cover/202610/87e636e9a4e08c82.jpg"
+  },
+  {
+   "station": "山东水饺",
+   "dish": "拌猪耳朵",
+   "file": "拌猪耳朵.jpg",
+   "object_key": "cover/202610/cb890d6ea203e3fa.jpg"
+  },
+  {
+   "station": "山东水饺",
+   "dish": "拌皮冻",
+   "file": "拌皮冻.png",
+   "object_key": "cover/202610/0cdf9194619f0ebd.png"
+  },
+  {
+   "station": "何记河南正宗水煎包胡辣汤",
+   "dish": "肉馅/素馅水煎包",
+   "file": "肉馅／素馅水煎包.jpg",
+   "object_key": "cover/202610/d255b181ab428b0d.jpg"
+  },
+  {
+   "station": "何记河南正宗水煎包胡辣汤",
+   "dish": "胡辣汤",
+   "file": "胡辣汤.jpg",
+   "object_key": "cover/202610/0d70a37cecd3baa2.jpg"
+  },
+  {
+   "station": "依云煎包店",
+   "dish": "煎包",
+   "file": "煎包.jpg",
+   "object_key": "cover/202610/d255b181ab428b0d.jpg"
+  },
+  {
+   "station": "依云煎包店",
+   "dish": "茶叶蛋",
+   "file": "茶叶蛋.jpg",
+   "object_key": "cover/202610/d7847f19243d0a77.jpg"
+  },
+  {
+   "station": "依云煎包店",
+   "dish": "巴沙鱼汤",
+   "file": "巴沙鱼汤.jpg",
+   "object_key": "cover/202610/c84c84ea7a4eb865.jpg"
+  },
+  {
+   "station": "依云煎包店",
+   "dish": "鳗鱼汤",
+   "file": "鳗鱼汤.jpg",
+   "object_key": "cover/202610/9346cb88b0a5f80e.jpg"
+  },
+  {
+   "station": "依云煎包店",
+   "dish": "鱼丸",
+   "file": "鱼丸.png",
+   "object_key": "cover/202610/8a6d18af5fa34476.png"
+  }
+ ],
+ "stations": {
+  "盛茂源东北饺子馆": "cover/202610/e801c3913a0e517f.jpg",
+  "夜贰两东北串吧": "cover/202610/4335b3eb7830a0c6.jpg",
+  "文博家锅盔": "cover/202610/f1a7ce2867c05de6.jpg",
+  "猪师弟空气年糕": "cover/202610/2140ccae223c9b91.jpg",
+  "陈记片皮鸭": "cover/202610/0732abd22bd8f551.jpg",
+  "壹品豆花": "cover/202610/bbf5e639ded51d97.jpg",
+  "便宜坊（原光阴的故事）": "cover/202610/cc6bc29bbcaacfdd.jpg",
+  "临榆炸鸡腿（学生街店）": "cover/202610/2a7f9c3ca4df9d2f.jpg",
+  "台湾锅贴": "cover/202610/40bf699290bdc863.webp",
+  "重庆小面": "cover/202610/1b5a479fb3d9384b.jpg",
+  "刘记肉夹馍": "cover/202610/68dfc156f2d2af03.jpg",
+  "可可烘焙": "cover/202610/5c3b605d9399d2c5.jpg",
+  "广式养生鸡": "cover/202610/9dffd2526b0e2903.jpg",
+  "莆田卤面·天九湾炝肉·山里炝粉": "cover/202610/7e49d407bb7b30f3.jpg",
+  "栗栗烘焙-栗酥饼（福大店）": "cover/202610/4deb6b3503a7b177.jpg",
+  "江一福·按时吃饭·啫啫煲": "cover/202610/744e0e7c12088af7.jpg",
+  "周麻婆·新川式家常菜": "cover/202610/ab6d80130a9bbd73.png",
+  "鲜榨果汁·现炒板栗": "cover/202610/d618f85c37c5676c.jpg",
+  "洪濑鸡爪": "cover/202610/463cb0e5bc49efca.jpg",
+  "云南铜锅牛羊肉米线": "cover/202610/7a5807f605255590.jpg",
+  "达叔肉夹馍·烤冷面": "cover/202610/c82d6122e02fc21d.jpg",
+  "成都纸包鱼烧烤大排档": "cover/202610/784b0a55b73dae41.jpg",
+  "桥头排骨": "cover/202610/fffce9e2a9f70f8c.jpg",
+  "北方饭店": "cover/202610/020ba0952512f2b2.png",
+  "川册·川味小馆": "cover/202610/ab6d80130a9bbd73.png",
+  "李夏记牛腩煲（原广式牛杂）": "cover/202610/1a56db5e3f36db74.jpg",
+  "焦焦牧场·鲜牛奶炸鸡": "cover/202610/d220e664b44b4a19.png",
+  "116炭火": "cover/202610/3f9ea9148bbb4faa.jpg",
+  "fufu牛奶冰": "cover/202610/86d796e57631ea90.jpg",
+  "傻师傅台湾厨房": "cover/202610/ba553383c02fdb01.jpg",
+  "新疆石榴花美食馆": "cover/202610/8876cd4a251fe87f.jpg",
+  "禾西Restaurant": "cover/202610/c8ea3d961083b97e.jpg",
+  "大福的烧鸟·居酒屋": "cover/202610/91164b416d1ad518.jpg",
+  "有饭料理店": "cover/202610/7f27576d596668c0.jpg",
+  "唐小厨东北菜": "cover/202610/e801c3913a0e517f.jpg",
+  "福大阿毛烧烤": "cover/202610/613f07ca55f72028.jpg",
+  "周家粥铺": "cover/202610/f8f94622664360ca.jpg",
+  "黔味烤鱼": "cover/202610/6d68cfadad6cc1fa.jpg",
+  "邱阳破店": "cover/202610/967bd71da897b2c6.jpg",
+  "山东水饺": "cover/202610/c7862e7c2a167ecc.jpg",
+  "何记河南正宗水煎包胡辣汤": "cover/202610/d255b181ab428b0d.jpg",
+  "依云煎包店": "cover/202610/d255b181ab428b0d.jpg"
+ },
+ "canteens": {
+  "盛茂源东北饺子馆": "cover/202610/e801c3913a0e517f.jpg",
+  "夜贰两东北串吧": "cover/202610/4335b3eb7830a0c6.jpg",
+  "文博家锅盔": "cover/202610/f1a7ce2867c05de6.jpg",
+  "猪师弟空气年糕": "cover/202610/2140ccae223c9b91.jpg",
+  "陈记片皮鸭": "cover/202610/0732abd22bd8f551.jpg",
+  "壹品豆花": "cover/202610/bbf5e639ded51d97.jpg",
+  "便宜坊（原光阴的故事）": "cover/202610/cc6bc29bbcaacfdd.jpg",
+  "临榆炸鸡腿（学生街店）": "cover/202610/2a7f9c3ca4df9d2f.jpg",
+  "台湾锅贴": "cover/202610/40bf699290bdc863.webp",
+  "重庆小面": "cover/202610/1b5a479fb3d9384b.jpg",
+  "刘记肉夹馍": "cover/202610/68dfc156f2d2af03.jpg",
+  "可可烘焙": "cover/202610/5c3b605d9399d2c5.jpg",
+  "广式养生鸡": "cover/202610/9dffd2526b0e2903.jpg",
+  "莆田卤面·天九湾炝肉·山里炝粉": "cover/202610/7e49d407bb7b30f3.jpg",
+  "栗栗烘焙-栗酥饼（福大店）": "cover/202610/4deb6b3503a7b177.jpg",
+  "江一福·按时吃饭·啫啫煲": "cover/202610/744e0e7c12088af7.jpg",
+  "周麻婆·新川式家常菜": "cover/202610/ab6d80130a9bbd73.png",
+  "鲜榨果汁·现炒板栗": "cover/202610/d618f85c37c5676c.jpg",
+  "洪濑鸡爪": "cover/202610/463cb0e5bc49efca.jpg",
+  "云南铜锅牛羊肉米线": "cover/202610/7a5807f605255590.jpg",
+  "达叔肉夹馍·烤冷面": "cover/202610/c82d6122e02fc21d.jpg",
+  "成都纸包鱼烧烤大排档": "cover/202610/784b0a55b73dae41.jpg",
+  "桥头排骨": "cover/202610/fffce9e2a9f70f8c.jpg",
+  "北方饭店": "cover/202610/020ba0952512f2b2.png",
+  "川册·川味小馆": "cover/202610/ab6d80130a9bbd73.png",
+  "李夏记牛腩煲（原广式牛杂）": "cover/202610/1a56db5e3f36db74.jpg",
+  "焦焦牧场·鲜牛奶炸鸡": "cover/202610/d220e664b44b4a19.png",
+  "116炭火": "cover/202610/3f9ea9148bbb4faa.jpg",
+  "fufu牛奶冰": "cover/202610/86d796e57631ea90.jpg",
+  "傻师傅台湾厨房": "cover/202610/ba553383c02fdb01.jpg",
+  "新疆石榴花美食馆": "cover/202610/8876cd4a251fe87f.jpg",
+  "禾西Restaurant": "cover/202610/c8ea3d961083b97e.jpg",
+  "大福的烧鸟·居酒屋": "cover/202610/91164b416d1ad518.jpg",
+  "有饭料理店": "cover/202610/7f27576d596668c0.jpg",
+  "唐小厨东北菜": "cover/202610/e801c3913a0e517f.jpg",
+  "福大阿毛烧烤": "cover/202610/613f07ca55f72028.jpg",
+  "周家粥铺": "cover/202610/f8f94622664360ca.jpg",
+  "黔味烤鱼": "cover/202610/6d68cfadad6cc1fa.jpg",
+  "邱阳破店": "cover/202610/967bd71da897b2c6.jpg",
+  "山东水饺": "cover/202610/c7862e7c2a167ecc.jpg",
+  "何记河南正宗水煎包胡辣汤": "cover/202610/d255b181ab428b0d.jpg",
+  "依云煎包店": "cover/202610/d255b181ab428b0d.jpg"
+ }
+}

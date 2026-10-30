@@ -226,14 +226,14 @@ async function unset_favorite(userId, subjectType, subjectId) {
 }
 
 /**
- * 点位提交（用户报新点位/档口/菜品，payload JSON 留痕，进后台审核）
+ * 点位提交（用户报新点位/档口/菜品/入驻申请，payload JSON 留痕，进后台审核）
  * @param {number} userId
- * @param {Object} input - {submitType: 0点位/1档口/2菜品, targetId, payload}
+ * @param {Object} input - {submitType: 0点位/1档口/2菜品/3档口入驻, targetId, payload}
  * @returns {Promise<{id: number}>}
  */
 async function create_point_submit(userId, input) {
     const submitType = Number(input.submitType);
-    assert([0, 1, 2].includes(submitType), 'submitType 不合法');
+    assert([0, 1, 2, 3].includes(submitType), 'submitType 不合法');
     const raw = input.payload && typeof input.payload === 'object' ? input.payload : {};
     const targetId = input.targetId === undefined || input.targetId === null || input.targetId === ''
         ? null : Number(input.targetId);
@@ -261,7 +261,7 @@ async function create_point_submit(userId, input) {
         assert(name.length >= 1 && name.length <= 64, '档口名称需 1-64 字');
         const category = String(raw.category || '').trim().slice(0, 32);
         payload = { name, category };
-    } else {
+    } else if (submitType === 2) {
         // 新菜品：必须挂靠未下架档口；名称必填，价格/口味/忌口可选
         assert(Number.isInteger(targetId) && targetId > 0, '缺少挂靠档口');
         const station = await query_one('SELECT id FROM station WHERE id = ? AND status < 2', [targetId]);
@@ -276,6 +276,17 @@ async function create_point_submit(userId, input) {
         const tasteTags = String(raw.tasteTags || '').slice(0, 128);
         const tabooTags = String(raw.tabooTags || '').slice(0, 128);
         payload = { name, price, tasteTags, tabooTags };
+    } else {
+        // 档口入驻申请：店名/联系人/手机号必填，位置与简介选填，进后台人工审核
+        const name = String(raw.name || '').trim();
+        assert(name.length >= 1 && name.length <= 64, '档口名称需 1-64 字');
+        const contact = String(raw.contact || '').trim();
+        assert(contact.length >= 1 && contact.length <= 32, '联系人需 1-32 字');
+        const phone = String(raw.phone || '').trim();
+        assert(/^1\d{10}$/.test(phone), '请输入 11 位手机号');
+        const position = String(raw.position || '').trim().slice(0, 128);
+        const intro = String(raw.intro || '').trim().slice(0, 300);
+        payload = { name, contact, phone, position, intro };
     }
     // payload 列为 JSON 类型，必须 stringify 后传参
     const r = await query(

@@ -7,16 +7,13 @@
  *   ③ 后端拿 ticket 调 ${base}/serviceValidate?ticket=...&service=... 校验，解析 XML 取学号与姓名
  *   真实接入需向福大网信办申请应用注册（service 回调白名单），凭证填入 env 即切换，代码不变
  *
- * demo 模式：任一 env 缺失时的演示桩——学号（6-12 位数字）+ 口令（≥6 位）模拟校验，
+ * demo 模式：任一 env 缺失时的演示桩——学号（福州大学 9 位数字）+ 统一初始口令（默认 FZU521），
+ *   口令托管在 fzu_account 表（r80）：首次登录建档并强制改密，之后可用本人改密后的口令登录；
  *   姓名由学号确定性映射（同学号恒同名，演示稳定）；答辩如实说明，数据模型与接口协议与真实一致
  */
 const config = require('../config');
+const fzu_account = require('../services/fzu-account.service');
 const { err } = require('./api-error');
-
-/** 姓氏池（演示桩确定性映射用） */
-const SURNAMES = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '吴', '周'];
-/** 名字池 */
-const GIVEN = ['志强', '晓明', '佳怡', '俊杰', '雨桐', '浩然', '欣然', '子轩', '思远', '梦琪'];
 
 /** 当前 CAS 模式：env 凭证齐备 → real，否则 demo */
 function cas_mode() {
@@ -31,24 +28,14 @@ function cas_login_url() {
 }
 
 /**
- * 模拟 CAS 校验（demo 模式专用）
- * @param {string} studentId - 学号/工号（6-12 位数字，如 102400207）
- * @param {string} password - 统一身份认证口令
- * @returns {{uid: string, name: string}} 学号与姓名
+ * 模拟 CAS 校验（demo 模式专用，r80 起为口令托管口径）
+ * @param {string} studentId - 学号/工号（9 位数字，如 102400207；与 db3 身份口径一致）
+ * @param {string} password - 统一身份认证口令（首次登录须为统一初始口令，如 FZU521）
+ * @returns {Promise<{uid: string, name: string, must_change: boolean}>} 学号、姓名与「是否仍用初始口令」
  * @throws {Error} 业务码 40001（invalid）：学号格式或口令不合法
  */
-function assert_fzu_cas(studentId, password) {
-    const sid = String(studentId || '').trim();
-    if (!/^\d{6,12}$/.test(sid)) {
-        throw err.invalid('学号格式不正确（6-12 位数字，如 102400207）');
-    }
-    if (typeof password !== 'string' || password.length < 6) {
-        throw err.invalid('统一身份认证口令至少 6 位');
-    }
-    // 确定性姓名：同学号恒同名（演示桩语义；真实 CAS 由学校人员库返回）
-    const h = Number(sid.slice(-4));
-    const name = SURNAMES[h % 10] + GIVEN[Math.floor(h / 10) % 10];
-    return { uid: sid, name };
+async function assert_fzu_cas(studentId, password) {
+    return fzu_account.verify_credential(studentId, password);
 }
 
 /**
@@ -94,9 +81,9 @@ async function validate_cas_ticket(ticket) {
 
 /**
  * 按当前模式校验 SSO/绑定凭据（routes 层统一入口）
- * real 模式只认 ticket（防伪造学号绕过真实认证）；demo 模式只认学号 + 口令
+ * real 模式只认 ticket（防伪造学号绕过真实认证）；demo 模式认学号 + 托管口令
  * @param {Object} body - 请求体（{ticket} 或 {studentId, password}）
- * @returns {Promise<{uid: string, name: string}>} 校验通过的身份
+ * @returns {Promise<{uid: string, name: string, must_change: boolean}>} 校验通过的身份
  * @throws {Error} 业务码 40001：模式不匹配或校验不通过
  */
 async function assert_cas_credential(body) {
@@ -107,7 +94,8 @@ async function assert_cas_credential(body) {
         }
         const cas = await validate_cas_ticket(String(ticket));
         if (!cas) throw err.invalid('统一身份认证校验失败或票据已过期，请重新授权登录');
-        return cas;
+        // 真实 CAS 的口令由校方托管，本地无「初始口令」概念
+        return { ...cas, must_change: false };
     }
     if (ticket) throw err.invalid('当前环境未配置真实 CAS，请使用学号 + 口令登录');
     return assert_fzu_cas(studentId, password);

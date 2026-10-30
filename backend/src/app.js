@@ -14,6 +14,10 @@ const config = require('./config');
  */
 function create_app() {
     const app = express();
+    // 信任两跳反向代理（Docker 发布端口的用户态代理 → Nginx；Linux 直连部署时第二跳不存在，仍取真实 IP）。
+    // 目的：req.ip 取 X-Forwarded-For 的真实客户端 IP，避免匿名限流（登录/注册/验证码）退化为全站共享一个桶。
+    // 取舍：X-Forwarded-For 左端可由客户端伪造，仅影响「限流分桶」，不影响鉴权与身份；登录另有图形验证码兜底。
+    app.set('trust proxy', 2);
     app.use(cors());
     app.use(express.json({ limit: '1mb' }));
 

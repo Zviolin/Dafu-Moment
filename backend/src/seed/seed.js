@@ -1,10 +1,11 @@
 /**
- * 种子数据一键导入（v2.1 口径，v2.0 数据 + 点位中文标签）：
- * 数据口径：基于福州大学旗山校区真实食堂、美岐学生街与永嘉天地真实在营商户编写的「拟真数据集」
- * （菜品/价格贴近实际门店菜单，评价文本参考大众点评/美团真实点评语料风格人工撰写，
- * 非爬虫抓取，答辩如实说明）：
- * 10 点位（6 校内食堂 + 3 永嘉天地商户 + 美岐学生街）/ 52 窗口 / 330+ 菜品 / 管理员+12 学生 /
- * 180+ 条种子评价（按维度配置加权打分）/ 收藏（想吃）/ 窗口公告；随后聚合全量重算
+ * 种子数据一键导入（r78 真实数据口径）：
+ * - 点位 / 档口 / 菜品：来自 https://github.com/Zviolin/Dafu-Moment 最新提交的
+ *   data/db3/sql/03_collected_places.sql + 06_estimated_menu_seed.sql（60 个真实点位、
+ *   11 份明码菜单、37 道明码菜），并合并其公开数据源 qishan.geojson 的坐标/人均/评分/招牌菜。
+ * - 没有公开逐菜标价的店铺按公开人均生成估算价，dish.is_estimated=1，前端标注「估」。
+ * - 评价文本仍为演示语料（非爬虫），仅用于让页面有内容；用户数/福宝数等统计全部真实计数。
+ * - 同时初始化成长任务 12 条与宠物装扮 3 件。
  */
 const bcrypt = require('bcryptjs');
 const { query, query_one } = require('../db/pool');
@@ -39,71 +40,77 @@ function pick(arr) {
     return arr[rand_int(0, arr.length - 1)];
 }
 
-/* ===== 点位：校内 6 食堂（type=0）+ 永嘉天地 3 商户（type=1）+ 美岐学生街（type=2） =====
- * 校内餐厅名全部取自福州大学后勤管理处官网营业通知（hqc.fzu.edu.cn，2026-07/2024-08/2023-07 公告）：
- * 生活一区：海棠园京元餐厅（一楼）、茉莉园聚誉餐厅（二楼）、丁香园品膳餐厅、丹桂园朝阳餐厅；
- * 生活三区：玫瑰园食惠餐厅、紫荆园捷祥餐厅（含麦当劳）；教学区：桃李园餐厅（教工接待）。
- * 位置描述为楼栋级口径（生活一/三区沿校园西侧，玫瑰园/紫荆园并排 serve 二三区）。
- * 坐标 GCJ-02 火星坐标：美岐用 poi86 火星坐标 119.191987,26.059497（早期误用大地坐标会偏约 500 米）；
- * 永嘉天地取 26.0600/119.1930 一带微错开。
- * tags：点位中文标签（03 §2 canteen.tags JSON），2-4 个按点位类型/主营合理分配
+/* ===== 点位 / 档口 / 菜品：真实数据（Dafu-Moment data/db3 最新提交 + 公开 POI 坐标） =====
+ * 来源：https://github.com/Zviolin/Dafu-Moment 的 data/db3/sql/03_collected_places.sql
+ *      与 06_estimated_menu_seed.sql（60 个真实点位、11 份菜单、37 道明码菜）；
+ *      坐标/评分/人均/招牌菜来自其公开数据源 qishan.geojson（经 data/db3 脚本引用）。
+ * 说明：没有公开逐菜标价的店铺，用公开人均与招牌菜名生成「估算价」，dish.is_estimated=1。
  */
-const CANTEENS = [
-    { name: '旗山校区·京元餐厅（海棠园）', type: 0, campus: '旗山校区', location: '生活一区一楼，近东门', avgPrice: 12, lat: 26.0567, lng: 119.1927, cover: 'preset:rice', tags: ['自选菜', '米饭套餐', '平价', '粉面'] },
-    { name: '旗山校区·丁香园餐厅', type: 0, campus: '旗山校区', location: '生活一区，临青春广场', avgPrice: 13, lat: 26.0559, lng: 119.1920, cover: 'preset:dumpling', tags: ['面食', '粉面', '自选菜'] },
-    { name: '旗山校区·朝阳餐厅（丹桂园）', type: 0, campus: '旗山校区', location: '生活一区，丁香园北侧（原丁香园二楼）', avgPrice: 11, lat: 26.0565, lng: 119.1914, cover: 'preset:wok', tags: ['自选菜', '平价', '家常菜'] },
-    { name: '旗山校区·玫瑰园餐厅（食惠）', type: 0, campus: '旗山校区', location: '生活三区大门旁，临生活二区', avgPrice: 12, lat: 26.0523, lng: 119.1917, cover: 'preset:salad', tags: ['米饭套餐', '粉面', '自助'] },
-    { name: '旗山校区·紫荆园餐厅（捷祥）', type: 0, campus: '旗山校区', location: '生活三区，含麦当劳', avgPrice: 15, lat: 26.0528, lng: 119.1926, cover: 'preset:burger', tags: ['汉堡', '奶茶', '西式快餐'] },
-    { name: '旗山校区·桃李园餐厅', type: 0, campus: '旗山校区', location: '教学区东三教学楼旁（教工接待餐厅）', avgPrice: 16, lat: 26.0576, lng: 119.1962, cover: 'preset:noodle', tags: ['教工餐厅', '面食', '米饭套餐'] },
-    { name: '永嘉天地·巷口麻辣烫', type: 1, campus: '周边商区', location: '永嘉天地 B1', avgPrice: 18, lat: 26.0602, lng: 119.1926, cover: 'preset:hotpot', tags: ['麻辣烫', '外卖', '微辣'], category: '麻辣烫', dishes: [['招牌骨汤麻辣烫', 18], ['番茄麻辣烫', 17], ['微辣套餐', 20], ['加宽粉', 2], ['加午餐肉', 5]] },
-    { name: '永嘉天地·食光里轻食', type: 1, campus: '周边商区', location: '永嘉天地一层', avgPrice: 22, lat: 26.0597, lng: 119.1932, cover: 'preset:salad', tags: ['轻食', '沙拉', '素食'], category: '轻食', dishes: [['鸡胸肉沙拉', 16], ['牛油果沙拉', 19], ['全麦三明治', 13], ['藜麦碗', 17]] },
-    { name: '永嘉天地·果遇鲜果茶', type: 1, campus: '周边商区', location: '永嘉天地一层中庭', avgPrice: 15, lat: 26.0601, lng: 119.1934, cover: 'preset:milktea', tags: ['奶茶', '甜品', '外卖'], category: '甜品饮品', dishes: [['满杯百香果', 12], ['杨枝甘露', 15], ['柠檬茶', 9], ['鲜橙四季春', 10]] },
-    { name: '美岐学生街', type: 2, campus: '周边商区', location: '旗山校区西门·美岐商业街', avgPrice: 18, lat: 26.0595, lng: 119.1920, cover: 'preset:hotpot', tags: ['小吃街', '粉面', '汉堡', '麻辣烫'] },
-];
+const REAL = require('./real-data.json');
 
-/* 品类 → 预设封面（preset: 前缀存库，前端 cover_url 映射 /preset-cover/ 贴纸 SVG） */
+/* ===== 真实菜品图映射表（r84）=====
+ * 来源：华为云 CodeHub 仓库 dafu-shike 的 assets/dish-images/（150 张真实菜品图）
+ * object_key 为 MinIO 对象键（cover/{yyyymm}/{内容哈希前16}.{ext}），内容寻址天然幂等
+ * 无对应图片的菜品/档口/点位回退到 CATEGORY_COVER 的 preset 占位图
+ */
+const IMAGE_MAP = require('./dish-image-map.json');
+
+/** 菜品封面键：档口名 + 空格 + 菜名 双键（避免重名菜品跨档口串图，须与下方查询处的拼接保持一致） */
+const DISH_COVER = new Map(IMAGE_MAP.dishes.map((d) => [`${d.station} ${d.dish}`, d.object_key]));
+
 const CATEGORY_COVER = {
     '自选菜': 'preset:rice', '米饭套餐': 'preset:rice', '套餐': 'preset:rice',
-    '粉面': 'preset:noodle', '面食': 'preset:noodle',
+    '粉面': 'preset:noodle', '面食': 'preset:noodle', '面条': 'preset:noodle',
     '面点': 'preset:baozi', '小吃': 'preset:fries', '卤味': 'preset:fries',
     '轻食': 'preset:salad', '汉堡简餐': 'preset:burger', '铁板': 'preset:bbq',
     '韩式': 'preset:hotpot', '麻辣烫': 'preset:hotpot', '家常炒菜': 'preset:wok',
-    '甜品饮品': 'preset:milktea', '福州小吃': 'preset:dumpling', '炸鸡小吃': 'preset:chicken',
+    '炒菜': 'preset:wok', '甜品饮品': 'preset:milktea', '甜品': 'preset:milktea',
+    '福州小吃': 'preset:dumpling', '炸鸡小吃': 'preset:chicken', '炸物': 'preset:fries',
+    '烧烤': 'preset:bbq', '烤鱼': 'preset:bbq', '烧鸟': 'preset:bbq', '综合': 'preset:rice',
 };
 
-/* 校内窗口模板（品类名即窗口名，随机洗牌分配） */
-const STATION_TPL = [
-    ['麻辣香锅', '自选菜'], ['黄焖鸡米饭', '米饭套餐'], ['兰州拉面', '面食'], ['沙县小吃', '粉面'],
-    ['重庆小面', '面食'], ['广式煲仔饭', '米饭套餐'], ['卤味熟食', '卤味'], ['铁板烧', '铁板'],
-    ['石锅拌饭', '韩式'], ['手工水饺', '面点'], ['烧腊饭', '米饭套餐'], ['自选快餐', '自选菜'],
-    ['日式定食', '套餐'], ['麻辣烫', '自选菜'], ['炸鸡汉堡', '小吃'], ['粥粉面档', '粉面'],
-    ['轻食沙拉', '轻食'], ['台湾卤肉饭', '米饭套餐'], ['烤肉拌饭', '米饭套餐'], ['螺蛳粉', '粉面'],
-];
+/**
+ * 依据真实菜名推断口味标签（用于筛选，不臆造具体口味强度）
+ * @param {string} name
+ * @returns {string}
+ */
+function taste_of(name) {
+    if (/辣|麻|椒|川|湘/.test(name)) return '偏辣';
+    if (/甜|奶|糖|蛋糕|泡芙|蛋挞|冰|芋泥|栗/.test(name)) return '甜香';
+    if (/汤|粥|蒸|清|豆花/.test(name)) return '清淡';
+    if (/炸|烤|酥|脆|鸡排|鸡腿/.test(name)) return '香脆';
+    return '咸鲜';
+}
 
-/* 美岐学生街：真实在营商户 + 贴近门店菜单的招牌菜 */
-const OFF_CAMPUS_STATIONS = [
-    { name: '周麻婆·川菜小馆', category: '家常炒菜', dishes: [['周麻婆豆腐', 14], ['水煮肉片', 22], ['宫保鸡丁', 18], ['鱼香肉丝', 17], ['酸汤肥牛', 26], ['干锅花菜', 14], ['番茄蛋汤', 6]] },
-    { name: '塔斯汀·中国汉堡', category: '汉堡简餐', dishes: [['板烧凤梨中国堡', 16], ['香辣鸡腿堡', 13], ['北京烤鸭中国堡', 17], ['藤椒鸡排堡', 14], ['双层牛肉堡', 19], ['经典薯条', 7]] },
-    { name: '华莱士·全鸡汉堡', category: '汉堡简餐', dishes: [['香辣鸡腿堡', 10], ['全鸡汉堡', 9], ['黄金鸡米花', 8], ['香酥鸡排', 11], ['蛋挞', 4], ['可乐', 3]] },
-    { name: '蜜雪冰城', category: '甜品饮品', dishes: [['冰鲜柠檬水', 4], ['珍珠奶茶', 6], ['摇摇奶昔', 7], ['圣代', 5], ['满杯百香果', 7], ['柠檬芦荟', 6]] },
-    { name: '张亮麻辣烫', category: '麻辣烫', dishes: [['招牌骨汤麻辣烫', 20], ['番茄麻辣烫', 19], ['微辣套餐', 22], ['加宽粉', 2], ['加午餐肉', 5]] },
-    { name: '老福洲·拌面扁肉', category: '福州小吃', dishes: [['花生酱拌面', 7], ['扁肉', 7], ['拌面扁肉套餐', 13], ['卤蛋', 2], ['罗汉肉', 10], ['炸春卷', 6]] },
-    { name: '正新鸡排·美岐店', category: '炸鸡小吃', dishes: [['大鸡排', 12], ['摇滚鱿鱼', 13], ['鸡米花', 9], ['甘梅地瓜条', 8], ['柠檬茶', 6]] },
-];
-
-const DISH_TPL = {
-    自选菜: [['香锅牛肉', 18], ['香锅鸡柳', 15], ['香锅豆腐', 10], ['香锅土豆片', 8], ['香锅宽粉', 8], ['时蔬拼盘', 7], ['香锅鸡翅', 16], ['午餐肉拼盘', 12]],
-    米饭套餐: [['黄焖鸡米饭', 15], ['卤肉饭', 13], ['烧鸭饭', 18], ['叉烧饭', 17], ['烤肉拌饭', 15], ['咖喱鸡饭', 13], ['排骨饭', 16]],
-    面食: [['牛肉拉面', 14], ['刀削面', 12], ['炸酱面', 11], ['番茄鸡蛋面', 10], ['酸辣粉', 10], ['重庆小面', 12]],
-    粉面: [['拌粉', 8], ['扁肉', 7], ['炖罐套餐', 14], ['蒸饺', 8], ['炒粉', 10], ['云吞面', 12]],
-    卤味: [['卤鸡腿', 8], ['卤鸭翅', 9], ['卤蛋', 2], ['卤豆干', 4], ['卤牛肉', 20], ['凉拌卤味拼盘', 15]],
-    铁板: [['铁板牛柳', 19], ['铁板鱿鱼', 18], ['铁板鸡排', 15], ['铁板豆腐', 10]],
-    韩式: [['石锅拌饭', 15], ['泡菜肥牛石锅', 18], ['韩式炸鸡', 20], ['芝士年糕', 14]],
-    面点: [['猪肉水饺', 10], ['玉米猪肉饺', 11], ['韭菜盒', 5], ['蒸包', 6], ['煎饺', 9]],
-    套餐: [['照烧鸡定食', 18], ['猪排定食', 19], ['三文鱼亲子饭', 25], ['味噌拉面套餐', 17]],
-    小吃: [['香辣炸鸡', 13], ['汉堡套餐', 16], ['薯条', 6], ['鸡米花', 9]],
-    轻食: [['鸡胸肉沙拉', 15], ['牛油果沙拉', 18], ['全麦三明治', 12], ['藜麦碗', 16]],
-};
+/* 真实点位 → 种子结构；只保留公开数据里真实存在的档口，没有菜单数据的点位不造「默认档口」 */
+const CANTEENS = REAL.places.map((p) => {
+    const stations = (p.stations || []).map((st) => ({
+        name: String(st.name || '默认档口').slice(0, 64),
+        category: String(st.category || '综合').slice(0, 32),
+        dishes: (st.dishes || []).map((d) => [
+            String(d.name || '').slice(0, 64),
+            Number(d.price) || 0,
+            String(d.unit || '元').slice(0, 16),
+            d.estimated ? 1 : 0,
+        ]),
+    }));
+    return {
+        name: String(p.name).slice(0, 64),
+        type: Number(p.type),
+        campus: p.campus || '旗山校区',
+        location: String(p.location || '').slice(0, 128),
+        avgPrice: p.avg_price == null ? null : Number(p.avg_price),
+        businessHours: p.business_hours == null ? null : String(p.business_hours).slice(0, 64),
+        lat: p.lat == null ? null : Number(p.lat),
+        lng: p.lng == null ? null : Number(p.lng),
+        rating: p.rating == null ? null : Number(p.rating),
+        cover: IMAGE_MAP.canteens[String(p.name)]
+            || CATEGORY_COVER[(stations[0] && stations[0].category) || '']
+            || 'preset:rice',
+        tags: (p.tags || []).slice(0, 8),
+        stations,
+    };
+});
 
 const TASTE = ['偏辣', '清淡', '少油', '香辣', '咸鲜', '酸甜', '浓郁', '爽口', '微麻'];
 const TABOO = ['清真', '素食', '无香菜', '无葱蒜'];
@@ -122,23 +129,16 @@ const DIMENSIONS = [
 
 /* ===== 评价语料：参考大众点评/美团真实点评风格人工撰写（拟真口径） ===== */
 const GOOD_TEXTS = [
-    '京元这家香锅真的百吃不腻，土豆片边缘炸得焦焦的，宽粉吸满汤汁，每次都忍不住多点两个菜，人均14吃到扶墙。',
-    '阿姨手不抖！鸡腿给得满满当当，酱汁拌饭一绝，十二点下课跑过去也就排了五分钟。',
-    '排队十分钟，出餐巨快。牛肉拉面汤头很鲜，面条是现拉的，加个卤蛋完美，一周吃了三回。',
-    '黄焖鸡汤汁浓，土豆炖得粉粉的，米饭给得多，还送免费例汤，15块钱讲良心了。',
-    '这个拌面是花生酱的魂！福州人从小吃到大的味道，扁肉皮薄肉实，13块的套餐学生党狂喜。',
-    '柠檬水4块钱一大杯，冰给得很实在，上完体育课来一杯，救命神器。',
-    '麻辣烫选菜区很干净，骨汤是能直接喝的那种，不是味精水，阿姨还提醒我别拿太多怕浪费。',
-    '石锅拌饭锅巴绝了，滋滋响着端上来，酱料够味，就是泡菜给得有点少，扣半星哈哈。',
-    '叉烧肥瘦刚好，酱汁渗到饭底，这个窗口撑起了整个食堂的排队长度。',
-    '新出的藤椒味麻得刚刚好不抢戏，鸡肉腌得入味，感觉得连吃一周才能戒掉。',
-    '水煮肉片麻而不燥，肉片很嫩，就是中午人超多要拼桌，早点来。',
-    '打饭阿姨已经认识我了，每次都多给一勺土豆，救命，这窗口我能吃到大四。',
-    '期末周连吃四天，包水饺的大姐手速惊人，玉米猪肉馅清清甜甜的，热乎。',
-    '汉堡胚是现烤的软乎的那种，凤梨片很解腻，比隔壁强不少，就是饭点要等一刻钟。',
-    '铁板鱿鱼火候正好，酱料是自己炒的那种，吃完盘底都想刮干净，就是吃完一身味别去上课了哈哈哈。',
-    '打包回宿舍打开还是热乎的，盒子扎得严实一点没洒，配送速度也快，好评。',
-    '人均二十出头吃这么一大盆，性价比在永嘉这一圈里真的很能打。',
+    '份量给得很实在，味道也在线，下课过来吃一顿很满足，人均十几块很值。',
+    '出餐比想象中快，饭点排了几分钟就拿到了，热气腾腾的，冬天吃特别舒服。',
+    '老板人很热情，还提醒我小心烫。味道不是那种重口调料味，吃完不口干。',
+    '第一次来随便点的，结果意外好吃，已经安利给室友了，下次还来。',
+    '价格和份量很匹配，学生党友好。小料可以自己加，这点很加分。',
+    '堂食环境比照片看起来干净，桌面收得挺勤，翻台快不用等太久。',
+    '口味比较稳，连着吃了好几次都没翻车，属于不知道吃啥时的安全牌。',
+    '打包回去也没有坨，汤汁分开装的，细节做得不错，配送也快。',
+    '招牌菜确实有东西，香味很足但不齁，配米饭刚刚好。',
+    '阿姨手不抖，给的量对学生很友好，一顿顶两顿，性价比拉满。',
 ];
 const MID_TEXTS = [
     '说实话就那样吧，胜在便宜，赶时间可以吃，专门过去没必要。',
@@ -264,45 +264,35 @@ async function seed_if_empty() {
     }
     log.info(`[seed] 评分维度配置 ${DIMENSIONS.length} 条`);
 
-    /* 4. 点位 / 窗口 / 菜品 */
-    const dishRows = []; // {id, canteenType}——评价生成按点位类型取适用维度
+    /* 4. 点位 / 档口 / 菜品（全部来自真实 POI 数据；无公开菜单的档口保留空菜单） */
+    const dishRows = []; // {id, canteenType}
     for (const c of CANTEENS) {
         const r = await query(
-            'INSERT INTO canteen (name, type, campus, location, avg_price, lat, lng, cover_object_key, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [c.name, c.type, c.campus, c.location, c.avgPrice, c.lat, c.lng, c.cover, JSON.stringify(c.tags || [])]
+            'INSERT INTO canteen (name, type, campus, location, avg_price, business_hours, lat, lng, cover_object_key, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [c.name, c.type, c.campus, c.location, c.avgPrice, c.businessHours, c.lat, c.lng, c.cover, JSON.stringify(c.tags || [])]
         );
         const canteenId = r.insertId;
-        // 窗口来源：永嘉商户 → 与店铺同名的默认档口；美岐 → 固定真实商户；校内 → 模板洗牌取 7 窗口
-        const stations = c.category
-            ? [{ name: c.name, category: c.category, dishes: c.dishes }]
-            : (c.type === 2
-                ? OFF_CAMPUS_STATIONS
-                : [...STATION_TPL].sort(() => rand() - 0.5).slice(0, 7).map(([stName, category]) => ({ name: stName, category, dishes: null })));
+        const stations = c.stations;
         for (const [si, st] of stations.entries()) {
-            // 档口导览坐标（T-31/AC08）：承所属点位坐标 + 按档口序号的确定性小偏移（±0.0008°≈±80m，防标记重叠）
+            // 档口导览坐标：承所属点位坐标 + 确定性小偏移，避免多个点位标记重叠
             const stLat = c.lat == null ? null : Number(c.lat) + ((si % 5) - 2) * 0.0004;
             const stLng = c.lng == null ? null : Number(c.lng) + ((Math.floor(si / 5) % 5) - 2) * 0.0004;
+            const cover = IMAGE_MAP.stations[st.name] || CATEGORY_COVER[st.category] || c.cover || 'preset:rice';
             const rs = await query(
                 'INSERT INTO station (canteen_id, name, category, cover_object_key, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
-                [canteenId, st.name, st.category, CATEGORY_COVER[st.category] || 'preset:rice', stLat, stLng]
+                [canteenId, st.name, st.category, cover, stLat, stLng]
             );
             const stationId = rs.insertId;
-            const dishes = st.dishes || (() => {
-                // 校内按品类出 6-8 道
-                const pool = DISH_TPL[st.category] || DISH_TPL['自选菜'];
-                return [...pool].sort(() => rand() - 0.5).slice(0, Math.min(pool.length, rand_int(6, 8)));
-            })();
-            for (const [dName, basePrice] of dishes) {
-                // 校内价格小幅浮动；校外商户按门店实价（不浮动）
-                const price = (c.type === 0 ? basePrice + rand_int(-2, 3) : basePrice).toFixed(1);
-                const taste = Array.from({ length: rand_int(1, 2) }, () => pick(TASTE)).filter((v, idx, a) => a.indexOf(v) === idx).join(',');
-                const taboo = rand() < 0.25 ? pick(TABOO) : '';
-                // ~15% 菜品为近 14 天上新
+            for (const [dName, basePrice, unit, estimated] of st.dishes) {
+                if (!dName) continue;
+                const price = Number(basePrice).toFixed(1);
                 const isNew = rand() < 0.15;
+                // 菜品封面优先取真实菜品图，无图回退档口封面
+                const dishCover = DISH_COVER.get(`${st.name} ${dName}`) || cover;
                 const rd = await query(
-                    `INSERT INTO dish (station_id, name, price, taste_tags, taboo_tags, cover_object_key, first_seen_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ${isNew ? 'NOW() - INTERVAL 5 DAY' : 'NOW() - INTERVAL 60 DAY'})`,
-                    [stationId, dName, price, taste, taboo, CATEGORY_COVER[st.category] || 'preset:rice']
+                    `INSERT INTO dish (station_id, name, price, price_unit, is_estimated, taste_tags, taboo_tags, cover_object_key, first_seen_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${isNew ? 'NOW() - INTERVAL 5 DAY' : 'NOW() - INTERVAL 60 DAY'})`,
+                    [stationId, dName, price, unit || '元', estimated ? 1 : 0, taste_of(dName), '', dishCover]
                 );
                 dishRows.push({ id: rd.insertId, canteenType: c.type });
             }
@@ -407,16 +397,57 @@ async function seed_if_empty() {
     /* 7. 窗口公告（校内上新 + 校外商户优惠各一条） */
     const stFirst = await query_one('SELECT id FROM station LIMIT 1');
     await query(
-        "INSERT INTO station_post (station_id, author_id, type, content, starts_at, ends_at) VALUES (?, 1, 'new_dish', '本窗口周四上新「藤椒鸡排饭」，前 20 名半价，欢迎品尝！', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))",
+        "INSERT INTO station_post (station_id, author_id, type, content, starts_at, ends_at) VALUES (?, 1, 'new_dish', '本店本周上新「牛肉拌面」，到店出示校园卡立减 2 元，欢迎品尝！', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))",
         [stFirst.id]
     );
-    const stTas = await query_one("SELECT id FROM station WHERE name LIKE '塔斯汀%' LIMIT 1");
+    const stTas = await query_one("SELECT id FROM station WHERE name LIKE '重庆小面%' LIMIT 1");
     if (stTas) {
         await query(
-            "INSERT INTO station_post (station_id, author_id, type, content, starts_at, ends_at) VALUES (?, 1, 'promo', '学生认证任意堡 +3 元换购中杯柠檬水，出示校园卡即可。', NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY))",
+            "INSERT INTO station_post (station_id, author_id, type, content, starts_at, ends_at) VALUES (?, 1, 'promo', '学生到店点任意主食 +3 元换购冰豆浆，出示校园卡即可。', NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY))",
             [stTas.id]
         );
     }
+
+    /* 7.5 成长任务与宠物装扮目录（真实可领取，不再使用前端假数据） */
+    const TASKS = [
+        [1, 1, '每日签到', '打开签到页完成一次打卡', 1, 10, 1],
+        [2, 1, '发布一条点评', '真实发布一条菜品/档口/点位评价', 2, 15, 2],
+        [3, 1, '给福宝喂食一次', '使用道具或金币喂养一次宠物', 3, 10, 3],
+        [4, 1, '收藏一道菜', '把想吃的菜品加入收藏', 4, 5, 4],
+        [5, 1, '点赞/评论/回复任意一次', '在点评圈完成一次互动', 5, 5, 5],
+        [6, 1, '分享一条美食动态', '发布一条带图或带话题的动态', 6, 15, 6],
+        [7, 2, '探店新星', '累计打卡 10 次', 1, 50, 7],
+        [8, 2, '点评达人', '累计发布 20 条点评', 2, 80, 8],
+        [9, 2, '喂养达人', '累计喂食 3 次', 3, 30, 9],
+        [10, 2, '收藏家', '累计收藏 8 个对象', 4, 50, 10],
+        [11, 2, '互动达人', '累计互动 50 次', 5, 80, 11],
+        [12, 2, '分享达人', '累计发布 3 条动态', 6, 60, 12],
+    ];
+    for (const t of TASKS) {
+        await query(
+            'INSERT INTO `task` (id, task_type, name, description, action_type, reward_coins, enabled, sort) VALUES (?, ?, ?, ?, ?, ?, 1, ?)',
+            t
+        );
+    }
+    // 与前端 /assets/pet-dress/d1~d9.png 一一对应；d9 为 Lv.7 成就装扮（价格 0，仅等级解锁）
+    const DRESSES = [
+        ['d1', '砂锅蒸笼', 80, 1, '', 1],
+        ['d2', '草莓罩', 60, 1, '', 2],
+        ['d3', '饭团', 60, 1, '', 3],
+        ['d4', '寿司卷', 80, 1, '', 4],
+        ['d5', '汉堡', 80, 1, '', 5],
+        ['d6', '草莓奶油', 100, 1, '', 6],
+        ['d7', '红披风', 120, 1, '', 7],
+        ['d8', '辣椒罩', 80, 1, '', 8],
+        ['d9', '皇冠', 0, 7, '', 9],
+    ];
+    for (const d of DRESSES) {
+        await query(
+            'INSERT INTO pet_dress (id, name, price, min_level, image, sort) VALUES (?, ?, ?, ?, ?, ?)',
+            d
+        );
+    }
+    log.info(`[seed] 成长任务 ${TASKS.length} 条 / 宠物装扮 ${DRESSES.length} 件`);
 
     /* 8. 聚合预热：全量重算摘要（overall_score 已按维度权重写入，此处只做平均与分项求和） */
     await aggregation.recalc_all();

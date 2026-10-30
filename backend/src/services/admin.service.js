@@ -320,20 +320,25 @@ async function point_submit_approve(adminId, id, input = {}) {
             [row.target_id, name, payload.category || '']
         );
         createdId = r.insertId;
-    } else {
+    } else if (Number(row.submit_type) === 2) {
         // 新菜品：挂靠提交时校验过的档口
         const r = await query(
             'INSERT INTO dish (station_id, name, price, taste_tags, taboo_tags, first_seen_at) VALUES (?, ?, ?, ?, ?, NOW())',
             [row.target_id, name, payload.price || 0, payload.tasteTags || '', payload.tabooTags || '']
         );
         createdId = r.insertId;
+    } else {
+        // 档口入驻申请：仅回写审核结论，由运营线下开通档口后台账号
+        createdId = null;
     }
     await query(
         'UPDATE point_submit SET audit_status = 1, auditor_id = ?, audit_comment = ? WHERE id = ?',
         [adminId, String(input.comment || '').slice(0, 255), id]
     );
-    await notification.create(row.submitter_id, 'audit', '点位提交已通过',
-        `你提交的「${name}」已审核通过并上架`, 'point_submit', id);
+    const pass_text = Number(row.submit_type) === 3
+        ? `你提交的「${name}」入驻申请已通过，运营会尽快联系你开通档口后台`
+        : `你提交的「${name}」已审核通过并上架`;
+    await notification.create(row.submitter_id, 'audit', '点位提交已通过', pass_text, 'point_submit', id);
     return { id, createdId };
 }
 

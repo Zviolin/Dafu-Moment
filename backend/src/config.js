@@ -48,6 +48,10 @@ const config = {
         service: process.env.FZU_CAS_SERVICE || '',     // 校方回调地址，如 https://your-domain/auth/fzu/callback
         validate_path: process.env.FZU_CAS_VALIDATE_PATH || '/serviceValidate', // CAS 2.0 默认；CAS 3.0 为 /p3/serviceValidate
         timeout_ms: Number(process.env.FZU_CAS_TIMEOUT_MS || 10000), // ticket 校验 HTTP 超时
+        // 演示桩统一初始口令（r80）：任一学号首次登录用它，登入后必须在「我的 → 统一身份口令」修改
+        initial_password: process.env.FZU_CAS_INITIAL_PASSWORD || 'FZU521',
+        // 统一身份口令最小长度（改密/后台重置共用口径）
+        password_min: Number(process.env.FZU_CAS_PASSWORD_MIN || 6),
     },
     /**
      * 自动抠图微服务（r52 手账贴纸）：rembg(U2Net) sidecar 容器

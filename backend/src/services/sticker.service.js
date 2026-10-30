@@ -63,14 +63,26 @@ async function matting_extract(buf) {
 }
 
 /**
+ * 菜品公共贴纸的对象键：由源图片键确定性派生（内容寻址）
+ * 同一张菜品图无论同步多少次都落到同一个键 → 重复同步只覆盖对象，不新增记录、不留孤儿对象
+ * @param {string} srcKey 源图片 objectKey
+ * @returns {string}
+ */
+function dish_sticker_key(srcKey) {
+    const h = crypto.createHash('sha256').update(String(srcKey)).digest('hex').slice(0, 16);
+    return `sticker/dish/${h}.png`;
+}
+
+/**
  * 抠图并入库：原图 → matting → MinIO → sticker 表
  * @param {Buffer} buf 原图字节
  * @param {number} userId 归属用户
  * @param {string} name 贴纸名
- * @param {number} source 0 上传抠图 / 1 收藏自动抠图
+ * @param {number} source 0 上传抠图 / 1 收藏自动抠图 / 3 菜品公共贴纸
+ * @param {string} [fixedKey] 指定对象键（菜品公共贴纸用确定性键，保证同步幂等）
  * @returns {Promise<{id: number, object_key: string, url: string}>}
  */
-async function extract_and_save(buf, userId, name, source = 0) {
+async function extract_and_save(buf, userId, name, source = 0, fixedKey = '') {
     let png;
     try {
         png = await matting_extract(buf);
@@ -81,7 +93,7 @@ async function extract_and_save(buf, userId, name, source = 0) {
     // 空结果兜底：全透明图（未识别出主体）拒绝入库
     if (png.length < 2000) throw err.invalid('没有识别出可抠的主体，请换一张清晰的菜品图');
     const yyyymm = new Date().toISOString().slice(0, 7).replace('-', '');
-    const objectKey = `sticker/${yyyymm}/${crypto.randomUUID()}.png`;
+    const objectKey = fixedKey || `sticker/${yyyymm}/${crypto.randomUUID()}.png`;
     await minioClient.putObject(config.minio.bucket, objectKey, png, png.length, { 'Content-Type': 'image/png' });
     const r = await query(
         'INSERT INTO sticker (user_id, name, object_key, source) VALUES (?, ?, ?, ?)',
@@ -160,8 +172,9 @@ async function own_sticker(userId, id) {
 /**
  * 全量菜品贴纸同步：所有有图菜品 → 系统公共贴纸（source=3，user_id=0，人人可用不可删）
  *  - preset: 伪键（种子预设插画）：不入 MinIO 不抠图，直接入库指向 /preset-cover/ 静态插画
- *  - 真实图片键（管理端上传）：MinIO 拉图 → matting 抠图 → 透明 PNG 入库
- * 幂等：以 object_key = 菜品图键 同源去重，只补缺失；单张失败不中断整体
+ *  - 真实图片键（管理端上传 / 真实菜品图）：MinIO 拉图 → matting 抠图 → 透明 PNG 入库
+ * 幂等：真实图按源图键派生确定性对象键（sticker/dish/{hash}.png），
+ *      已有同键记录则跳过抠图——避免每次后端重启都对全量菜品重新抠图
  * @returns {Promise<{total: number, made: number, skip: number, fail: number}>}
  */
 async function sync_dish_stickers() {
@@ -171,17 +184,20 @@ async function sync_dish_stickers() {
     let made = 0, skip = 0, fail = 0;
     for (const d of dishes) {
         try {
-            // 同源去重：同一菜品图键只生成一条公共贴纸（多菜品共用同一预设插画时共享）
-            const dup = await query_one('SELECT id FROM sticker WHERE source = 3 AND object_key = ? LIMIT 1', [d.img]);
-            if (dup) { skip += 1; continue; }
             if (String(d.img).startsWith('preset:')) {
                 // 预设插画菜品：贴纸已预抠为前端静态资源（preset-<品类>.png），虚拟入库即可
+                const dup = await query_one('SELECT id FROM sticker WHERE source = 3 AND object_key = ? LIMIT 1', [d.img]);
+                if (dup) { skip += 1; continue; }
                 await query('INSERT INTO sticker (user_id, name, object_key, source) VALUES (0, ?, ?, 3)', [String(d.name || '菜品贴纸').slice(0, 64), d.img]);
             } else {
+                // 真实菜品图：对象键由源图键确定性派生 → 同源只抠一次，重启不再重复
+                const key = dish_sticker_key(d.img);
+                const dup = await query_one('SELECT id FROM sticker WHERE source = 3 AND object_key = ? LIMIT 1', [key]);
+                if (dup) { skip += 1; continue; }
                 const chunks = [];
                 const stream = await minioClient.getObject(config.minio.bucket, d.img);
                 for await (const chunk of stream) chunks.push(chunk);
-                await extract_and_save(Buffer.concat(chunks), 0, d.name, 3);
+                await extract_and_save(Buffer.concat(chunks), 0, d.name, 3, key);
             }
             made += 1;
         } catch (e) {
@@ -192,4 +208,4 @@ async function sync_dish_stickers() {
     return { total: dishes.length, made, skip, fail };
 }
 
-module.exports = { extract_and_save, extract_from_object_key, list_user, delete_item, own_sticker, sync_dish_stickers, BUILTIN };
+module.exports = { extract_and_save, extract_from_object_key, list_user, delete_item, own_sticker, sync_dish_stickers, dish_sticker_key, BUILTIN };

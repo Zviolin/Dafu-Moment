@@ -141,7 +141,7 @@ async function points_map() {
  */
 async function canteen_detail(id) {
     const canteen = await query_one(
-        'SELECT id, name, type, campus, location, avg_price, cover_object_key, tags FROM canteen WHERE id = ? AND enabled = 1',
+        'SELECT id, name, type, campus, location, avg_price, business_hours, cover_object_key, tags FROM canteen WHERE id = ? AND enabled = 1',
         [id]
     );
     if (!canteen) throw err.not_found('食堂不存在');
@@ -184,7 +184,7 @@ async function station_detail(id) {
     );
     const summary = parse_summary(summaryRow);
     const dishes = await query(
-        `SELECT d.id, d.name, d.price, d.taste_tags, d.taboo_tags, d.cover_object_key,
+        `SELECT d.id, d.name, d.price, d.price_unit, d.is_estimated, d.taste_tags, d.taboo_tags, d.cover_object_key,
                 d.is_recommended AS isRecommended, sm.rating_avg, sm.review_count
          FROM dish d LEFT JOIN review_summary sm ON sm.subject_type = 0 AND sm.subject_id = d.id
          WHERE d.station_id = ? AND d.status = 0 ORDER BY d.id`,
@@ -192,7 +192,7 @@ async function station_detail(id) {
     );
     // 推荐菜（03 §5.3）：is_recommended=1 优先（按均分排），不足 3 个按 rating_avg 补齐，无评价按 id 取前 3
     const recommendedRows = await query(
-        `SELECT d.id, d.name, d.price, d.cover_object_key, d.is_recommended AS isRecommended,
+        `SELECT d.id, d.name, d.price, d.price_unit, d.is_estimated, d.cover_object_key, d.is_recommended AS isRecommended,
                 IFNULL(sm.rating_avg, 0) AS rating_avg, IFNULL(sm.review_count, 0) AS review_count
          FROM dish d LEFT JOIN review_summary sm ON sm.subject_type = 0 AND sm.subject_id = d.id
          WHERE d.station_id = ? AND d.status = 0
@@ -204,6 +204,8 @@ async function station_detail(id) {
         id: d.id,
         name: d.name,
         price: Number(d.price),
+        priceUnit: d.price_unit || '元',
+        isEstimated: Number(d.is_estimated) === 1,
         coverObjectKey: d.cover_object_key,
         isRecommended: Number(d.isRecommended) === 1,
         ratingAvg: Number(d.rating_avg),
@@ -234,7 +236,7 @@ function parse_summary(row) {
 
 /**
  * 菜品多维筛选列表
- * @param {Object} f - {canteenId, stationId, q, taste[], taboo[], priceMin, priceMax, ratingMin, sort, businessStatus, page, pageSize}
+ * @param {Object} f - {canteenId, stationId, canteenType, q, taste[], taboo[], priceMin, priceMax, ratingMin, recommended, sort, businessStatus, page, pageSize}
  */
 async function filter_dishes(f) {
     const page = page_int(f.page, 1);
@@ -256,13 +258,25 @@ async function filter_dishes(f) {
         where.push('s.canteen_id = ?');
         params.push(f.canteenId);
     }
+    if (f.canteenType !== undefined && f.canteenType !== null && f.canteenType !== '') {
+        const canteenType = Number(f.canteenType);
+        if (![0, 1, 2, 3].includes(canteenType)) throw err.invalid('canteenType 取值不合法');
+        where.push('c.type = ?');
+        params.push(canteenType);
+    }
     if (f.category) {
         where.push('s.category = ?');
         params.push(f.category);
     }
-    if (f.q) {
-        where.push('(d.name LIKE ? OR s.name LIKE ?)');
-        params.push(`%${f.q}%`, `%${f.q}%`);
+    if (String(f.q || '').trim()) {
+        // 关键词覆盖面：菜名 / 档口名 / 品类 / 点位名 / 口味标签 / 忌口标签（不再只匹配菜名）
+        const kw = `%${String(f.q).trim()}%`;
+        where.push(`(d.name LIKE ? OR s.name LIKE ? OR s.category LIKE ? OR c.name LIKE ?
+            OR d.taste_tags LIKE ? OR d.taboo_tags LIKE ?)`);
+        params.push(kw, kw, kw, kw, kw, kw);
+    }
+    if (f.recommended === true || f.recommended === '1' || f.recommended === 'true') {
+        where.push('d.is_recommended = 1');
     }
     for (const t of f.taste || []) {
         where.push('FIND_IN_SET(?, REPLACE(d.taste_tags, " ", ""))');
@@ -301,7 +315,7 @@ async function filter_dishes(f) {
 
     const total = await query_one(`SELECT COUNT(*) c ${base}`, params);
     const list = await query(
-        `SELECT d.id, d.name, d.price, d.taste_tags, d.taboo_tags, d.cover_object_key,
+        `SELECT d.id, d.name, d.price, d.price_unit, d.is_estimated, d.taste_tags, d.taboo_tags, d.cover_object_key,
                 d.is_recommended AS isRecommended,
                 d.first_seen_at, s.name AS station_name, s.id AS station_id, c.id AS canteen_id, c.name AS canteen_name,
                 IFNULL(sm.rating_avg, 0) AS rating_avg, IFNULL(sm.review_count, 0) AS review_count
@@ -366,13 +380,61 @@ async function list_categories() {
 }
 
 /**
+ * 筛选项可用性（按真实在售菜品统计）：
+ * 前端据此只展示有数据的点位类型 / 营业状态 / 推荐菜，避免出现「选了必空」的死选项
+ * @returns {Promise<{canteenTypes: Array<{type:number,count:number}>, business:{open:number,closed:number}, recommended:number, categories: Array}>}
+ */
+async function filter_options() {
+    const base = `FROM dish d
+        JOIN station s ON s.id = d.station_id AND s.status < 2
+        JOIN canteen c ON c.id = s.canteen_id AND c.enabled = 1
+        WHERE d.status = 0`;
+    const typeRows = await query(`SELECT c.type, COUNT(*) cnt ${base} GROUP BY c.type ORDER BY c.type`);
+    const statusRows = await query(`SELECT s.status, COUNT(*) cnt ${base} GROUP BY s.status`);
+    const recRow = await query_one(`SELECT COUNT(*) cnt ${base} AND d.is_recommended = 1`);
+    // 评分档位：与 filter_dishes 同口径（菜品均分 + 至少 3 条评价），无数据的档位前端隐藏
+    const rating4 = await query_one(
+        `SELECT COUNT(*) cnt FROM review_summary sm
+         JOIN dish d ON d.id = sm.subject_id
+         JOIN station s ON s.id = d.station_id AND s.status < 2
+         JOIN canteen c ON c.id = s.canteen_id AND c.enabled = 1
+         WHERE sm.subject_type = 0 AND d.status = 0 AND sm.review_count >= 3 AND sm.rating_avg >= 4`
+    );
+    const rating45 = await query_one(
+        `SELECT COUNT(*) cnt FROM review_summary sm
+         JOIN dish d ON d.id = sm.subject_id
+         JOIN station s ON s.id = d.station_id AND s.status < 2
+         JOIN canteen c ON c.id = s.canteen_id AND c.enabled = 1
+         WHERE sm.subject_type = 0 AND d.status = 0 AND sm.review_count >= 3 AND sm.rating_avg >= 4.5`
+    );
+    const statusOf = (v) => Number(statusRows.find((r) => Number(r.status) === v)?.cnt || 0);
+    return {
+        canteenTypes: typeRows.map((r) => ({ type: Number(r.type), count: Number(r.cnt) })),
+        business: { open: statusOf(0), closed: statusOf(1) },
+        recommended: Number(recRow.cnt),
+        ratings: [
+            { min: 4, count: Number(rating4.cnt) },
+            { min: 4.5, count: Number(rating45.cnt) },
+        ],
+        categories: await list_categories(),
+    };
+}
+
+/**
  * 统一关键词搜索：点位/档口/菜品三组匹配（每组各设数量上限）
+ * 匹配面：名称 + 位置 + 标签 + 营业时间 + 品类 + 口味/忌口标签；夜宵、早餐按营业时段扩展
  * @param {string} q - 关键词（已去空白）
  * @returns {Promise<{points: Array, stations: Array, dishes: Array}>}
  */
 async function search_all(q) {
     const kw = `%${q}%`;
-    // 点位：名称命中且在架
+    // 场景词扩展：数据里没有「夜宵/早餐」词条时，用营业时段兜底匹配，避免搜什么都搜不到
+    const sceneExpr = /夜宵|宵夜/.test(q)
+        ? "SUBSTRING_INDEX(IFNULL(c.business_hours,''), '-', -1) >= '21:00'"
+        : (/早餐|早点/.test(q)
+            ? "SUBSTRING_INDEX(IFNULL(c.business_hours,''), '-', 1) <= '07:30'"
+            : '0');
+    // 点位：名称/位置/标签/营业时间命中，场景词额外按营业时段
     const points = await query(
         `SELECT c.id, c.name, c.type, c.location,
                 (SELECT COUNT(*) FROM station s WHERE s.canteen_id = c.id AND s.status < 2) AS station_count,
@@ -380,30 +442,72 @@ async function search_all(q) {
                   JOIN dish d ON d.id = sm.subject_id
                   JOIN station s ON s.id = d.station_id
                  WHERE sm.subject_type = 0 AND sm.review_count > 0 AND s.canteen_id = c.id) AS avg_score
-         FROM canteen c WHERE c.enabled = 1 AND c.name LIKE ? ORDER BY c.type, c.id LIMIT 8`,
-        [kw]
+         FROM canteen c
+         WHERE c.enabled = 1 AND (c.name LIKE ? OR c.location LIKE ? OR c.tags LIKE ? OR c.business_hours LIKE ? OR (${sceneExpr}))
+         ORDER BY c.type, c.id LIMIT 8`,
+        [kw, kw, kw, kw]
     );
-    // 档口：名称命中且未下架
+    // 档口：名称 / 品类命中且未下架
     const stations = await query(
         `SELECT s.id, s.name, s.category, c.name AS canteen_name, sm.rating_avg, sm.review_count
          FROM station s
          JOIN canteen c ON c.id = s.canteen_id
          LEFT JOIN review_summary sm ON sm.subject_type = 1 AND sm.subject_id = s.id
-         WHERE s.status < 2 AND s.name LIKE ? ORDER BY s.id LIMIT 8`,
-        [kw]
+         WHERE s.status < 2 AND (s.name LIKE ? OR s.category LIKE ?) ORDER BY s.id LIMIT 8`,
+        [kw, kw]
     );
-    // 菜品：名称命中且在售
+    // 菜品：菜名 / 口味 / 忌口 / 所属档口与品类 / 点位名命中且在售
     const dishes = await query(
-        `SELECT d.id, d.name, d.price, s.name AS station_name, c.name AS canteen_name,
-                sm.rating_avg, sm.review_count
+        `SELECT d.id, d.name, d.price, d.price_unit, d.is_estimated, s.id AS station_id,
+                s.name AS station_name, c.name AS canteen_name, sm.rating_avg, sm.review_count
          FROM dish d
          JOIN station s ON s.id = d.station_id AND s.status < 2
          JOIN canteen c ON c.id = s.canteen_id
          LEFT JOIN review_summary sm ON sm.subject_type = 0 AND sm.subject_id = d.id
-         WHERE d.status = 0 AND d.name LIKE ? ORDER BY d.id LIMIT 12`,
-        [kw]
+         WHERE d.status = 0 AND (d.name LIKE ? OR d.taste_tags LIKE ? OR d.taboo_tags LIKE ?
+               OR s.name LIKE ? OR s.category LIKE ? OR c.name LIKE ?)
+         ORDER BY d.id LIMIT 12`,
+        [kw, kw, kw, kw, kw, kw]
     );
     return { points, stations, dishes };
+}
+
+/**
+ * 热搜词：全部取自真实数据（高频菜品 + 高频品类 + 可命中的场景词），数据导入后自动更新
+ * @returns {Promise<string[]>} 最多 8 个可直接搜到结果的词
+ */
+async function hot_keywords() {
+    // 「综合」这类兜底品类做热搜词没有信息量，排除
+    const GENERIC_CATS = new Set(['综合', '其他', '']);
+    const dishRows = await query(
+        `SELECT d.name, IFNULL(sm.review_count, 0) AS cnt
+         FROM dish d
+         JOIN station s ON s.id = d.station_id AND s.status < 2
+         JOIN canteen c ON c.id = s.canteen_id AND c.enabled = 1
+         LEFT JOIN review_summary sm ON sm.subject_type = 0 AND sm.subject_id = d.id
+         WHERE d.status = 0
+         ORDER BY cnt DESC, d.id ASC LIMIT 6`
+    );
+    const catRows = await query(
+        `SELECT s.category AS name, COUNT(*) AS cnt
+         FROM station s
+         JOIN dish d ON d.station_id = s.id AND d.status = 0
+         WHERE s.status < 2 AND s.category <> ''
+         GROUP BY s.category ORDER BY cnt DESC, s.category LIMIT 6`
+    );
+    const sceneRow = await query_one(
+        `SELECT
+            MAX(SUBSTRING_INDEX(IFNULL(business_hours,''), '-', -1) >= '21:00') AS has_night,
+            MAX(SUBSTRING_INDEX(IFNULL(business_hours,''), '-', 1) <= '07:30') AS has_breakfast
+         FROM canteen WHERE enabled = 1`
+    );
+    const scene = [];
+    if (Number(sceneRow && sceneRow.has_night) === 1) scene.push('夜宵');
+    if (Number(sceneRow && sceneRow.has_breakfast) === 1) scene.push('早餐');
+    // 过长的档口全名不适合做词条，截断到 10 字以内再参与热搜
+    const dishWords = dishRows.map((r) => r.name).filter((n) => n && n.length <= 10);
+    const catWords = catRows.map((r) => r.name).filter((n) => !GENERIC_CATS.has(n));
+    return [...new Set([...dishWords.slice(0, 4), ...catWords, ...scene])].slice(0, 8);
 }
 
 /**
@@ -530,7 +634,7 @@ async function rankings(period = 'week', dim = 'hot', limit = 10) {
     const orderBy = RANK_SORT_EXPR[dim] || RANK_SORT_EXPR.hot;
     const rows = await query(
         `SELECT s.id, s.name, s.category, s.cover_object_key,
-                c.id AS canteen_id, c.name AS canteen_name,
+                c.id AS canteen_id, c.name AS canteen_name, c.avg_price,
                 COUNT(r.id) AS review_count,
                 ROUND(AVG(r.overall_score), 2) AS rating_avg,
                 SUM(r.like_count) AS like_count
@@ -538,7 +642,7 @@ async function rankings(period = 'week', dim = 'hot', limit = 10) {
          JOIN station s ON s.id = r.subject_id
          JOIN canteen c ON c.id = s.canteen_id
          WHERE ${where.join(' AND ')}
-         GROUP BY s.id, s.name, s.category, s.cover_object_key, c.id, c.name
+         GROUP BY s.id, s.name, s.category, s.cover_object_key, c.id, c.name, c.avg_price
          ORDER BY ${orderBy}, s.id ASC
          LIMIT ?`,
         [...params, Number(limit)]
@@ -550,6 +654,7 @@ async function rankings(period = 'week', dim = 'hot', limit = 10) {
         coverObjectKey: r.cover_object_key,
         canteenId: r.canteen_id,
         canteenName: r.canteen_name,
+        avgPrice: r.avg_price === null || r.avg_price === undefined ? null : Number(r.avg_price),
         reviewCount: Number(r.review_count),
         ratingAvg: Number(r.rating_avg),
         likeCount: Number(r.like_count),
@@ -638,6 +743,6 @@ async function compare_stations(ids) {
 
 module.exports = {
     list_canteens, points_map, canteen_detail, station_detail,
-    filter_dishes, dish_detail, list_categories, search_all, recommendations, rankings,
+    filter_dishes, dish_detail, list_categories, filter_options, search_all, hot_keywords, recommendations, rankings,
     list_stations, compare_stations,
 };

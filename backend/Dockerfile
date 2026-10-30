@@ -8,6 +8,8 @@ RUN npm install --registry=https://registry.npmmirror.com && npm cache clean --f
 
 COPY src ./src
 COPY sql ./sql
+# 种子封面图（147 张，约 36MB）：启动时自愈补齐到 MinIO，避免新部署的图片全 404
+COPY assets ./assets
 
 ENV TZ=Asia/Shanghai
 EXPOSE 3000

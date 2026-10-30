@@ -33,12 +33,16 @@ const draftSvc = require('../services/draft.service');
 const commentSvc = require('../services/comment.service');
 const taskSvc = require('../services/task.service');
 const titleSvc = require('../services/title.service');
+const petSvc = require('../services/pet.service');
+const postSvc = require('../services/post.service');
 // 2.0 主库打卡实现（3.0 的 location/check_in_dish 版本在 checkin.service.js，由 v3 路由使用）
 const checkin = require('../services/checkin-legacy.service');
 const adminSvc = require('../services/admin.service');
 const managerSvc = require('../services/manager.service');
 const { minioClient } = require('../db/minio');
 const { assert_cas_credential, cas_mode, cas_login_url } = require('../utils/fzu-cas');
+// 统一身份口令托管（r80）：初始口令 / 本人改密 / 后台重置
+const fzu_account = require('../services/fzu-account.service');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.numbers.UPLOAD_MAX_BYTES } });
@@ -86,7 +90,7 @@ router.post('/auth/register', rate_limit('register', 5, 3600), async (req, res, 
         const token = jwt.sign({ uid: r.insertId }, config.jwt_secret, { expiresIn: '7d' });
         ok(res, {
             token,
-            user: { id: r.insertId, username, nickname: (nickname || username).slice(0, 32), email: null, avatar: 0, avatar_object_key: null, fzu_uid: null, fzu_name: null, fzu_verified: false, role: 0, status: 0 },
+            user: { id: r.insertId, username, nickname: (nickname || username).slice(0, 32), email: null, avatar: 0, avatar_object_key: null, fzu_uid: null, fzu_name: null, fzu_verified: false, fzu_must_change_password: false, role: 0, status: 0 },
         });
     } catch (e) { next(e); }
 });
@@ -111,6 +115,8 @@ router.post('/auth/login', rate_limit('login', 10, 600), async (req, res, next) 
                 id: user.id, username: user.username, nickname: user.nickname,
                 email: user.email || null, avatar: user.avatar, avatar_object_key: user.avatar_object_key || null,
                 ...fzu_fields(user), role: user.role, status: user.status,
+                // 已绑定统一身份且仍在用初始口令时置 true，前端顶栏/我的页提示改密
+                fzu_must_change_password: await fzu_account.must_change_of(user.fzu_uid),
             },
         });
     } catch (e) { next(e); }
@@ -126,6 +132,8 @@ router.get('/auth/me', write_required(), async (req, res, next) => {
             id: u.id, username: u.username, nickname: u.nickname,
             email: u.email || null, avatar: u.avatar, avatar_object_key: u.avatar_object_key || null,
             fzu_uid: u.fzu_uid || null, fzu_name: u.fzu_name || null, fzu_verified: u.fzu_verified === 1,
+            // 仍在使用统一初始口令时置 true，前端据此提示本人尽快改密
+            fzu_must_change_password: await fzu_account.must_change_of(u.fzu_uid),
             role: u.role, status: u.status,
         });
     } catch (e) { next(e); }
@@ -144,7 +152,13 @@ function fzu_fields(u) {
  */
 router.get('/auth/fzu/cas/mode', (_req, res) => {
     const data = { mode: cas_mode() };
-    if (data.mode === 'real') data.loginUrl = '/api/auth/fzu/cas/login';
+    if (data.mode === 'real') {
+        data.loginUrl = '/api/auth/fzu/cas/login';
+    } else {
+        // demo 模式公开统一初始口令，前端登录页直接提示（真实 CAS 模式不会下发任何口令信息）
+        data.initialPassword = fzu_account.INITIAL_PASSWORD;
+        data.initialPasswordHint = '任一学号首次登录均使用统一初始口令，登录后请在「我的 → 统一身份口令」自行修改';
+    }
     ok(res, data);
 });
 
@@ -170,8 +184,11 @@ router.post('/auth/fzu/bind', write_required(), async (req, res, next) => {
         const dup = await query_one('SELECT id FROM `user` WHERE fzu_uid = ? AND id <> ?', [cas.uid, req.user.id]);
         if (dup) throw err.conflict('该学号已绑定其他账号');
         await query('UPDATE `user` SET fzu_uid = ?, fzu_name = ?, fzu_verified = 1 WHERE id = ?', [cas.uid, cas.name, req.user.id]);
+        // 口令托管建档 + 关联本地账号（首次登录仍用初始口令时 last_login 留在 SSO 登录）
+        await fzu_account.ensure_account(cas.uid);
+        await fzu_account.link_user(cas.uid, req.user.id);
         const u = await query_one('SELECT fzu_uid, fzu_name, fzu_verified FROM `user` WHERE id = ?', [req.user.id]);
-        ok(res, fzu_fields(u));
+        ok(res, { ...fzu_fields(u), fzu_must_change_password: !!cas.must_change });
     } catch (e) { next(e); }
 });
 
@@ -180,6 +197,10 @@ router.post('/auth/fzu/bind', write_required(), async (req, res, next) => {
  */
 router.delete('/auth/fzu/bind', write_required(), async (req, res, next) => {
     try {
+        // 解绑只断开本地账号与统一身份账号的关联，口令托管记录保留（学号本身仍存在）
+        if (req.user.fzu_uid) {
+            await query('UPDATE fzu_account SET user_id = NULL WHERE uid = ?', [String(req.user.fzu_uid)]);
+        }
         await query('UPDATE `user` SET fzu_uid = NULL, fzu_name = NULL, fzu_verified = 0 WHERE id = ?', [req.user.id]);
         ok(res, { fzu_uid: null, fzu_name: null, fzu_verified: false });
     } catch (e) { next(e); }
@@ -211,6 +232,9 @@ router.post('/auth/fzu/sso', rate_limit('fzu_sso', 10, 600), async (req, res, ne
             }
         }
         await query('UPDATE `user` SET last_login_at = NOW() WHERE id = ?', [user.id]);
+        // SSO 登录即视为一次统一身份认证登录：建档（首次用初始口令）并刷新关联
+        await fzu_account.ensure_account(cas.uid);
+        await fzu_account.link_user(cas.uid, user.id);
         const token = jwt.sign({ uid: user.id }, config.jwt_secret, { expiresIn: '7d' });
         ok(res, {
             token,
@@ -218,8 +242,11 @@ router.post('/auth/fzu/sso', rate_limit('fzu_sso', 10, 600), async (req, res, ne
                 id: user.id, username: user.username, nickname: user.nickname,
                 email: user.email || null, avatar: user.avatar, avatar_object_key: user.avatar_object_key || null,
                 ...fzu_fields(user), role: user.role, status: user.status,
+                // 首次登录仍用统一初始口令 → true，前端据此提示去「我的 → 统一身份口令」改密
+                fzu_must_change_password: !!cas.must_change,
             },
             created: !user.last_login_at,
+            must_change_password: !!cas.must_change,
         });
     } catch (e) { next(e); }
 });
@@ -284,6 +311,8 @@ router.get('/points/:id/reviews', auth_optional(), async (req, res, next) => {
         assert(Number.isInteger(subjectId) && subjectId > 0, '点位 ID 不合法');
         // sort：hot / new / dim:<dimension_key>（维度适用性由 service 校验）
         const sort = String(req.query.sort || 'new');
+        // 与 GET /reviews 同一白名单口径
+        assert(['hot', 'new'].includes(sort) || /^dim:[a-z_]+$/.test(sort), 'sort 仅支持 hot / new / dim:<维度>');
         const page = page_int(req.query.page, 1);
         ok(res, await review.list_reviews(2, subjectId, sort, page, 20, req.user ? req.user.id : null));
     } catch (e) { next(e); }
@@ -325,6 +354,7 @@ router.get('/dishes', async (req, res, next) => {
         const f = req.query;
         ok(res, await content.filter_dishes({
             canteenId: f.canteenId, stationId: f.stationId, q: f.q, category: f.category,
+            canteenType: f.canteenType, recommended: f.recommended,
             taste: f.taste ? String(f.taste).split(',') : [],
             taboo: f.taboo ? String(f.taboo).split(',') : [],
             priceMin: f.priceMin, priceMax: f.priceMax,
@@ -347,6 +377,13 @@ router.get('/search', async (req, res, next) => {
 });
 
 /**
+ * 热搜词：取自真实数据（高频菜品 / 品类 / 可命中场景词），保证点开有结果
+ */
+router.get('/search/hot', async (_req, res, next) => {
+    try { ok(res, await content.hot_keywords()); } catch (e) { next(e); }
+});
+
+/**
  * 推荐（首页两块）：top 高分口碑 / forYou 为你推荐（规则推荐，未登录按全站热度）
  */
 router.get('/recommendations', auth_optional(), async (req, res, next) => {
@@ -362,6 +399,13 @@ router.get('/categories', async (_req, res, next) => {
     try { ok(res, await content.list_categories()); } catch (e) { next(e); }
 });
 
+/**
+ * 筛选项可用性（按真实数据统计，前端据此隐藏空选项）
+ */
+router.get('/filters/options', async (_req, res, next) => {
+    try { ok(res, await content.filter_options()); } catch (e) { next(e); }
+});
+
 router.get('/dishes/:id', async (req, res, next) => {
     try { ok(res, await content.dish_detail(Number(req.params.id))); } catch (e) { next(e); }
 });
@@ -374,9 +418,12 @@ router.get('/rankings', async (req, res, next) => {
     try {
         const period = String(req.query.period || 'week');
         const dim = String(req.query.dim || 'hot');
+        // limit 可配（首页口碑榜取 3~6 行，榜单页默认 10），越界收敛到 1~20
+        const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 20);
         ok(res, await content.rankings(
             ['day', 'week', 'all'].includes(period) ? period : 'week',
-            ['hot', 'score', 'like'].includes(dim) ? dim : 'hot'
+            ['hot', 'score', 'like'].includes(dim) ? dim : 'hot',
+            limit
         ));
     } catch (e) { next(e); }
 });
@@ -400,9 +447,13 @@ router.get('/reviews', auth_optional(), async (req, res, next) => {
             subjectType = Number(req.query.subjectType);
             subjectId = Number(req.query.subjectId);
             assert(Number.isInteger(subjectType) && Number.isInteger(subjectId), 'subject 参数不合法');
+            // subjectType 口径：0 菜品 / 1 档口 / 2 点位（越界直接 422，避免空查询掩盖前端传错）
+            assert([0, 1, 2].includes(subjectType), 'subjectType 需为 0/1/2');
         }
         // sort：hot / new / dim:<dimension_key>（维度适用性由 service 校验）
         const sort = String(req.query.sort || 'new');
+        // 枚举白名单：非法值直接 422，避免静默回落成 new 掩盖前端传错
+        assert(['hot', 'new'].includes(sort) || /^dim:[a-z_]+$/.test(sort), 'sort 仅支持 hot / new / dim:<维度>');
         const page = page_int(req.query.page, 1);
         // size 1-50（post 详情页历史口径用 50）
         const size = Math.min(Math.max(page_int(req.query.size, 20), 1), 50);
@@ -702,7 +753,7 @@ router.get('/users/:id/profile', auth_optional(), async (req, res, next) => {
         const uid = Number(req.params.id);
         assert(Number.isInteger(uid) && uid > 0, '用户 ID 不合法');
         const u = await query_one(
-            'SELECT id, nickname, avatar, avatar_object_key, created_at FROM `user` WHERE id = ?',
+            'SELECT id, nickname, avatar, avatar_object_key, fzu_verified, created_at FROM `user` WHERE id = ?',
             [uid]
         );
         if (!u) throw err.not_found('用户不存在');
@@ -716,7 +767,8 @@ router.get('/users/:id/profile', auth_optional(), async (req, res, next) => {
         ok(res, {
             user: {
                 id: u.id, nickname: u.nickname, avatar: u.avatar,
-                avatarObjectKey: u.avatar_object_key || null, createdAt: u.created_at,
+                avatarObjectKey: u.avatar_object_key || null,
+                fzuVerified: !!u.fzu_verified, createdAt: u.created_at,
             },
             stats: statBlock.stats,
             title: statBlock.title,
@@ -993,6 +1045,103 @@ router.post('/tasks/:id/claim', write_required(), rate_limit('task-claim', N.TAS
     } catch (e) { next(e); }
 });
 
+/* ---------------- 社区动态（r78：发动态 / 推荐 / 最新 / 点赞） ---------------- */
+
+/**
+ * 动态列表：?tab=recommend|latest &page &size
+ */
+router.get('/posts', auth_optional(), async (req, res, next) => {
+    try {
+        const tab = req.query.tab === 'latest' ? 'latest' : 'recommend';
+        const page = page_int(req.query.page, 1);
+        const size = Math.min(Math.max(page_int(req.query.size, 10), 1), 30);
+        ok(res, await postSvc.list_posts({
+            tab, page, size, user_id: req.user ? req.user.id : null,
+        }));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 发布动态：{content, images?, topics?}
+ */
+router.post('/posts', write_required(), async (req, res, next) => {
+    try {
+        ok(res, await postSvc.create_post(req.user.id, req.body || {}), 201);
+    } catch (e) { next(e); }
+});
+
+/**
+ * 动态详情
+ */
+router.get('/posts/:id', auth_optional(), async (req, res, next) => {
+    try {
+        const id = Number(req.params.id);
+        assert(Number.isInteger(id) && id > 0, '动态 ID 不合法');
+        ok(res, await postSvc.get_post(id, req.user ? req.user.id : null));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 点赞 / 取消点赞（幂等）
+ */
+router.post('/posts/:id/like', write_required(), async (req, res, next) => {
+    try {
+        const id = Number(req.params.id);
+        assert(Number.isInteger(id) && id > 0, '动态 ID 不合法');
+        ok(res, await postSvc.toggle_like(req.user.id, id));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 删除自己的动态
+ */
+router.delete('/posts/:id', write_required(), async (req, res, next) => {
+    try {
+        ok(res, await postSvc.delete_post(req.user.id, Number(req.params.id)));
+    } catch (e) { next(e); }
+});
+
+/* ---------------- 宠物养成（r78：真实状态 / 喂食 / 装扮 / 广场） ---------------- */
+
+/**
+ * 我的宠物状态（懒创建；点亮天数真实计算）
+ */
+router.get('/me/pet', auth_required(), async (req, res, next) => {
+    try { ok(res, await petSvc.state(req.user.id)); } catch (e) { next(e); }
+});
+
+/**
+ * 喂食：道具优先，无道具扣 10 金币
+ */
+router.post('/me/pet/feed', write_required(), async (req, res, next) => {
+    try { ok(res, await petSvc.feed(req.user.id)); } catch (e) { next(e); }
+});
+
+/**
+ * 购买 / 穿戴装扮：{dress_id}
+ */
+router.post('/me/pet/dress', write_required(), async (req, res, next) => {
+    try {
+        const dressId = String((req.body || {}).dress_id || '').trim();
+        assert(dressId, '缺少装扮 ID');
+        ok(res, await petSvc.wear_dress(req.user.id, dressId));
+    } catch (e) { next(e); }
+});
+
+/**
+ * 修改宠物名：{name}
+ */
+router.put('/me/pet/name', write_required(), async (req, res, next) => {
+    try { ok(res, await petSvc.rename(req.user.id, (req.body || {}).name)); } catch (e) { next(e); }
+});
+
+/**
+ * 宠物广场：真实在养用户数与榜单
+ */
+router.get('/pet/community', auth_required(), async (req, res, next) => {
+    try { ok(res, await petSvc.community(req.user.id)); } catch (e) { next(e); }
+});
+
 /* ---------------- 头衔与贡献（T-21） ---------------- */
 
 /**
@@ -1018,6 +1167,14 @@ router.get('/users/:id/stats', auth_optional(), async (req, res, next) => {
  */
 router.get('/ai/models', auth_required(), async (req, res, next) => {
     try { ok(res, await ai.list_models(req.user.id)); } catch (e) { next(e); }
+});
+
+/**
+ * 测试模型连通性（r89）：表单值优先，缺省回落到已保存配置（编辑态密钥留空可复用）
+ * 返回 {ok, latencyMs, model, reply?} 或 {ok:false, error, hint}，不落库、不影响使用中配置
+ */
+router.post('/ai/models/test', auth_required(), rate_limit('ai-test', 30, 3600), async (req, res, next) => {
+    try { ok(res, await ai.test_user_model(req.user.id, req.body || {})); } catch (e) { next(e); }
 });
 
 /**
@@ -1136,6 +1293,19 @@ router.put('/me/password', auth_required(), async (req, res, next) => {
         const hash = await bcrypt.hash(newPassword, 10);
         await query('UPDATE `user` SET password = ? WHERE id = ?', [hash, req.user.id]);
         ok(res);
+    } catch (e) { next(e); }
+});
+
+/**
+ * 修改福大统一身份口令（r80，登录态）
+ * 双重输入：新口令 + 确认新口令必须一致；另需当前口令（初始口令登录者也必须验证）
+ * 成功后 must_change 置 0，/auth/me 不再提示改密
+ */
+router.put('/me/fzu/password', auth_required(), rate_limit('fzu_pwd', 10, 600), async (req, res, next) => {
+    try {
+        const { oldPassword, newPassword, confirmPassword } = req.body || {};
+        const data = await fzu_account.change_password(req.user.id, oldPassword, newPassword, confirmPassword);
+        ok(res, { ...data, message: '统一身份口令已更新' });
     } catch (e) { next(e); }
 });
 
@@ -1282,6 +1452,10 @@ admin.delete('/ai-providers/:id', async (req, res, next) => {
 admin.get('/platform-models', async (_req, res, next) => {
     try { ok(res, await ai.admin_list_platform()); } catch (e) { next(e); }
 });
+/* 平台模型连通性测试（r89）：已保存的可复用密钥，未保存的直接测表单值 */
+admin.post('/platform-models/test', async (req, res, next) => {
+    try { ok(res, await ai.test_platform_model(req.body || {})); } catch (e) { next(e); }
+});
 admin.post('/platform-models', async (req, res, next) => {
     try { ok(res, await ai.admin_save_platform(req.body || {})); } catch (e) { next(e); }
 });
@@ -1362,6 +1536,21 @@ admin.get('/users', async (req, res, next) => {
 });
 admin.post('/users/:id/status', async (req, res, next) => {
     try { await adminSvc.set_user_status(req.user.id, Number(req.params.id), req.body); ok(res); } catch (e) { next(e); }
+});
+
+/* 福大统一身份账号管理（r80）：口令由后台托管，可查询/重置，重置后强制本人改密 */
+admin.get('/fzu-accounts', async (req, res, next) => {
+    try {
+        const page = page_int(req.query.page, 1);
+        const size = Math.min(page_int(req.query.size, 20), 50);
+        ok(res, await fzu_account.list_accounts(req.query.keyword || req.query.q || '', page, size));
+    } catch (e) { next(e); }
+});
+admin.put('/fzu-accounts/:uid/password', async (req, res, next) => {
+    try {
+        const { newPassword } = req.body || {};
+        ok(res, await fzu_account.reset_password(req.params.uid, newPassword));
+    } catch (e) { next(e); }
 });
 
 admin.get('/words', async (_req, res, next) => {
