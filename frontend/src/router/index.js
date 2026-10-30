@@ -5,7 +5,7 @@
  * 记饮食：/checkin /footprint /journal/:id
  * AI：/ai /ai/mbti /ai/wheel /ai/plan /ai/profile
  * 我的：/me /collection /my-reviews /notifications /achievements /settings /tasks /drafts /follows /user/:id
- * 共建：/cobuild /report
+ * 共建：/cobuild /vendor/apply /report
  * 宠物：/pet /pet-community
  */
 import { createRouter, createWebHistory } from 'vue-router';
@@ -52,6 +52,7 @@ const routes = [
     { path: '/user/:id', name: 'user-profile', component: () => import('../views/user-profile-view.vue') },
     // ---- 内容共建 ----
     { path: '/cobuild', name: 'cobuild', component: () => import('../views/cobuild-view.vue'), meta: { auth: true } },
+    { path: '/vendor/apply', name: 'vendor-apply', component: () => import('../views/vendor-apply-view.vue'), meta: { auth: true } },
     { path: '/report', name: 'report', component: () => import('../views/report-view.vue'), meta: { auth: true } },
     // ---- 宠物 ----
     { path: '/pet', name: 'pet', component: () => import('../views/pet-view.vue'), meta: { auth: true } },
@@ -73,6 +74,8 @@ const routes = [
             { path: 'content', name: 'admin-content', component: () => import('../views/admin/content-view.vue') },
             { path: 'governance', name: 'admin-governance', component: () => import('../views/admin/governance-view.vue') },
             { path: 'ai-providers', name: 'admin-ai-providers', component: () => import('../views/admin/ai-providers-view.vue') },
+            // 统一身份账号（r80）：SSO 口令托管的重置 / 指定新口令
+            { path: 'fzu-accounts', name: 'admin-fzu-accounts', component: () => import('../views/admin/fzu-accounts-view.vue') },
         ],
     },
 ];

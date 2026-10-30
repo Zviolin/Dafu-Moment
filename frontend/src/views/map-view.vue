@@ -5,6 +5,16 @@
             <span class="map-note">底图 © 高德地图 · 点位基于真实 POI 坐标标注 · 点击标记查看食区</span>
         </div>
 
+        <!-- 点位搜索：按名称 / 位置 / 标签筛选标记 -->
+        <div class="map-tools card">
+            <el-input
+                v-model="keyword" class="map-search" size="small" clearable
+                placeholder="搜索点位名称或位置，如「京元食堂」「学生街」"
+            >
+                <template #prefix><el-icon :size="14"><Search /></el-icon></template>
+            </el-input>
+        </div>
+
         <div class="map-body card">
             <div ref="map_el" class="map-canvas" aria-label="福州大学旗山校区美食地图"></div>
 
@@ -35,11 +45,16 @@
             </transition>
         </div>
 
-        <!-- 场景图例 chip（素材 16px，与首页场景四格同源） -->
+        <!-- 类型筛选：点击切换，与地图标记联动（真实类型：食堂 / 学生街 / 周边） -->
         <div class="legend">
-            <span v-for="g in LEGEND" :key="g.label" class="legend-chip">
+            <button
+                v-for="g in FILTERS" :key="g.label" class="legend-chip"
+                :class="{ on: active_type === g.type }"
+                @click="set_type(g.type)"
+            >
                 <img :src="g.img" :alt="g.label" />{{ g.label }}
-            </span>
+                <i class="cnt">{{ count_of(g.type) }}</i>
+            </button>
         </div>
     </div>
 </template>
@@ -50,9 +65,9 @@
  * 文字/图标矢量绘制任意缩放锐利，自带完整中文注记；GCJ-02 坐标与 DB 无缝衔接。
  * 食区标记锚定真实 POI 坐标（高德官方点/官方数据集/POI 库火星坐标），楼栋级为近似落点；?focus=id 直达定位并弹出详情卡
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Close, Location } from '@element-plus/icons-vue';
+import { Close, Location, Search } from '@element-plus/icons-vue';
 import { api_content } from '../api';
 import { fmt_score, CANTEEN_TYPE_NAME } from '../utils/format';
 import { load_amap, pin_html, AMAP_CENTER } from '../utils/amap';
@@ -62,13 +77,15 @@ const router = useRouter();
 const canteens = ref([]);
 const active = ref(null);
 const map_el = ref(null);
+const keyword = ref('');
+const active_type = ref('all');
 
-// 图例：就餐场景（scene-* 素材 16px，纯展示）
-const LEGEND = [
-    { label: '食堂', img: '/assets/icons/scene-canteen.png' },
-    { label: '外卖', img: '/assets/icons/scene-waimai.png' },
-    { label: '私厨', img: '/assets/icons/scene-sichu.png' },
-    { label: '商场', img: '/assets/icons/scene-mall.png' },
+// 筛选类型：与真实点位类型对齐（0 食堂 / 2 学生街 / 3 周边其他）
+const FILTERS = [
+    { label: '全部', type: 'all', img: '/assets/icons/scene-canteen.png' },
+    { label: '食堂', type: 0, img: '/assets/icons/scene-canteen.png' },
+    { label: '学生街', type: 2, img: '/assets/icons/scene-mall.png' },
+    { label: '周边', type: 3, img: '/assets/icons/scene-sichu.png' },
 ];
 
 // 食区默认落点（GCJ-02 火星坐标）：餐厅名取自福大后勤管理处官网公告（hqc.fzu.edu.cn）。
@@ -87,6 +104,10 @@ const PIN_POS = [
     { kw: '紫荆园', lat: 26.0528, lng: 119.1926, short: '紫荆园' },
     // 桃李园·教学区东三教学楼旁（图书馆主馆官方 26.056812,119.198453 西侧教学区，楼栋级近似）
     { kw: '桃李园', lat: 26.0576, lng: 119.1962, short: '桃李园' },
+    // 佳客来西餐厅·源库 map_location 无此点，仅作地图兜底示意（与桃李园同片区，待实地校准）
+    { kw: '佳客来', lat: 26.057, lng: 119.194, short: '佳客来' },
+    // 紫竹园到口餐厅·源库 map_location 无此点，仅作地图兜底示意（生活三区北侧，待实地校准）
+    { kw: '紫竹园', lat: 26.053, lng: 119.192, short: '紫竹园' },
     // 美岐学生街·岐安村福大学生街（poi86 火星坐标：119.191987,26.059497）
     { kw: '美岐', lat: 26.0595, lng: 119.1920, short: '美岐学生街' },
 ];
@@ -94,6 +115,7 @@ const PIN_POS = [
 const pins = ref([]);
 let map = null;
 const markers = [];
+const marker_pins = [];
 
 /**
  * 点位类型名（0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖）
@@ -104,13 +126,62 @@ function type_name(t) {
 }
 
 /**
+ * 某筛选类型下的点位数（「全部」返回总数）
+ * @param {string|number} type
+ * @returns {number}
+ */
+function count_of(type) {
+    if (type === 'all') return pins.value.length;
+    return pins.value.filter((p) => Number(p.type) === Number(type)).length;
+}
+
+/**
+ * 切换类型筛选
+ * @param {string|number} type
+ */
+function set_type(type) {
+    active_type.value = type;
+}
+
+/**
+ * 按类型 + 关键字过滤地图标记，并自适应视野
+ */
+function apply_filter() {
+    if (!map) return;
+    const kw = keyword.value.trim().toLowerCase();
+    const visible = [];
+    let active_visible = false;
+    markers.forEach((m, i) => {
+        const p = marker_pins[i];
+        const type_ok = active_type.value === 'all' || Number(p.type) === Number(active_type.value);
+        const tags = Array.isArray(p.tags) ? p.tags.join(' ') : '';
+        const hay = `${p.name || ''} ${p.location || ''} ${tags}`.toLowerCase();
+        const kw_ok = !kw || hay.includes(kw);
+        const show = type_ok && kw_ok;
+        m.setMap(show ? map : null);
+        if (show) {
+            visible.push(m);
+            if (active.value && Number(p.id) === Number(active.value.id)) active_visible = true;
+        }
+    });
+    // 当前详情卡对应点位被筛掉时收起卡片并复位标记
+    if (active.value && !active_visible) {
+        active.value = null;
+        markers.forEach((m) => m.setContent(pin_html()));
+    }
+    if (visible.length) map.setFitView(visible, false, [42, 42, 42, 42], 16);
+}
+
+watch([keyword, active_type], apply_filter);
+
+/**
  * 打开标记详情卡（focus 直达时视角移动过去）
  * @param {Object} p
  * @param {boolean} fly
  */
 function open_pin(p, fly = false) {
     active.value = p;
-    markers.forEach((m, i) => m.setContent(pin_html({ on: pins.value[i].id === p.id })));
+    markers.forEach((m, i) => m.setContent(pin_html({ on: Number(marker_pins[i].id) === Number(p.id) })));
     if (fly && map) map.setZoomAndCenter(17, [p.lng, p.lat]);
 }
 
@@ -163,6 +234,7 @@ onMounted(async () => {
         });
         m.on('click', () => open_pin(p));
         markers.push(m);
+        marker_pins.push(p);
     });
     // 自适应含全部标记的视野（四边留白 42px，最大 z16）
     map.setFitView(null, false, [42, 42, 42, 42], 16);
@@ -189,6 +261,9 @@ onBeforeUnmount(() => {
 .map-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .map-head h2 { margin: 0; font-size: 18px; }
 .map-note { font-size: 12px; color: var(--ink-2); }
+/* 搜索条：地图上方，按名称/位置/标签过滤标记 */
+.map-tools { margin-bottom: 10px; padding: 8px 10px; }
+.map-search { max-width: 420px; }
 /* isolation 隔离高德内部高 z-index，避免盖住吸顶导航；flex:1 让卡片撑满剩余高度 */
 .map-body { position: relative; padding: 10px; isolation: isolate; z-index: 0; flex: 1; display: flex; }
 /* 高德 2.0 自带容器尺寸监听，视口变化自动适配；min-height 兜底矮视口可用性 */
@@ -229,15 +304,19 @@ onBeforeUnmount(() => {
 .card-pop-leave-active { transition: all .15s ease; }
 .card-pop-enter-from, .card-pop-leave-to { opacity: 0; transform: translateY(8px); }
 
-/* 场景图例 chip：淡描边微圆角（去胶囊/去墨线/去错位阴影） */
+/* 类型筛选 chip：可点击，选中态琥珀描边 */
 .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .legend-chip {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 11px; font-weight: 600; color: var(--ink-3);
     background: var(--paper); border: 1px solid var(--line);
     border-radius: var(--radius-sm); padding: 4px 10px;
+    cursor: pointer; transition: border-color .12s ease, color .12s ease, background .12s ease;
 }
+.legend-chip:hover { border-color: var(--brand); }
+.legend-chip.on { color: var(--brand-dark); border-color: var(--brand); background: var(--brand-light); }
 .legend-chip img { width: 16px; height: 16px; object-fit: contain; display: block; }
+.legend-chip .cnt { font-style: normal; font-size: 10px; color: var(--ink-2); }
 
 @media (max-width: 768px) {
     /* 移动端高度由 flex 填充接管，min-height 兜底 */

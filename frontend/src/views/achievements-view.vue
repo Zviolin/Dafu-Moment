@@ -77,19 +77,19 @@
  * 头衔横幅（当前头衔 + 已获得枚数）→ 四项成就进度卡 → 头衔含义说明
  * （需求 5.1.7：头衔表示贡献与活跃情况，不代表内容真实性）→
  * 打卡/点评/获赞里程碑列表（分段 Tab）→ 徽章墙（未点亮灰态 + 点亮条件）。
- * 进度读 localStorage『dafu_achv_progress』（可能已由其他页写入，兼容缺省）。
- * 成就数据后端暂无接口 → mock + localStorage（TODO: 待后端接口）
+ * 进度全部来自真实接口：/me/stats（打卡/点位/点评/获赞）+ /checkin/stats（连续天数），
+ * 无记录时各口径为 0，避免「打卡 1 次就点亮探店达人」。
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { load_json } from '../utils/storage.js';
+import { api_me, api_checkin } from '../api';
 
 const router = useRouter();
 
-/* ---------------- mock 常量（TODO: 待后端接口） ---------------- */
+/* ---------------- 成就口径 ---------------- */
 
-// 成就进度默认口径（与 P26 原型一致）：打卡 36 / 点位 17 / 点评 12 / 获赞 312 / 连续 9 天
-const DEFAULT_ACHV = { checkins: 36, spots: 17, reviews: 12, likes: 312, streak: 9 };
+// 成就进度默认全 0，加载后由真实统计覆盖
+const DEFAULT_ACHV = { checkins: 0, spots: 0, reviews: 0, likes: 0, streak: 0 };
 
 // 四项进度卡口径
 const PROW_DEFS = [
@@ -201,12 +201,30 @@ const next_prog = computed(() => {
 /* ---------------- 生命周期 ---------------- */
 
 onMounted(() => {
-    // 合并已写入的成就进度（兼容缺省：其他页只写部分字段时逐字段兜底）
-    const saved = load_json('dafu_achv_progress', {});
-    Object.keys(DEFAULT_ACHV).forEach((k) => {
-        if (saved[k] !== undefined) achv.value[k] = Number(saved[k]) || 0;
-    });
+    load_real_stats();
 });
+
+/**
+ * 加载真实成就统计：个人统计（打卡/点位/点评/获赞）+ 连续打卡天数
+ */
+async function load_real_stats() {
+    try {
+        const [me, ck] = await Promise.all([api_me.stats(), api_checkin.stats()]);
+        const s = (me && me.stats) || {};
+        achv.value = {
+            checkins: Number(s.check_in_count) || 0,
+            spots: Number(s.spot_count) || 0,
+            reviews: Number(s.review_count) || 0,
+            likes: Number(s.like_count) || 0,
+            streak: Number(ck && ck.continuousDays) || 0,
+        };
+        // 清掉历史版本写入的伪进度，避免下次被误用
+        localStorage.removeItem('dafu_achv_progress');
+    } catch {
+        // 未登录或接口不可用：保持全 0，不再展示虚构成就
+        achv.value = { ...DEFAULT_ACHV };
+    }
+}
 
 /* ---------------- 交互 ---------------- */
 

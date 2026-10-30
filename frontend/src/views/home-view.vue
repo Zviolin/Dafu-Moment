@@ -1,12 +1,7 @@
 <template>
     <div class="page-wrap home">
-        <!-- 1. 顶部搜索条 → /search -->
-        <div class="searchbar fade-up" @click="$router.push('/search')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B0A18A" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-            <span>搜食堂、档口、菜品</span>
-        </div>
-
-        <!-- 2. 就餐场景四格 → /list?type=N（类型文案取自 CANTEEN_TYPE_NAME） -->
+        <!-- 1. 就餐场景四格 → /list?type=N（类型文案取自 CANTEEN_TYPE_NAME）
+             搜索入口统一收敛到顶部导航栏搜索框（首页不再重复放页内搜索条，r90） -->
         <div class="scence fade-up">
             <div v-for="s in SCENES" :key="s.type" class="scene-item" @click="$router.push(`/list?type=${s.type}`)">
                 <span class="simg"><img :src="s.img" :alt="CANTEEN_TYPE_NAME[s.type]"></span>
@@ -226,15 +221,31 @@ function apply_bubble_opacity() {
 }
 
 /**
- * 加载推荐（top 高分口碑 + forYou 为你推荐）；接口失败或无数据时展示空态
+ * 加载推荐 + 首页口碑榜：
+ * 口碑榜与 /rank 页「口碑榜（近 7 天）」同源（rankings?period=week&dim=score），避免前后端两套口径导致榜单不一致；
+ * 榜单为空时回落到 recommendations.top，推荐块仍用 forYou。
  */
 async function load_recs() {
-    try {
-        const data = await api_content.recommendations();
-        recs.value = { top: data.top || [], forYou: data.forYou || [] };
-    } catch {
-        recs.value = { top: [], forYou: [] };
-    }
+    const [reco, rank] = await Promise.allSettled([
+        api_content.recommendations(),
+        api_content.rankings({ period: 'week', dim: 'score', limit: 6 }),
+    ]);
+    const data = reco.status === 'fulfilled' ? (reco.value || {}) : {};
+    const board = rank.status === 'fulfilled' ? (rank.value || []) : [];
+    // 榜单行 → 首页卡片字段（subjectType 1 = 档口）
+    const top = board.length
+        ? board.map((r) => ({
+            subjectType: 1,
+            subjectId: r.id,
+            name: r.name,
+            subtitle: [r.canteenName, r.category, r.avgPrice ? `¥${r.avgPrice}/人` : ''].filter(Boolean).join(' · '),
+            tags: r.category ? [r.category] : [],
+            avgScore: r.ratingAvg,
+            reviewCount: r.reviewCount,
+            cover: r.coverObjectKey,
+        }))
+        : (data.top || []);
+    recs.value = { top, forYou: data.forYou || [] };
     build_hot_cards();
 }
 
@@ -301,27 +312,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ===== 顶部搜索条：纸面微圆角 + 极淡弥散阴影 ===== */
-.searchbar {
-    margin: 8px 0 0;
-    height: 38px;
-    background: var(--paper);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-soft);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 14px;
-    font-size: 12.5px;
-    color: var(--ink-2);
-    cursor: pointer;
-}
-
 /* ===== 场景四格：68px 外框 / 52px 素材图 ===== */
 .scence {
     display: flex;
     justify-content: space-around;
-    padding: 20px 0 4px;
+    padding: 10px 0 4px;
 }
 .scene-item { text-align: center; cursor: pointer; }
 .simg {
@@ -465,10 +460,8 @@ onMounted(() => {
 .home-top-grid { display: contents; }
 
 @media (min-width: 769px) {
-    /* 页内搜索条隐藏：与顶部导航的搜索框功能重复，桌面入口收敛到顶栏 */
-    .searchbar { display: none; }
-    /* 四场景格：无搜索条后顶部留白略增，居中收窄避免大屏稀疏拉伸 */
-    .scence { max-width: 620px; margin: 0 auto; padding-top: 28px; }
+    /* 四场景格：顶部无页内搜索条，居中收窄避免大屏稀疏拉伸 */
+    .scence { max-width: 620px; margin: 0 auto; padding-top: 20px; }
 
     /* 双列区 grid：左主列 1.15fr（r1 = tab 标题行，r2 = 口碑榜/推荐卡「同格互斥叠放」：
        两卡都定位到 2/1，桌面 v-show 保证同一时刻只显示其一，切换顶格零空隙）

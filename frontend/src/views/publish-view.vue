@@ -151,13 +151,14 @@ async function fetch_canteen_type(s) {
 }
 
 /**
- * 加载维度配置并重置已填分项（默认 5 星）
+ * 加载维度配置并重置已填分项（默认 0 星 = 全灰，必须用户主动打分）
+ * 说明：测试记录第 1 条要求评分默认呈灰色，避免「没点过也显示 5 星」的误导
  * @param {number} canteenType
  */
 async function load_dims(canteenType) {
     dims.value = await api_content.dimensions(canteenType);
     const scores = {};
-    for (const d of dims.value) scores[d.key] = 5;
+    for (const d of dims.value) scores[d.key] = 0;
     form.value.dimensionScores = scores;
     // 编辑模式：维度就绪后回填原分
     if (pending_scores.value) {
@@ -353,12 +354,14 @@ onMounted(async () => {
     width: 42px;
     height: 42px;
     object-fit: contain;
-    opacity: 0.35;
+    opacity: 0.4;
+    /* 未选中统一灰度，避免彩色插画被误认为已评分 */
+    filter: grayscale(1) contrast(0.9);
     cursor: pointer;
-    transition: opacity 0.15s, transform 0.15s;
+    transition: opacity 0.15s, transform 0.15s, filter 0.15s;
 }
-.stars img.on { opacity: 1; transform: scale(1.08); }
-.stars img:hover { opacity: 0.8; }
+.stars img.on { opacity: 1; filter: none; transform: scale(1.08); }
+.stars img:hover { opacity: 0.75; }
 .dim-empty { font-size: 13px; color: var(--ink-2); }
 /* 标签 chips：微圆角，选中墨底 */
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }

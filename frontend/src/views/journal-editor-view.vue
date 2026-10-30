@@ -23,8 +23,9 @@
         </div>
 
         <div class="je-body">
-            <!-- 画布区：750×1000 纸面，贴纸/文字块自由排版 -->
-            <div class="je-stage" :class="{ editing: !!sel }">
+            <!-- 画布区：750×1000 纸面，贴纸/文字块自由排版；
+                 height 取缩放后的真实高度，避免 transform 不改变布局高度而留下大段空白（r90） -->
+            <div class="je-stage" :class="{ editing: !!sel }" :style="{ height: stage_h }">
                 <div
                     ref="paper" class="paper" :class="`bg-${bg}`"
                     :style="[bg === 3 && bg_src ? { background: `#FFFDF5 url(${bg_src}) center / cover no-repeat` } : {}, { transform: `scale(${scale})` }]"
@@ -175,6 +176,13 @@ const TEXT_COLORS = ['3a2e1a', 'c98a1e', 'c0533e', '4a7c59', '46618c', '8a5a9e']
 const BG_NAMES = ['米纸网格', '点阵', '牛皮纸'];
 const CANVAS = { w: 750, h: 1000 };
 let uid_seed = 1;
+
+/**
+ * 画布区占位高度：transform: scale 只影响绘制、不改变布局尺寸，
+ * 若不显式收起，缩放后的纸面下方会留下一大段空白，移动端要滚很久才见到工具面板（r90）
+ * @returns {string} 形如 "457px" 的真实高度
+ */
+const stage_h = computed(() => `${Math.round(CANVAS.h * scale.value)}px`);
 
 /* ---------------- 贴图库 ---------------- */
 

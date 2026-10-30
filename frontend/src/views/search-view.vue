@@ -21,8 +21,8 @@
             <el-icon class="cat-close" :size="12" @click="clear_category"><Close /></el-icon>
         </div>
 
-        <!-- ============ 状态 A：搜索首页态（无关键词） ============ -->
-        <template v-if="!f.q.trim()">
+        <!-- ============ 状态 A：搜索首页态（无关键词且无品类筛选） ============ -->
+        <template v-if="!f.q.trim() && !f.category">
             <!-- 历史记录：本机真实搜索记录（点击即用该词重新搜索） -->
             <div class="sect">历史记录</div>
             <div v-if="search_history.length" class="wordrow">
@@ -30,11 +30,12 @@
             </div>
             <div v-else class="word-empty">暂无搜索记录</div>
 
-            <!-- 大家还在搜 -->
+            <!-- 大家还在搜：热搜词取自后端真实数据，点开必有结果 -->
             <div class="sect">大家还在搜</div>
-            <div class="wordrow">
-                <span v-for="w in HOT_WORDS" :key="w" class="word" @click="go_word(w)">{{ w }}</span>
+            <div v-if="hot_words.length" class="wordrow">
+                <span v-for="w in hot_words" :key="w" class="word" @click="go_word(w)">{{ w }}</span>
             </div>
+            <div v-else class="word-empty">暂无热搜词</div>
 
             <!-- 食堂导览入口：AI 地图背景 → /map -->
             <div class="sect">食堂导览</div>
@@ -94,13 +95,41 @@
                 </span>
             </div>
 
-            <!-- 筛选面板（可折叠）：食堂 / 人均 / 口味 / 忌口 / 评分 -->
+            <!-- 筛选面板（可折叠）：点位类型 / 食堂 / 营业状态 / 品类 / 人均 / 口味 / 忌口 / 评分 / 推荐菜 -->
             <div v-if="filter_open" class="filter-panel card fade-up">
+                <div v-if="type_options.length" class="f-group">
+                    <div class="f-title">点位类型</div>
+                    <div class="chip-row">
+                        <span class="chip" :class="{ on: f.canteenType === null }" @click="set_canteen_type(null)">全部</span>
+                        <span
+                            v-for="t in type_options" :key="t.type"
+                            class="chip" :class="{ on: f.canteenType === t.type }"
+                            @click="set_canteen_type(t.type)"
+                        >{{ CANTEEN_TYPE_NAME[t.type] }} {{ t.count }}</span>
+                    </div>
+                </div>
                 <div class="f-group">
                     <div class="f-title">食堂</div>
                     <el-select v-model="f.canteenId" placeholder="全部食堂" clearable style="width: 100%" @change="do_search">
                         <el-option v-for="c in canteens" :key="c.id" :value="c.id" :label="short_name(c.name)" />
                     </el-select>
+                </div>
+                <div v-if="business_options.length > 1" class="f-group">
+                    <div class="f-title">营业状态</div>
+                    <div class="chip-row">
+                        <span v-for="b in business_options" :key="b.value" class="chip" :class="{ on: f.businessStatus === b.value }" @click="set_business(b.value)">{{ b.label }} {{ b.count }}</span>
+                    </div>
+                </div>
+                <div v-if="categories.length" class="f-group">
+                    <div class="f-title">品类</div>
+                    <div class="chip-row">
+                        <span class="chip" :class="{ on: !f.category }" @click="clear_category">全部</span>
+                        <span
+                            v-for="c in categories" :key="c.name"
+                            class="chip" :class="{ on: f.category === c.name }"
+                            @click="set_category(c.name)"
+                        >{{ c.name }} {{ c.count }}</span>
+                    </div>
                 </div>
                 <div class="f-group">
                     <div class="f-title">人均价格</div>
@@ -124,13 +153,23 @@
                         <span v-for="t in TABOO" :key="t" class="chip" :class="{ on: f.taboo.includes(t) }" @click="toggle_tag('taboo', t)">{{ t }}</span>
                     </div>
                 </div>
-                <div class="f-group">
+                <div v-if="rating_options.length" class="f-group">
                     <div class="f-title">评分</div>
                     <div class="chip-row">
-                        <span class="chip" :class="{ on: f.ratingMin === 4 }" @click="set_rating(4)">≥4 星</span>
-                        <span class="chip" :class="{ on: f.ratingMin === 4.5 }" @click="set_rating(4.5)">≥4.5 星</span>
+                        <span
+                            v-for="r in rating_options" :key="r.min"
+                            class="chip" :class="{ on: f.ratingMin === r.min }"
+                            @click="set_rating(r.min)"
+                        >≥{{ r.min }} 星 {{ r.count }}</span>
                     </div>
                 </div>
+                <div v-if="filter_meta.recommended > 0" class="f-group">
+                    <div class="f-title">推荐</div>
+                    <div class="chip-row">
+                        <span class="chip" :class="{ on: f.recommended }" @click="toggle_recommended">只看推荐菜 {{ filter_meta.recommended }}</span>
+                    </div>
+                </div>
+                <div class="filter-note">筛选项按当前在售菜品自动生成；暂无菜品的点位不展示</div>
                 <el-button plain class="reset-btn" @click="reset">重置筛选</el-button>
             </div>
 
@@ -142,9 +181,9 @@
             <!-- 无结果：明确提示 + 热门引导（AC02 降级） -->
             <div v-if="!loading && result.list.length === 0 && has_no_result" class="empty-block">
                 <div class="empty-main">没找到「{{ f.q }}」相关内容</div>
-                <div class="empty-sub">换个关键词试试，或看看大家都在搜什么</div>
+                <div class="empty-sub">已收录学生街与周边门店的完整菜单，以及 8 个校内食堂的 28 个档口（食堂档口菜品仍在完善），可先试试下面的真实热搜</div>
                 <div class="wordrow center">
-                    <span v-for="w in HOT_GUIDE" :key="w" class="word" @click="go_word(w)">{{ w }}</span>
+                    <span v-for="w in hot_guide" :key="w" class="word" @click="go_word(w)">{{ w }}</span>
                 </div>
             </div>
 
@@ -166,7 +205,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { Close } from '@element-plus/icons-vue';
 import { api_content } from '../api';
-import { score_color, fmt_score } from '../utils/format';
+import { score_color, fmt_score, CANTEEN_TYPE_NAME } from '../utils/format';
 import DishCard from '../components/dish-card.vue';
 
 const TASTE = ['偏辣', '清淡', '少油', '香辣', '咸鲜', '酸甜', '浓郁'];
@@ -187,10 +226,33 @@ const sorts = [
     { key: 'priceDesc', name: '价格↓' },
 ];
 
-// 大家还在搜词组（点击即用该词搜索）
-const HOT_WORDS = ['糖水铺', '夜宵', '免排队'];
-// 无结果时的热门引导词（同词组口径）
-const HOT_GUIDE = ['麻辣香锅', '糖水铺', '手打面', '夜宵'];
+// 点位类型筛选项（按真实菜品数动态生成，避免出现「选了必空」的选项）
+const type_options = ref([]);
+// 筛选项可用性统计（推荐菜 / 营业状态 / 品类 / 评分档位）
+const filter_meta = reactive({
+    recommended: 0,
+    business: { open: 0, closed: 0 },
+    ratings: [],
+});
+// 只展示有真实数据的评分档位（≥4.5 无达标菜品时自动隐藏）
+const rating_options = computed(() => filter_meta.ratings.filter((r) => Number(r.count) > 0));
+// 营业状态（all 未下架全量 / open 营业中 / closed 休息中）
+const BUSINESS = [
+    { value: 'all', label: '全部' },
+    { value: 'open', label: '营业中' },
+    { value: 'closed', label: '休息中' },
+];
+// 只展示有真实菜品的营业状态选项（如「休息中」为 0 时自动隐藏）
+const business_options = computed(() => BUSINESS
+    .map((b) => ({ ...b, count: b.value === 'all' ? filter_meta.business.open + filter_meta.business.closed : filter_meta.business[b.value] }))
+    .filter((b) => b.value === 'all' || b.count > 0));
+
+// 热搜词：由后端 /search/hot 按真实数据生成（失败时回退到可命中的通用词）
+const hot_words = ref(['夜宵', '早餐']);
+// 无结果引导词与热搜同源，最多展示 4 个
+const hot_guide = computed(() => hot_words.value.slice(0, 4));
+// 品类 chips（/categories 聚合，取前 12 个）
+const categories = ref([]);
 
 // 本机搜索历史（localStorage 记录的真实搜索词，无记录展示空态）
 const HISTORY_KEY = 'dafu_search_history';
@@ -211,11 +273,16 @@ const searched = ref(false);
 const f = reactive({
     q: route.query.q || '',
     canteenId: route.query.canteenId ? Number(route.query.canteenId) : null,
+    canteenType: route.query.canteenType !== undefined ? Number(route.query.canteenType) : null,
     category: route.query.category || null,
     priceMin: null, priceMax: null,
     taste: route.query.taste ? String(route.query.taste).split(',') : [],
     taboo: route.query.taboo ? String(route.query.taboo).split(',') : [],
     ratingMin: null,
+    // 营业状态：all 全部 / open 营业中 / closed 休息中
+    businessStatus: route.query.businessStatus || 'all',
+    // 只看推荐菜（is_recommended=1）
+    recommended: route.query.recommended === '1',
     sort: 'comprehensive', page: 1,
 });
 
@@ -276,8 +343,11 @@ async function do_search() {
         const q = { ...route.query };
         if (f.q) q.q = f.q; else delete q.q;
         if (f.canteenId) q.canteenId = f.canteenId; else delete q.canteenId;
+        if (f.canteenType !== null) q.canteenType = f.canteenType; else delete q.canteenType;
         if (f.category) q.category = f.category; else delete q.category;
         if (f.taste.length) q.taste = f.taste.join(','); else delete q.taste;
+        if (f.businessStatus !== 'all') q.businessStatus = f.businessStatus; else delete q.businessStatus;
+        if (f.recommended) q.recommended = '1'; else delete q.recommended;
         history.replaceState(null, '', `/search?${new URLSearchParams(q)}`);
     } finally {
         loading.value = false;
@@ -383,18 +453,91 @@ function clear_category() {
 }
 
 /**
+ * 选中品类筛选项（重复点击即取消）
+ * @param {string} name - 品类名
+ */
+function set_category(name) {
+    f.category = f.category === name ? null : name;
+    do_search();
+}
+
+/**
+ * 点位类型筛选（null 为全部）
+ * @param {number|null} t
+ */
+function set_canteen_type(t) {
+    f.canteenType = f.canteenType === t ? null : t;
+    do_search();
+}
+
+/**
+ * 营业状态筛选
+ * @param {string} v - all/open/closed
+ */
+function set_business(v) {
+    f.businessStatus = v;
+    do_search();
+}
+
+/**
+ * 只看推荐菜开关
+ */
+function toggle_recommended() {
+    f.recommended = !f.recommended;
+    do_search();
+}
+
+/**
  * 重置
  */
 function reset() {
     Object.assign(f, {
-        q: '', canteenId: null, category: null, priceMin: null, priceMax: null,
-        taste: [], taboo: [], ratingMin: null, sort: 'comprehensive', page: 1,
+        q: '', canteenId: null, canteenType: null, category: null, priceMin: null, priceMax: null,
+        taste: [], taboo: [], ratingMin: null, businessStatus: 'all', recommended: false,
+        sort: 'comprehensive', page: 1,
     });
     do_search();
 }
 
+/**
+ * 加载热搜词与筛选项元数据（失败静默降级，不阻塞搜索主流程）
+ */
+async function load_filters_meta() {
+    try {
+        const words = await api_content.hot_keywords();
+        if (Array.isArray(words) && words.length) hot_words.value = words;
+    } catch { /* 热搜接口不可用则保留兜底词 */ }
+    try {
+        const opt = await api_content.filter_options();
+        if (opt && Array.isArray(opt.canteenTypes)) {
+            // 只保留有真实菜品的点位类型（避免选择后必空）
+            type_options.value = opt.canteenTypes.filter((t) => Number(t.count) > 0);
+        }
+        if (opt && opt.business) filter_meta.business = opt.business;
+        if (opt && Number(opt.recommended) > 0) filter_meta.recommended = Number(opt.recommended);
+        if (opt && Array.isArray(opt.ratings)) filter_meta.ratings = opt.ratings;
+        categories.value = Array.isArray(opt && opt.categories) ? opt.categories.slice(0, 12) : [];
+    } catch {
+        // 元数据接口不可用时回落品类接口
+        try {
+            const rows = await api_content.categories();
+            categories.value = Array.isArray(rows) ? rows.slice(0, 12) : [];
+        } catch { categories.value = []; }
+    }
+    // URL 里残留了已无数据的筛选值时自动清掉，避免「一进来就空结果」
+    if (type_options.value.length && f.canteenType !== null
+        && !type_options.value.some((t) => t.type === f.canteenType)) {
+        f.canteenType = null;
+    }
+    if (!filter_meta.recommended) f.recommended = false;
+    if (f.ratingMin !== null && !rating_options.value.some((r) => Number(r.min) === Number(f.ratingMin))) {
+        f.ratingMin = null;
+    }
+}
+
 onMounted(async () => {
     load_search_history();
+    load_filters_meta();
     try {
         canteens.value = await api_content.canteens();
     } catch {
@@ -574,6 +717,7 @@ onMounted(async () => {
 .chip:hover { background: #FBF3DC; color: var(--brand-dark); }
 .chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .reset-btn { width: 100%; }
+.filter-note { font-size: 10px; color: var(--ink-2); line-height: 1.6; margin: -2px 0 10px; }
 
 /* ===== 菜品结果网格 ===== */
 .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
@@ -599,12 +743,12 @@ onMounted(async () => {
     .search-input, .sqbtn { height: 44px; }
     .search-input input { font-size: 13.5px; }
     /* 结果卡片流：桌面固定 2 列（替代移动端 auto-fill 自适应，节奏更稳）；筛选条与历史热门区保持全宽不动 */
-    .result-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+    .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
 }
 
 /* ===== 桌面适配二档（≥1200）===== */
 @media (min-width: 1200px) {
     /* 超宽屏：结果 3 列并加大列距 */
-    .result-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .result-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 }
 </style>

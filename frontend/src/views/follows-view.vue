@@ -20,7 +20,8 @@
                 <img class="avatar-fix uav" :src="u.avatar" alt="头像" />
                 <div class="uinfo">
                     <div class="uname">
-                        {{ u.name }}
+                        <!-- 昵称独立包裹：不换行 + 溢出省略，避免被认证签挤压成竖排一字一行 -->
+                        <span class="uname-txt">{{ u.name }}</span>
                         <span v-if="u.verified" class="vbadge">校内已认证</span>
                     </div>
                     <div class="uintro">{{ u.intro }}</div>
@@ -38,7 +39,7 @@
                 <img class="avatar-fix uav" :src="u.avatar" alt="头像" />
                 <div class="uinfo">
                     <div class="uname">
-                        {{ u.name }}
+                        <span class="uname-txt">{{ u.name }}</span>
                         <span v-if="u.verified" class="vbadge">校内已认证</span>
                     </div>
                     <div class="uintro">{{ u.intro }}</div>
@@ -162,7 +163,7 @@ onMounted(() => {
 }
 
 /* 用户列表：行间虚线分隔，行高留白充足 */
-.user-list { margin-top: 12px; padding: 4px 0; }
+.user-list { margin-top: 20px; padding: 4px 0; }
 .urow {
     display: flex;
     align-items: center;
@@ -172,8 +173,10 @@ onMounted(() => {
 .urow + .urow { border-top: 1px dashed var(--line); }
 .uav { width: 44px; height: 44px; border-radius: 50%; }
 .uinfo { flex: 1; min-width: 0; }
-.uname { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-.uintro { font-size: 10.5px; color: var(--ink-2); margin-top: 3px; font-weight: 400; }
+/* 昵称行：允许认证签换行到下一行，但昵称本身永不折行（防竖排一字一行） */
+.uname { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.uname-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.uintro { font-size: 10.5px; color: var(--ink-2); margin-top: 3px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 校内已认证小签 */
 .vbadge {
@@ -201,22 +204,36 @@ onMounted(() => {
 .ubtn.back:hover { background: var(--brand-light); }
 .ubtn.mutual { border: none; background: #EDE0C2; color: var(--ink-3); }
 
-.foot-hint { text-align: center; font-size: 10.5px; color: var(--ink-2); margin-top: 16px; }
+.foot-hint { text-align: center; font-size: 10.5px; color: var(--ink-2); margin-top: 20px; }
 
 /* ===== 桌面适配（≥769）===== */
 @media (min-width: 769px) {
-    /* 用户卡桌面改 3 列网格：整卡仍是一个卡面，内部用户行分列排布 */
-    .user-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 10px 12px; }
+    /* 用户卡桌面改 3 列网格：整卡仍是一个卡面，内部用户行分列排布
+       列数上限锁 3：内容列宽 1032px，4 列后单列仅 250px，
+       昵称会被「校内已认证」签挤成竖排一字一行 */
+    .user-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px 16px;
+        padding: 14px 16px;
+        margin-top: 26px;
+    }
     /* 行间虚线基于 DOM 相邻选择器，分列后视觉错乱，网格内取消改用留白 */
     .urow + .urow { border-top: none; }
     /* 单个用户行加淡金悬浮反馈与圆角，强化可点区 */
     .urow { border-radius: var(--radius-sm); transition: background .12s ease; }
     .urow:hover { background: #FBF3DC; }
+    /* 桌面端字号放大一档，昵称与简介更易读 */
+    .uname { font-size: 14px; }
+    .uintro { font-size: 11px; }
+    /* 底部提示与卡片拉开呼吸感 */
+    .foot-hint { margin-top: 24px; font-size: 11px; }
 }
 
 /* ===== 桌面适配二档（≥1200）===== */
 @media (min-width: 1200px) {
-    /* 超宽屏：用户卡 4 列铺满 */
-    .user-list { grid-template-columns: repeat(4, 1fr); }
+    /* 超宽屏：内容列宽受 .page-wrap 上限约束（仍 1032px），
+       保持 3 列仅加大列间距；不再改 4 列，避免昵称被压窄 */
+    .user-list { gap: 6px 24px; }
 }
 </style>

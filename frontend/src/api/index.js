@@ -16,11 +16,19 @@ export const api_auth = {
     fzu_unbind: () => http.delete('/auth/fzu/bind'),
     fzu_sso: (d) => http.post('/auth/fzu/sso', d),
     fzu_cas_mode: () => http.get('/auth/fzu/cas/mode'),
+    // 统一身份口令本人改密（r80）：旧口令 + 新口令 + 确认新口令（双重输入）
+    fzu_update_password: (d) => http.put('/me/fzu/password', d),
 };
 
-// 他人公开主页：用户信息 + 公开点评分页（{user, reviews: {list, total, page, size}}）
+// 他人公开主页：用户信息 + 公开点评分页（{user, reviews: {list, total, page, size}, stats, title, follow}）
 export const api_user = {
     profile: (id, params) => http.get(`/users/${id}/profile`, { params }),
+    // 关注态（登录后取他人主页按钮初始态）：{followed, available}
+    follow_status: (id) => http.get(`/users/${id}/follow-status`),
+    // 关注（幂等）：{followed, already}
+    follow: (id) => http.post(`/users/${id}/follow`),
+    // 取关（未关注 404，服务端软删除保留关系行）
+    unfollow: (id) => http.delete(`/users/${id}/follow`),
 };
 
 export const api_content = {
@@ -40,6 +48,10 @@ export const api_content = {
     dimensions: (type) => http.get('/dimensions', { params: { type } }),
     // 统一搜索：返回点位 / 档口 / 菜品三分组
     search_all: (q) => http.get('/search', { params: { q } }),
+    // 热搜词（取自真实数据，保证点开有结果）：string[]
+    hot_keywords: () => http.get('/search/hot'),
+    // 筛选项可用性（按真实数据统计：点位类型/营业状态/推荐菜/品类）
+    filter_options: () => http.get('/filters/options'),
     // 推荐：高分口碑 top + 个性化 forYou
     recommendations: () => http.get('/recommendations'),
     // 校园口碑榜：按档口聚合期间内真实评价（period: day/week/all；dim: hot/score/like）
@@ -61,12 +73,17 @@ export const api_review = {
     like: (id) => http.post(`/reviews/${id}/like`),
     appeal: (id) => http.post(`/reviews/${id}/appeal`),
     reply: (id, content) => http.post(`/reviews/${id}/reply`, { content }),
+    // 评价评论列表（单层，返回 {available, list, total}）
+    comments: (id) => http.get(`/reviews/${id}/comments`),
+    // 评价评论发布（与 reply 同后端口径，统一走评论服务）
+    comment: (id, data) => http.post(`/reviews/${id}/comments`, data),
     my_reviews: () => http.get('/me/reviews'),
 };
 
 // AI 助手「福宝」：问答 + 历史 + 用户自配（多供应商：openai 兼容 / anthropic 原生）
 export const api_ai = {
-    ask: (question) => http.post('/ai/ask', { question }),
+    // 问答：后端 LLM 超时默认 60s，前端必须放宽（默认 15s 会先超时→误判 AI 不可用并降级，r89 修复）
+    ask: (question) => http.post('/ai/ask', { question }, { timeout: 70000 }),
     history: () => http.get('/ai/history'),
     /* 历史对话管理：删除单条 / 清空全部（仅本人记录） */
     delete_history: (id) => http.delete(`/ai/history/${id}`),
@@ -79,6 +96,8 @@ export const api_ai = {
     update_model: (id, d) => http.put(`/ai/models/${id}`, d),
     delete_model: (id) => http.delete(`/ai/models/${id}`),
     select_model: (id) => http.put(`/ai/models/${id}/select`),
+    /* 连通性测试（r89）：传 id 测已保存配置，或直接传表单值；不落库 */
+    test_model: (d) => http.post('/ai/models/test', d, { timeout: 70000 }),
     /* 平台托管模型（后台配置，免密钥直接选用）：选用 / 移除引用 */
     select_platform: (id) => http.put(`/ai/platform-models/${id}/select`),
     remove_platform: (id) => http.delete(`/ai/platform-models/${id}`),
@@ -173,6 +192,37 @@ export const api_admin = {
     delete_post: (id) => http.delete(`/admin/posts/${id}`),
     recalc: () => http.post('/admin/maintenance/recalc'),
     dashboard: () => http.get('/admin/dashboard'),
+};
+
+/* 成长任务（T-20）：{daily:[...], growth:[...], coins} */
+export const api_task = {
+    mine: () => http.get('/me/tasks'),
+    claim: (id) => http.post(`/tasks/${id}/claim`),
+};
+
+/* 宠物养成（r78）：状态 / 喂食 / 装扮 / 广场 */
+export const api_pet = {
+    state: () => http.get('/me/pet'),
+    feed: () => http.post('/me/pet/feed'),
+    wear: (dress_id) => http.post('/me/pet/dress', { dress_id }),
+    rename: (name) => http.put('/me/pet/name', { name }),
+    community: () => http.get('/pet/community'),
+};
+
+/* 社区动态（r78）：发布 / 列表 / 详情 / 点赞 / 删除 */
+export const api_post = {
+    list: (params) => http.get('/posts', { params }),
+    create: (data) => http.post('/posts', data),
+    get: (id) => http.get(`/posts/${id}`),
+    like: (id) => http.post(`/posts/${id}/like`),
+    remove: (id) => http.delete(`/posts/${id}`),
+    comments: (id) => http.get(`/posts/${id}/comments`),
+    comment: (id, data) => http.post(`/posts/${id}/comments`, data),
+};
+
+/* 个人统计与头衔进度（T-21） */
+export const api_me = {
+    stats: () => http.get('/me/stats'),
 };
 
 export const api_manager = {

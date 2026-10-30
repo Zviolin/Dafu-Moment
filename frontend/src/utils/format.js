@@ -36,8 +36,10 @@ export function time_ago(dt) {
  * @returns {string} 无效值返回 '—'
  */
 export function fmt_score(v) {
+    // null/空串视为暂无评分，避免 Number(null)=0 被展示成 0.0
+    if (v === null || v === undefined || v === '') return '—';
     const n = Number(v);
-    if (!Number.isFinite(n)) return '—';
+    if (!Number.isFinite(n) || n <= 0) return '—';
     return n.toFixed(1);
 }
 
@@ -71,6 +73,21 @@ export function cover_url(key) {
     if (!key) return '';
     if (key.startsWith('preset:')) return `/preset-cover/${key.slice(7)}.svg`;
     return `/img/${key}`;
+}
+
+/**
+ * 头像 URL：自定义头像 objectKey（裸串）→ /img/ 绝对路径；空 → 默认头像
+ *
+ * 注意：avatar_object_key 存的是 MinIO objectKey 裸串（如 cover/202610/xxx.jpg），
+ * 直接当 <img src> 用会被浏览器当相对路径解析到 SPA 路由上导致裂图，必须补 /img/ 前缀。
+ * @param {string} key - MinIO objectKey 裸串 / preset: 前缀 / 已是绝对路径
+ * @returns {string}
+ */
+export function avatar_url(key) {
+    if (!key) return '/assets/avatar-user.png';
+    const s = String(key);
+    if (s.startsWith('/') || s.startsWith('http')) return s;
+    return cover_url(s) || '/assets/avatar-user.png';
 }
 
 export const PWD_STRENGTH_TEXT = ['', '弱', '中', '强'];

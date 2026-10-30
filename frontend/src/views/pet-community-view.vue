@@ -1,155 +1,174 @@
 <template>
     <div class="page-wrap pet-community">
-        <!-- 顶部返回头：返回 + 标题 + 全服规模 -->
+        <!-- 顶部返回头：全服数量为 pet 表真实计数 -->
         <div class="topbar">
             <span class="icircle back" aria-label="返回" @click="go_back">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
             </span>
             <b class="t-title">社区宠物中心</b>
-            <span class="t-right">全服 1,208 只福宝</span>
+            <span class="t-right">全服 {{ total }} 只福宝</span>
         </div>
 
-        <!-- 我的宠物入口卡 → /pet（舞台式展示：大贴纸 + 饱腹度条，与宠物页 UI 同源） -->
+        <!-- 我的宠物入口卡：真实等级/道具/金币 -->
         <div class="card mine-entry fade-up" @click="$router.push('/pet')">
             <span class="mine-stage">
-                <img class="mine-pet" src="/assets/icons/grid-avatar.png" alt="我家的福宝" />
+                <img class="mine-pet base" :src="face_of(mine.mood)" alt="我家的福宝" />
+                <img v-if="mine.dress_id" class="mine-dress" :src="`/assets/pet-dress/${mine.dress_id}.png${PET_DRESS_VER}`" alt="" decoding="async" />
             </span>
             <div class="mine-info">
-                <b>我家的福宝</b>
+                <b>{{ mine.pet_name || '小福宝' }}</b>
                 <span class="mine-sat">
                     <i class="sat-bar"><em :style="{ width: mine_satiety + '%' }"></em></i>
-                    饱腹 {{ mine_satiety }}
+                    {{ mood_text(mine.mood) }} · 点亮 {{ mine.lit_days }} 天
                 </span>
-                <span class="mine-sub">投喂道具 ×{{ mine_props }} · 点进小窝看看</span>
+                <span class="mine-sub">Lv.{{ mine.level }} · 道具 ×{{ mine.props ?? 0 }} · {{ mine.coins ?? 0 }} 金币 · 点进小窝看看</span>
+                <span class="mine-rank">{{ mine_rank_text }}</span>
             </div>
             <i class="mine-arr">›</i>
         </div>
 
-        <!-- 周投喂榜 Top3：名次圆号 -->
-        <div class="sec"><b>本周投喂榜</b><span>每周一 0 点重置</span></div>
-        <section class="top3 fade-up">
-            <div v-for="t in TOP3" :key="t.rank" class="t-card">
+        <!-- 真实投喂榜 Top3：只收喂过至少 1 次的福宝（0 次不上榜） -->
+        <div class="sec"><b>累计投喂榜</b><span>按真实喂食次数排序 · 喂过至少 1 次才上榜</span></div>
+        <section v-if="ranking.length" class="top3 fade-up">
+            <div v-for="t in ranking" :key="t.user_id" class="t-card">
                 <span class="rank" :class="`r${t.rank}`">{{ t.rank }}</span>
-                <img class="avatar-fix" src="/assets/avatar-user.png" :alt="t.user" />
-                <b class="t-name">{{ t.user }}</b>
-                <span class="t-count">喂了 {{ t.count }} 次</span>
+                <img class="avatar-fix" :src="avatar_of(t)" :alt="t.nickname" />
+                <b class="t-name">{{ t.nickname }}</b>
+                <span class="t-count">喂了 {{ t.feed_total }} 次</span>
             </div>
         </section>
+        <!-- 空态：全服还没有任何投喂记录时，不拿 0 次的福宝凑榜 -->
+        <p v-else-if="loaded" class="rank-empty">还没有同学投喂过福宝，去「我的宠物」喂第一口吧～</p>
 
-        <!-- 宠物广场：他人宠物卡流 -->
-        <div class="sec"><b>宠物广场</b><span>投喂 / 摸摸都可以攒好感</span></div>
+        <!-- 宠物广场：真实宠物卡流 -->
+        <div class="sec"><b>宠物广场</b><span>每只福宝都来自真实账号</span></div>
         <section class="p-list">
-            <div v-for="(p, i) in pets" :key="p.id" class="card p-card fade-up" :style="{ animationDelay: `${(i % 6) * 40}ms` }">
+            <div v-for="(p, i) in pets" :key="p.user_id" class="card p-card fade-up" :style="{ animationDelay: `${(i % 6) * 40}ms` }">
                 <div class="p-pet-wrap">
-                    <img class="p-pet" :src="p.img" alt="福宝" />
-                    <span class="chip face-chip">{{ p.face }}</span>
+                    <img class="p-pet base" :src="face_of(p.mood)" alt="福宝" />
+                    <img v-if="p.dress_id" class="p-dress" :src="`/assets/pet-dress/${p.dress_id}.png${PET_DRESS_VER}`" alt="" loading="lazy" decoding="async" />
+                    <span class="chip face-chip">{{ face_label(p.mood) }}</span>
                 </div>
                 <div class="p-body">
                     <div class="p-owner">
-                        <img class="avatar-fix" src="/assets/avatar-user.png" style="width: 20px; height: 20px; border-radius: 50%;" alt="" />
-                        <b>{{ p.user }}</b>
+                        <img class="avatar-fix" :src="avatar_of(p)" style="width: 20px; height: 20px; border-radius: 50%;" alt="" />
+                        <b>{{ p.nickname }}</b>
+                        <span class="chip" v-if="p.is_me">我</span>
                     </div>
-                    <p class="p-mood">{{ p.mood }}</p>
-                    <div class="p-ops">
-                        <button class="op-btn" :class="{ done: p.feeded }" :disabled="p.feeded" @click="do_feed(p)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a8 8 0 0 1-16 0z" /><path d="M8 11c0-3 2-5 4-5s4 2 4 5" /></svg>
-                            投喂 {{ p.feeds }}
-                        </button>
-                        <button class="op-btn" :class="{ done: p.touched }" :disabled="p.touched" @click="do_touch(p)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.5 12 20 12 20z" /></svg>
-                            摸摸 {{ p.touches }}
-                        </button>
+                    <p class="p-mood">{{ p.pet_name }} · {{ mood_text(p.mood) }}</p>
+                    <div class="p-stats">
+                        <span>Lv.<b>{{ p.level }}</b></span>
+                        <span v-if="p.feed_total > 0">累计投喂 <b>{{ p.feed_total }}</b> 次</span>
+                        <span v-else>还没投喂过</span>
+                        <span>点亮 <b>{{ p.lit_days }}</b> 天</span>
                     </div>
                 </div>
             </div>
         </section>
+        <p v-if="loaded && pets.length === 0" class="list-empty">还没有同学养福宝，快去签到领养第一只吧～</p>
     </div>
 </template>
 
 <script setup>
 /**
- * 社区宠物中心页（对齐 P33）：
- * 我的宠物入口卡 → /pet；周投喂榜 Top3（名次圆号）；
- * 宠物广场卡流（宠物图+表情 / 主人头像昵称 / 今日状态 / 投喂摸摸互动+计数）。
- * 后端暂无接口 → 页内 mock（TODO: 待后端接口），我的宠物读 dafu_pet
+ * 社区宠物中心（r78 修正）：
+ * - 全服福宝数 = pet 表 COUNT(*)，不再写死 1,208
+ * - 榜单与广场均为真实用户宠物；无数据时展示空状态，不编造他人昵称
+ * - 我的宠物卡读取 /me/pet 的真实等级、道具、金币、点亮天数
  */
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { load_json } from '../utils/storage.js';
+import { api_pet } from '../api';
+// 贴纸缓存版本号（r81）：与宠物页共用，避免图片优化后仍命中旧缓存
+import { PET_DRESS_VER } from '../utils/asset-version.js';
+import { avatar_url } from '../utils/format';
 
 const router = useRouter();
+const total = ref(0);
+const pets = ref([]);
+// 累计投喂榜（后端只返回喂过至少 1 次的 Top3）
+const ranking = ref([]);
+const my_rank = ref(null);
+const my_pet = ref({});
+const loaded = ref(false);
 
-/* ---------------- mock 常量（TODO: 待后端接口） ---------------- */
+const mine = computed(() => ({
+    ...(my_pet.value || {}),
+    ...(pets.value.find((p) => p.is_me) || {}),
+}));
+const mine_satiety = computed(() => (mine.value.mood === 'happy' ? 90 : (mine.value.mood === 'normal' ? 60 : 25)));
 
-// 周投喂榜 Top3
-const TOP3 = [
-    { rank: 1, user: '深夜干饭王', count: 86 },
-    { rank: 2, user: '碳水快乐星', count: 72 },
-    { rank: 3, user: '甜品雷达', count: 65 },
-];
-
-// 广场宠物 mock：宠物图（装扮/表情）+ 表情签 + 主人 + 今日状态 + 互动计数
-const MOCK_PETS = [
-    { id: 1, img: '/assets/pet-dress/d9.png', face: '开心', user: '深夜干饭王', mood: '凌晨背完书奖励自己一顿麻辣香锅，头都亮了', feeds: 23, touches: 41 },
-    { id: 2, img: '/assets/pet-dress/d7.png', face: '满足', user: '辣度试验员', mood: '今日挑战变态辣拌面，披风都辣飞了', feeds: 19, touches: 36 },
-    { id: 3, img: '/assets/pet-dress/d1.png', face: '平静', user: '面面俱到', mood: '砂锅蒸笼上岗，今天吃三鲜蒸饺', feeds: 17, touches: 30 },
-    { id: 4, img: '/assets/pet-dress/d5.png', face: '开心', user: '碳水快乐星', mood: '汉堡日！面包胚比脸大', feeds: 15, touches: 28 },
-    { id: 5, img: '/assets/pet-dress/d6.png', face: '害羞', user: '甜品雷达', mood: '草莓奶油双皮奶，甜到心尖尖', feeds: 14, touches: 26 },
-    { id: 6, img: '/assets/pet-dress/d4.png', face: '满足', user: '干饭不语', mood: '寿司卷配味增汤，安静干饭', feeds: 12, touches: 22 },
-    { id: 7, img: '/assets/pet/e-happy.png', face: '开心', user: '一日五餐', mood: '第五餐是丁香园的杨枝甘露', feeds: 11, touches: 21 },
-    { id: 8, img: '/assets/pet-dress/d3.png', face: '平静', user: '轻食星人', mood: '饭团 + 无糖豆浆，轻盈一天', feeds: 9, touches: 18 },
-];
-
-
-
-/* ---------------- 状态 ---------------- */
-
-const pets = ref(MOCK_PETS.map((p) => ({ ...p }))); // 拷贝一份，互动计数本地可变
-const mine_satiety = ref(78);
-const mine_props = ref(3);
-
-/* ---------------- 生命周期 ---------------- */
-
-onMounted(() => {
-    // 我的宠物入口展示本机档案（无则用默认值）
-    const pet = load_json('dafu_pet', null);
-    if (pet) {
-        mine_satiety.value = pet.satiety ?? 78;
-        mine_props.value = pet.props ?? 3;
-    }
+/**
+ * 我的投喂榜文案：进榜显示名次；喂过但未进前三 / 从未投喂分别给引导
+ * @returns {string}
+ */
+const mine_rank_text = computed(() => {
+    if (my_rank.value) return `累计投喂榜第 ${my_rank.value.rank} 名 · 已喂 ${my_rank.value.feed_total} 次`;
+    const fed = Number(mine.value.feed_total) || 0;
+    if (fed > 0) return `已投喂 ${fed} 次 · 暂未进入前三`;
+    return '还没投喂过 · 喂第一口就能上榜';
 });
 
-/* ---------------- 交互 ---------------- */
+/**
+ * 头像地址
+ * @param {Object} p
+ * @returns {string}
+ */
+function avatar_of(p) { return avatar_url(p.avatar_object_key); }
+
+/**
+ * 心情 → 表情图
+ * @param {string} mood
+ * @returns {string}
+ */
+function face_of(mood) {
+    if (mood === 'happy') return '/assets/pet/e-happy.png';
+    if (mood === 'normal') return '/assets/pet/e-calm.png';
+    return '/assets/pet/e-wrong.png';
+}
+
+/**
+ * 心情 → 表情签
+ * @param {string} mood
+ * @returns {string}
+ */
+function face_label(mood) {
+    if (mood === 'happy') return '开心';
+    if (mood === 'normal') return '平静';
+    return '饿肚子';
+}
+
+/**
+ * 心情 → 文案
+ * @param {string} mood
+ * @returns {string}
+ */
+function mood_text(mood) {
+    if (mood === 'happy') return '刚吃饱，心情很好';
+    if (mood === 'normal') return '在安静地待机';
+    return '有点饿了，等投喂';
+}
 
 /**
  * 返回上一页
  */
-function go_back() {
-    router.back();
-}
+function go_back() { router.back(); }
 
-/**
- * 给 TA 的福宝投喂（每人限一次）
- * @param {object} p 宠物卡数据
- */
-function do_feed(p) {
-    if (p.feeded) return;
-    p.feeded = true;
-    p.feeds += 1;
-    ElMessage.success(`已给 ${p.user} 的福宝投喂`);
-}
-
-/**
- * 摸摸 TA 的福宝（每人限一次）
- * @param {object} p 宠物卡数据
- */
-function do_touch(p) {
-    if (p.touched) return;
-    p.touched = true;
-    p.touches += 1;
-    ElMessage.success(`摸了摸 ${p.user} 的福宝，好感 +1`);
-}
+onMounted(async () => {
+    try {
+        const [community, state] = await Promise.all([api_pet.community(), api_pet.state()]);
+        total.value = community.total;
+        pets.value = community.list;
+        ranking.value = community.ranking || [];
+        my_rank.value = community.my_rank || null;
+        my_pet.value = state;
+    } catch (e) {
+        ElMessage.error(e?.message || '宠物广场加载失败');
+    } finally {
+        loaded.value = true;
+    }
+});
 </script>
 
 <style scoped>
@@ -172,6 +191,7 @@ function do_touch(p) {
 .mine-sat { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--ink-2); margin-top: 6px; }
 .mine-sat .sat-bar { flex: 1; max-width: 130px; }
 .mine-sub { display: block; font-size: 10.5px; color: var(--ink-2); margin-top: 4px; }
+.mine-rank { display: block; font-size: 10.5px; color: var(--brand); margin-top: 4px; }
 .mine-arr { font-style: normal; font-size: 15px; color: var(--ink-2); flex-shrink: 0; }
 /* 饱腹度小进度条（与宠物页 sat-bar 同款口径） */
 .mine-sat .sat-bar { display: inline-block; height: 7px; border-radius: 4px; background: rgba(201, 138, 30, .14); overflow: hidden; }
@@ -233,4 +253,13 @@ function do_touch(p) {
     /* 宽屏三列铺开 */
     .p-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+.p-pet-wrap .p-pet.base { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.p-pet-wrap .p-dress { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.p-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 10px; color: var(--ink-2); padding-top: 8px; margin-top: auto; }
+.p-stats b { color: var(--brand); }
+.mine-stage { position: relative; }
+.mine-stage .mine-dress { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); object-fit: contain; }
+.list-empty { text-align: center; font-size: 11.5px; color: var(--ink-2); padding: 20px 0; }
+/* 投喂榜空态（未有一笔真实投喂时不凑榜） */
+.rank-empty { text-align: center; font-size: 11.5px; color: var(--ink-2); padding: 14px 0 4px; }
 </style>

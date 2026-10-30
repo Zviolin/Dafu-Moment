@@ -80,9 +80,9 @@
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api_review } from '../api';
+import { api_review, api_post } from '../api';
 import { useAuthStore } from '../stores/auth';
-import { time_ago } from '../utils/format';
+import { time_ago, avatar_url } from '../utils/format';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -98,44 +98,89 @@ const loading = ref(false);
 // 社区动态流：全部来自真实点评接口，无数据即空态（不再内置 mock 帖子）
 const posts = ref([]);
 
-/** 当前分栏的卡片流（切换过滤口径） */
+/**
+ * 推荐分：评分 2 + 点赞 1.5 + 评论 1 + 7 天新鲜度 3
+ * 与「最新」严格时间序形成明显差异，避免两栏内容完全相同
+ * @param {Object} p
+ * @returns {number}
+ */
+function recommend_score(p) {
+    const age_day = Math.max(0, (Date.now() - (p.order || 0)) / 86400000);
+    const fresh = Math.max(0, 1 - age_day / 7) * 3;
+    return (p.overall || 0) * 2 + (p.likes || 0) * 1.5 + (p.comments || 0) * 1 + fresh;
+}
+
+/** 当前分栏的卡片流：最新=严格时间倒序；推荐=评分/互动/新鲜度加权 */
 const feed_list = computed(() => {
     const list = posts.value;
     if (active_tab.value === 'latest') return [...list].sort((a, b) => b.order - a.order);
-    // 推荐：按热度（点赞数）排
-    return [...list].sort((a, b) => b.likes - a.likes);
+    return [...list].sort((a, b) => recommend_score(b) - recommend_score(a));
 });
 
 /**
- * 拉取社区动态（真实点评）；失败置空走空态，不回退 mock
+ * 拉取社区内容：真实点评 + 真实动态（post 表）
+ * 两栏都基于同一份真实数据，但排序口径不同：推荐=质量/互动/新鲜度，最新=时间。
+ * 任一接口失败不影响另一类内容展示，不回退 mock。
  */
-async function load_reviews() {
+async function load_feed() {
     loading.value = true;
-    try {
-        const d = await api_review.list({ page: 1, size: 10 });
-        const list = Array.isArray(d) ? d : (d.list || d.reviews?.list || []);
-        posts.value = list.map((r, i) => ({
-            id: String(r.id),
-            review_id: r.id,
-            author: r.nickname || '福大同学',
-            avatar: '/assets/avatar-user.png',
-            time: time_ago(r.createdAt),
-            order: 100 - i,
-            scene: Number(r.dimensionScores?.delivery) > 0 ? '外卖' : '堂食',
-            content: r.content || '（纯图点评）',
-            images: (r.images || []).slice(0, 3).map((k) => `/img/${k}`),
-            topics: (r.tags || []).map((t) => `#${t}#`),
-            likes: Number(r.likeCount) || 0,
-            comments: Number(r.commentCount) || 0,
-            liked: !!r.liked,
-            scores: r.dimensionScores || {},
-            overall: Number(r.overallScore) || 0,
-        }));
-    } catch {
-        posts.value = [];
-    } finally {
-        loading.value = false;
+    const [rv, ps] = await Promise.allSettled([
+        api_review.list({ page: 1, size: 30 }),
+        api_post.list({ tab: 'latest', size: 30 }),
+    ]);
+    const list = [];
+    if (rv.status === 'fulfilled') {
+        const d = rv.value;
+        const rows = Array.isArray(d) ? d : (d.list || d.reviews?.list || []);
+        rows.forEach((r, i) => {
+            const at = Date.parse(r.createdAt) || (Date.now() - (i + 1) * 3600000);
+            list.push({
+                id: String(r.id),
+                kind: 'review',
+                review_id: r.id,
+                author: r.nickname || '福大同学',
+                avatar: avatar_url(r.avatarObjectKey || r.avatar_object_key),
+                time: time_ago(r.createdAt),
+                order: at,
+                scene: Number(r.dimensionScores?.delivery) > 0 ? '外卖' : '堂食',
+                content: r.content || '（纯图点评）',
+                images: (r.images || []).slice(0, 3).map((k) => `/img/${k}`),
+                topics: (r.tags || []).map((t) => `#${t}#`),
+                likes: Number(r.likeCount) || 0,
+                comments: Number(r.commentCount) || 0,
+                liked: !!r.liked,
+                scores: r.dimensionScores || {},
+                overall: Number(r.overallScore) || 0,
+            });
+        });
     }
+    if (ps.status === 'fulfilled') {
+        const d = ps.value;
+        const rows = Array.isArray(d) ? d : (d.list || []);
+        rows.forEach((x) => {
+            const at = Date.parse(x.created_at) || Date.now();
+            list.push({
+                id: `p-${x.id}`,
+                kind: 'post',
+                post_id: x.id,
+                author: x.author?.nickname || '福大同学',
+                avatar: avatar_url(x.author?.avatar_object_key),
+                time: time_ago(x.created_at),
+                order: at,
+                scene: '动态',
+                content: x.content || '（纯图动态）',
+                images: (x.images || []).slice(0, 3).map((k) => (String(k).startsWith('/') ? k : `/img/${k}`)),
+                topics: (x.topics || []).map((t) => `#${t}#`),
+                likes: Number(x.like_count) || 0,
+                comments: Number(x.comment_count) || 0,
+                liked: !!x.liked,
+                scores: {},
+                overall: 0,
+            });
+        });
+    }
+    posts.value = list;
+    loading.value = false;
 }
 
 /**
@@ -173,11 +218,13 @@ function go_publish() {
  * @param {Object} p
  */
 async function toggle_like(p) {
-    if (p.review_id && auth.is_login) {
+    if (auth.is_login) {
         try {
-            const d = await api_review.like(p.review_id);
+            const d = p.kind === 'post'
+                ? await api_post.like(p.post_id)
+                : await api_review.like(p.review_id);
             p.liked = !!d.liked;
-            p.likes = Number(d.likeCount) || 0;
+            p.likes = Number(d.likeCount ?? d.like_count) || 0;
             return;
         } catch { /* 失败回落本地切换 */ }
     }
@@ -185,7 +232,7 @@ async function toggle_like(p) {
     p.likes += p.liked ? 1 : -1;
 }
 
-onMounted(load_reviews);
+onMounted(load_feed);
 </script>
 
 <style scoped>

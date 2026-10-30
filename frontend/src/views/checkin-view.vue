@@ -26,17 +26,33 @@
 
             <hr class="hairline" />
 
-            <!-- 选实际消费菜品（随点位联动） -->
+            <!-- 选实际消费菜品（随点位联动；无可选菜品时可自定义填写，避免「什么都选不了」） -->
             <div class="f-row">
                 <label class="f-label">吃了什么（可多选）</label>
-                <div v-if="dish_options.length" class="dish-chips">
+                <div v-if="dish_options.length || custom_dishes.length" class="dish-chips">
                     <span
                         v-for="d in dish_options" :key="d.name"
                         class="chip dish-chip" :class="{ on: form.dish_names.includes(d.name) }"
                         @click="toggle_dish(d)"
                     >{{ d.name }}<i class="dish-price">¥{{ d.price }}</i></span>
+                    <!-- 手动填写的菜品：点位没有在售菜品记录时（如校外餐厅/外卖）的唯一入口 -->
+                    <span
+                        v-for="n in custom_dishes" :key="'c-' + n"
+                        class="chip dish-chip custom" :class="{ on: form.dish_names.includes(n) }"
+                        @click="toggle_dish({ name: n })"
+                    >{{ n }}<i class="dish-price">自填</i></span>
                 </div>
-                <div v-else class="f-hint">{{ form.canteenId ? '这个点位暂时没有在售菜品' : '先选一个点位，看看这里有什么好吃的' }}</div>
+                <div v-else class="f-hint">{{ form.canteenId ? '这个点位暂时没有在售菜品，可在下方手动填写' : '先选一个点位，看看这里有什么好吃的' }}</div>
+                <div class="add-row">
+                    <el-input
+                        v-model="dish_input"
+                        size="small"
+                        maxlength="20"
+                        :placeholder="dish_options.length ? '没找到？手动添加你吃到的' : '手动填写你吃到的，如「牛肉面」'"
+                        @keyup.enter="add_dish"
+                    />
+                    <button class="add-btn" type="button" @click="add_dish">添加</button>
+                </div>
             </div>
 
             <hr class="hairline" />
@@ -57,7 +73,7 @@
                 <label class="f-label">拍几张</label>
                 <div class="photos">
                     <div v-for="(p, i) in form.photos" :key="i" class="ph">
-                        <img :src="p" alt="打卡照片" />
+                        <img :src="p.url" alt="打卡照片" />
                         <span class="ph-x" aria-label="删除照片" @click="remove_photo(i)">×</span>
                     </div>
                     <label v-if="form.photos.length < 9" class="ph add">
@@ -93,10 +109,10 @@
 
         <!-- 操作按钮：仅记录 / 发布打卡 -->
         <div class="ops fade-up">
-            <button class="ghost-btn" @click="save(false)">仅记录</button>
-            <button class="btn-primary main-btn" @click="save(true)">发布打卡</button>
+            <button class="ghost-btn" :disabled="saving" @click="save(false)">仅记录</button>
+            <button class="btn-primary main-btn" :disabled="saving" @click="save(true)">{{ saving ? '发布中…' : '发布打卡' }}</button>
         </div>
-        <p class="ops-tip">发布打卡会同步点亮足迹、推进成就并获得投喂道具；仅记录只保存在本机</p>
+        <p class="ops-tip">发布打卡会写入后端打卡日历、推进「每日签到」任务，并在每日首次打卡时获得投喂道具；仅记录只保存在本机</p>
 
         <!-- 成功反馈弹层：一次打卡联动清单（需求 5.1.4） -->
         <div v-if="success_open" class="mask" @click.self="success_open = false">
@@ -114,11 +130,11 @@
                     </div>
                     <div class="suc-item">
                         <svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                        成就进度 +1
+                        记入「每日签到」任务进度
                     </div>
                     <div class="suc-item">
                         <svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                        获得宠物投喂道具 ×1
+                        每日首次打卡获得宠物投喂道具 ×1
                     </div>
                 </div>
                 <button class="btn-primary suc-btn" @click="$router.push('/pet')">去喂福宝 ›</button>
@@ -131,45 +147,50 @@
 <script setup>
 /**
  * 一体化打卡页（需求 5.1.4 / AC10-AC13）：
- * 一次打卡联动 打卡日历 + 足迹点亮（首次）+ 成就进度 + 宠物投喂道具；
- * 同日同点位重复打卡需确认；「仅记录」只存本机不入公开流水。
- * 打卡/日历/宠物后端暂无写入接口 → 打卡流水存 localStorage（TODO: 待后端接口）
+ * 发布打卡 → 写后端 /api/checkin（打卡日历 + 每日签到任务计数 + 宠物投喂道具）；
+ * 同日同点位重复打卡走 409 确认后「另记一条」；「仅记录」只存本机手账不入后端。
  */
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { api_content } from '../api';
+import { api_content, api_checkin, api_upload } from '../api';
+import { useAuthStore } from '../stores/auth';
 import { img_url } from '../utils/format';
 import { load_json, save_json } from '../utils/storage.js';
 
 const router = useRouter();
-
-/* ---------------- 常量 ---------------- */
-
-// 宠物默认档案（首次打卡时初始化；仅 props 为打卡实际发放的投喂道具数）
-const DEFAULT_PET = { props: 0 };
-
-
+const auth = useAuthStore();
 
 /* ---------------- 状态 ---------------- */
 
 // 点位下拉选项：来自后端 /canteens；拉取失败则留空并提示（不再回退假点位）
 const canteen_options = ref([]);
-const checkins = ref([]); // 本机打卡流水（用于重复检测）
+const checkins = ref([]); // 本机打卡流水（用于重复检测与足迹页留档）
 const success_open = ref(false);
 const lit_text = ref('点亮足迹');
+// 发布中（防重复点击，照片上传期间按钮禁用）
+const saving = ref(false);
 
 const form = reactive({
     canteenId: null,
     date: '',
     dish_names: [],
-    photos: [],
+    photos: [], // [{url, file}]：url 本地预览，file 上传用
     note: '',
     visibility: 'private', // 手账默认私有
 });
 
 // 当前所选点位的在售菜品：选点位后从后端 /dishes 拉取
 const dish_options = ref([]);
+// 手动填写的菜品输入框（点位无在售菜品时的兜底入口）
+const dish_input = ref('');
+
+/**
+ * 已手动填写、但不在点位在售列表中的菜品名（单独渲染为「自填」chip）
+ */
+const custom_dishes = computed(() =>
+    form.dish_names.filter((n) => !dish_options.value.some((d) => d.name === n))
+);
 
 /* ---------------- 生命周期 ---------------- */
 
@@ -246,94 +267,169 @@ function toggle_dish(dish) {
 }
 
 /**
- * 选择照片：生成本地预览地址（最多 9 张）
+ * 手动添加「吃了什么」：点位没有在售菜品（校外餐厅 / 外卖 / 临时档口）时也能打卡
+ * 去重、最多 20 字；添加即选中，再点 chip 可取消
+ */
+function add_dish() {
+    const v = (dish_input.value || '').trim();
+    if (!v) return;
+    if (form.dish_names.includes(v)) {
+        ElMessage.info('这道菜已经选上了');
+        dish_input.value = '';
+        return;
+    }
+    form.dish_names.push(v);
+    dish_input.value = '';
+    ElMessage.success(`已添加「${v}」`);
+}
+
+/**
+ * 选择照片：生成本地预览地址并保留文件对象（发布时上传 MinIO），最多 9 张
  * @param {Event} e 文件选择事件
  */
 function on_pick_photos(e) {
     const files = Array.from(e.target.files || []);
     for (const f of files) {
         if (form.photos.length >= 9) break;
-        form.photos.push(URL.createObjectURL(f));
+        form.photos.push({ url: URL.createObjectURL(f), file: f });
     }
     e.target.value = ''; // 允许重复选择同一文件
 }
 
 /**
- * 移除一张预览照片
+ * 移除一张预览照片（同时释放本地预览 URL）
  * @param {number} i 下标
  */
 function remove_photo(i) {
+    const p = form.photos[i];
+    if (p && p.url) URL.revokeObjectURL(p.url);
     form.photos.splice(i, 1);
 }
 
 /* ---------------- 保存与联动 ---------------- */
 
 /**
- * 保存打卡
- * @param {boolean} publish true=发布打卡（完整联动）；false=仅记录（只存本机）
+ * 组装本机手账记录（足迹/手账页数据源）
+ * @param {string} canteen_label 点位名
+ * @param {string} visibility 可见范围 public/private
+ * @param {string[]} [photo_urls] 展示用照片地址（缺省取本地预览地址）
+ * @returns {Object} 打卡流水记录
  */
-async function save(publish) {
-    if (!form.canteenId) { ElMessage.warning('先选一个点位'); return; }
-    if (form.dish_names.length === 0) { ElMessage.warning('至少选一样今天吃到的'); return; }
-
-    const canteen_label = canteen_options.value.find((c) => c.value === form.canteenId)?.label || '该点位';
-
-    // 重复打卡：同一自然日同一店铺需确认（需求 AC 口径）
-    const dup = checkins.value.some((c) => c.date === form.date && c.canteenId === form.canteenId);
-    if (dup) {
-        try {
-            await ElMessageBox.confirm(
-                `${form.date} 已经在「${canteen_label}」打过卡啦，再记一条吗？`,
-                '重复打卡确认',
-                { confirmButtonText: '继续打卡', cancelButtonText: '再想想', type: 'warning' },
-            );
-        } catch {
-            return; // 用户取消
-        }
-    }
-
-    // 组装流水记录
-    const dishes = dish_options.value.filter((d) => form.dish_names.includes(d.name));
-    const rec = {
+function build_record(canteen_label, visibility, photo_urls) {
+    // 在售菜品取完整信息，手动填写的菜品补一条最小记录（price 记 0）
+    const dishes = form.dish_names.map((name) => {
+        const hit = dish_options.value.find((d) => d.name === name);
+        return hit || { id: null, name, price: 0, img: '' };
+    });
+    return {
         id: `ck_${Date.now()}`,
         date: form.date,
         meal: guess_meal(),
         canteenId: form.canteenId,
         canteenName: canteen_label,
         dishes,
-        photos: [...form.photos],
+        photos: photo_urls || form.photos.map((p) => p.url),
         note: form.note.trim(),
-        visibility: publish ? form.visibility : 'private', // 仅记录一律私有
+        visibility,
         createdAt: new Date().toISOString(),
     };
+}
 
-    // 写入打卡流水（打卡日历 / 足迹 / 手账共同数据源）
-    checkins.value.unshift(rec);
-    save_json('dafu_checkins', checkins.value);
+/**
+ * 保存打卡
+ * @param {boolean} publish true=发布打卡（写后端并联动任务/宠物）；false=仅记录（只存本机）
+ */
+async function save(publish) {
+    if (saving.value) return;
+    if (!form.canteenId) { ElMessage.warning('先选一个点位'); return; }
+    if (form.dish_names.length === 0) { ElMessage.warning('至少选一样今天吃到的'); return; }
 
+    const canteen_label = canteen_options.value.find((c) => c.value === form.canteenId)?.label || '该点位';
+
+    // ---- 仅记录：只写本机手账，不触发任何后端联动 ----
     if (!publish) {
-        // 仅记录：只存 localStorage，不触发联动
+        const rec = build_record(canteen_label, 'private');
+        checkins.value.unshift(rec);
+        save_json('dafu_checkins', checkins.value);
         ElMessage.success('已记到本机手账（仅自己可见）');
         return;
     }
 
-    // ---- 一体化联动（TODO: 待后端接口）----
-    // 1) 足迹点亮：该点位本机首次打卡 → 「首次点亮」，否则 +1
-    const first_lit = !checkins.value.some((c) => c.id !== rec.id && c.canteenId === rec.canteenId);
-    lit_text.value = first_lit ? `点亮足迹 · ${rec.canteenName}` : '足迹打卡 +1';
+    // ---- 发布打卡：先校验登录与日期口径（后端按「当天」落库）----
+    if (!auth.is_login) {
+        ElMessage.warning('发布打卡需要先登录');
+        router.push('/login');
+        return;
+    }
+    const today = fmt_date(new Date());
+    if (form.date !== today) {
+        ElMessage.warning('「发布打卡」只支持当天，历史日期请用「仅记录」保存到本机手账');
+        return;
+    }
 
-    // 2) 成就进度 +1（键名 checkins 与成就页/任务中心读取口径一致）
-    const achv = load_json('dafu_achv_progress', {});
-    achv.checkins = (achv.checkins || 0) + 1;
-    save_json('dafu_achv_progress', achv);
+    saving.value = true;
+    try {
+        // 1) 照片先上传，拿 MinIO objectKey；任一张失败即中止，避免留下半条打卡
+        const photo_keys = [];
+        for (const p of form.photos) {
+            if (!p.file) continue;
+            const fd = new FormData();
+            fd.append('file', p.file);
+            const up = await api_upload.image(fd);
+            if (up && up.objectKey) photo_keys.push(up.objectKey);
+        }
+        // 2) 在售菜品带 dishIds（自填菜品无 id，仅留档本机手账）
+        const dish_ids = form.dish_names
+            .map((n) => dish_options.value.find((d) => d.name === n)?.id)
+            .filter((x) => Number.isInteger(x) && x > 0);
+        const payload = {
+            canteenId: form.canteenId,
+            // 后端口径：1 公开 / 2 仅自己 / 3 匿名
+            visibility: form.visibility === 'public' ? 1 : 2,
+            note: form.note.trim(),
+            photos: photo_keys,
+            dishIds: dish_ids,
+        };
+        let res;
+        try {
+            res = await api_checkin.create(payload);
+        } catch (e) {
+            // 409：当天同点位已有打卡 → 二次确认后「另记一条」（追加菜品/照片）
+            if (e?.response?.status === 409) {
+                try {
+                    await ElMessageBox.confirm(
+                        `${today} 已经在「${canteen_label}」打过卡啦，再记一条吗？`,
+                        '重复打卡确认',
+                        { confirmButtonText: '继续打卡', cancelButtonText: '再想想', type: 'warning' },
+                    );
+                } catch {
+                    return; // 用户取消
+                }
+                res = await api_checkin.create({ ...payload, again: true });
+            } else {
+                throw e;
+            }
+        }
+        // 3) 本机手账留档（足迹/手账页数据源），并记录服务端打卡 id
+        const rec = build_record(
+            canteen_label,
+            form.visibility,
+            photo_keys.length ? photo_keys.map((k) => img_url(k)) : undefined,
+        );
+        rec.serverId = res?.checkinId || null;
+        rec.photoKeys = photo_keys;
+        checkins.value.unshift(rec);
+        save_json('dafu_checkins', checkins.value);
 
-    // 3) 宠物投喂道具 +1
-    const pet = load_json('dafu_pet', { ...DEFAULT_PET });
-    pet.props = (pet.props || 0) + 1;
-    save_json('dafu_pet', pet);
-
-    // 4) 成功反馈弹层（含联动清单 + 去喂福宝入口）
-    success_open.value = true;
+        // 4) 足迹文案：该点位本机首次打卡 → 「点亮」，否则 +1
+        const first_lit = !checkins.value.some((c) => c.id !== rec.id && c.canteenId === rec.canteenId);
+        lit_text.value = first_lit ? `点亮足迹 · ${rec.canteenName}` : '足迹打卡 +1';
+        success_open.value = true;
+    } catch {
+        /* 错误提示由 http 拦截器统一给出，保留表单内容供重试 */
+    } finally {
+        saving.value = false;
+    }
 }
 
 /* ---------------- 工具函数 ---------------- */
@@ -399,6 +495,15 @@ function guess_meal() {
 .dish-chip .dish-price { font-style: normal; font-size: 10px; color: var(--ink-2); margin-left: 5px; font-weight: 400; }
 .dish-chip.on { background: var(--brand); border-color: var(--brand); color: #FFFDF5; }
 .dish-chip.on .dish-price { color: rgba(255, 253, 245, 0.8); }
+/* 手动填写 chip：虚线描边区分「自填」，选中同样高亮 */
+.dish-chip.custom { border-style: dashed; }
+/* 自定义添加行（与饮食档案口径一致） */
+.add-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.add-row .el-input { flex: 1; }
+.add-btn {
+    flex: none; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--brand); color: #FFFDF5; font-size: 12px; font-weight: 700; cursor: pointer;
+}
 
 /* 照片九宫格 */
 .photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }

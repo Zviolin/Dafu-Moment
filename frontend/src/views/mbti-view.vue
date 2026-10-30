@@ -5,7 +5,7 @@
             <span class="icircle back" role="button" aria-label="返回" @click="go_back">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A2E1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
             </span>
-            <b class="tb-title">测一测 饭MBTI</b>
+            <b class="tb-title">测一测 饭BTI</b>
         </div>
 
         <!-- ===== 未测：答题态 ===== -->
@@ -14,9 +14,9 @@
             <div class="card head-card fade-up">
                 <img class="head-ill" src="/assets/icons/ill-mbti.png" alt="饭MBTI" />
                 <b class="head-title">答题生成你的口味画像</b>
-                <p class="head-sub">5 道小题，测出属于你的「饭 MBTI」，并生成可复用的口味画像</p>
+                <p class="head-sub">12 道小题，从甜辣 / 浓淡 / 探索 / 预算 4 个维度，生成 16 型「饭BTI」口味画像</p>
                 <div class="bar"><i :style="{ width: progress + '%' }"></i></div>
-                <span class="bar-label">{{ answered_count }}/5 已答 · 数据不足 3 题暂不生成</span>
+                <span class="bar-label">{{ answered_count }}/12 已答 · 至少答完 8 题生成</span>
             </div>
 
             <!-- 题目卡：辣度 / 口味 / 场景 / 预算 / 排队 -->
@@ -24,17 +24,17 @@
                 <b class="q-title">{{ qi + 1 }}. {{ q.title }}</b>
                 <div class="chips">
                     <span
-                        v-for="opt in q.options" :key="opt.label"
-                        class="pchip" :class="{ on: answers[q.key] === opt.label }"
-                        @click="pick(q.key, opt.label)"
+                        v-for="(opt, oi) in q.options" :key="opt.label"
+                        class="pchip" :class="{ on: answers[q.key] === oi }"
+                        @click="pick(q.key, oi)"
                     >{{ opt.label }}</span>
                 </div>
             </div>
 
             <div class="ops">
-                <button class="btn-primary gen-btn" :disabled="generating" @click="generate">{{ generating ? '生成中…' : '生成我的饭MBTI' }}</button>
+                <button class="btn-primary gen-btn" :disabled="generating" @click="generate">{{ generating ? '生成中…' : '生成我的饭BTI' }}</button>
             </div>
-            <p v-if="hint_lack" class="lack-tip">画像数据还不够，再答 {{ 3 - answered_count }} 题会更准，继续积累不着急~</p>
+            <p v-if="hint_lack" class="lack-tip">画像数据还不够，再答 {{ 8 - answered_count }} 题就能生成啦~</p>
         </template>
 
         <!-- ===== 已测：结果态（同时承担「口味画像」输出） ===== -->
@@ -69,13 +69,14 @@
         </template>
 
         <!-- 分享海报弹窗：简洁分享卡（插画 + 类型名），可复制文案 / 保存图片 -->
-        <el-dialog v-model="share_open" title="分享我的饭MBTI" width="320px">
+        <el-dialog v-model="share_open" title="分享我的饭BTI" width="320px">
             <div v-if="result" class="poster">
                 <span class="poster-brand">大福食刻 · 饭MBTI</span>
                 <img class="poster-img" :src="result.img" :alt="result.name" />
                 <b class="poster-name">{{ result.name }}</b>
                 <span class="tag">{{ result.code }} · {{ result.sub }}</span>
-                <p class="poster-line">我在大福食刻测出了口味人格，快来测测你的！</p>
+                <p class="poster-line">我在大福食刻测出了饭BTI：{{ result.code }} {{ result.name }}</p>
+                <p class="poster-url">{{ share_url }}</p>
             </div>
             <template #footer>
                 <div class="share-ops">
@@ -86,78 +87,68 @@
         </el-dialog>
 
         <!-- 合规声明（AC24；画像由本地问答规则即时计算，如实说明仅作娱乐参考） -->
-        <p class="compliance">以上内容仅供参考，不替代专业医生、营养师的医疗诊断与营养方案。<br>画像由本地问答规则生成，仅作娱乐参考。</p>
+        <p class="compliance">以上内容仅供参考，不替代专业医生、营养师的医疗诊断与营养方案。<br>画像由 4 维问答规则生成，仅作娱乐参考。</p>
     </div>
 </template>
 
 <script setup>
 /**
- * 测一测 饭MBTI（对齐 P17，同时承担「口味画像」输出）
- * 未测：5 道单选（辣度/口味/场景/预算/排队）+ 进度条，答题数 < 3 不生成并提示继续积累；
- * 结果：16 型映射 + 大图 + 五维画像 + 分享海报（复制文案/保存图片）+ 重新测试 + 删除画像；
- * 结果存 localStorage(dafu_mbti)，下次进入直接显示。
- * TODO: 待后端接口（当前为页内规则映射 + 本地持久化）
+ * 测一测 饭BTI（r78 修正）：
+ * 按 4 个正交维度出 12 道题（每维 3 题）：
+ *   S 甜食 / H 辣口；M 清淡 / R 重口；A 爱探索 / C 守旧；E 重性价比 / L 随心。
+ * 每维取多数票生成 4 字母饭BTI 代码（如 SMAE），再映射到 16 型插画/昵称；
+ * 结果包含 4 维画像、分享海报与可点击的测试网址，不再用 5 题硬套 ESFJ 等 MBTI 代码。
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();
-/** 本地持久化键（题目映射与画像均为前端规则，TODO: 待后端接口后迁移） */
 const STORAGE_KEY = 'dafu_mbti';
+const MIN_ANSWER = 8;
 
-// 16 型人格档案（与 /assets/mbti 素材一一对应）
-const MBTI_TYPES = [
-    { code: 'INTP', name: '分析家', sub: '冷静拆解派', img: '/assets/mbti/01_INTP_分析家.png', desc: '点单前先看遍测评，配料表都研究明白了。' },
-    { code: 'ISFJ', name: '清甜守护者', sub: '温柔甜品挂', img: '/assets/mbti/02_ISFJ_清甜守护者.png', desc: '胃的角落永远留给一份温柔的甜品。' },
-    { code: 'ESTJ', name: '辣爽探险家', sub: '重辣爱好者', img: '/assets/mbti/03_ESTJ_辣爽探险家.png', desc: '无辣不欢，微辣在你这里等于没放。' },
-    { code: 'ESFP', name: '派对星光', sub: '聚餐气氛组', img: '/assets/mbti/04_ESFP_派对星光.png', desc: '干饭必呼朋引伴，热闹的桌才香。' },
-    { code: 'ENFJ', name: '新菜灵感', sub: '新品首发官', img: '/assets/mbti/05_ENFJ_新菜灵感.png', desc: '档口一上新，你永远是第一个冲的。' },
-    { code: 'ENTJ', name: '工程专家', sub: '干饭计划通', img: '/assets/mbti/06_ENTJ_工程专家.png', desc: '一周食谱提前排好，效率与美味兼得。' },
-    { code: 'INFP', name: '梦境云朵', sub: '氛围感食客', img: '/assets/mbti/07_INFP_梦境云朵.png', desc: '吃饭吃的是心情，窗边座位优先。' },
-    { code: 'ISFP', name: '花艺甜品', sub: '颜值至上者', img: '/assets/mbti/08_ISFP_花艺甜品.png', desc: '先拍照后开动，摆盘不好看直接劝退。' },
-    { code: 'ENFP', name: '好奇美食家', sub: '万物皆可试', img: '/assets/mbti/09_ENFP_好奇美食家.png', desc: '没吃过的都想来一口，冒险精神满分。' },
-    { code: 'ISTJ', name: '牛仔品鉴官', sub: '老字号忠实粉', img: '/assets/mbti/10_ISTJ_牛仔品鉴官.png', desc: '认准一家老店，十年如一日的信任。' },
-    { code: 'ESTP', name: '墨镜飞行者', sub: '说走就走型', img: '/assets/mbti/11_ESTP_墨镜飞行者.png', desc: '说吃就吃，绝不内耗，出门就是干。' },
-    { code: 'ENTP', name: '船长认证官', sub: '隐藏菜单猎人', img: '/assets/mbti/12_ENTP_船长认证官.png', desc: '专攻菜单上没有的隐藏吃法。' },
-    { code: 'INFJ', name: '紫斗篷云朵', sub: '深夜食堂党', img: '/assets/mbti/13_INFJ_紫斗篷云朵.png', desc: '夜宵时段的灵魂食客，越晚越清醒。' },
-    { code: 'INTJ', name: '皇冠星星', sub: '效率干饭人', img: '/assets/mbti/14_INTJ_皇冠星星.png', desc: '出餐速度和口味都写在你的评分表里。' },
-    { code: 'ESFJ', name: '爱心厨师', sub: '投喂型选手', img: '/assets/mbti/15_ESFJ_爱心厨师.png', desc: '最大的快乐是看朋友吃光你推荐的菜。' },
-    { code: 'ISTP', name: '贝雷帽菜单', sub: '极简点单流', img: '/assets/mbti/16_ISTP_贝雷帽菜单.png', desc: '点单不超过三十秒，招牌菜直接拿下。' },
+// 4 维定义：第一项为默认极（平票时取默认）
+const DIMENSIONS = [
+    { key: 'taste', poles: ['S', 'H'], labels: { S: '甜口', H: '辣口' }, name: '甜辣倾向' },
+    { key: 'rich', poles: ['M', 'R'], labels: { M: '清淡', R: '重口' }, name: '浓淡偏好' },
+    { key: 'explore', poles: ['A', 'C'], labels: { A: '爱探索', C: '守旧' }, name: '探索指数' },
+    { key: 'budget', poles: ['E', 'L'], labels: { E: '重性价比', L: '随心' }, name: '消费风格' },
 ];
 
-// 5 道题（辣度/口味/场景/预算/排队），score 为各 MBTI 类型积分（纯前端规则映射）
+// 16 型档案：代码 → 插画/昵称（素材沿用 /assets/mbti）
+const TYPE_BY_CODE = {
+    HMCE: { name: '辣爽探险家', sub: '重辣爱好者', img: '/assets/mbti/03_ESTJ_辣爽探险家.png', desc: '无辣不欢，微辣在你这里等于没放，重口也拦不住你。' },
+    HMCL: { name: '工程专家', sub: '干饭计划通', img: '/assets/mbti/06_ENTJ_工程专家.png', desc: '辣度、预算、排队时间全部提前算好，效率与美味兼得。' },
+    HMAE: { name: '派对星光', sub: '聚餐气氛组', img: '/assets/mbti/04_ESFP_派对星光.png', desc: '无辣不欢又爱尝鲜，干饭必须呼朋引伴才热闹。' },
+    HMAL: { name: '墨镜飞行者', sub: '说走就走型', img: '/assets/mbti/11_ESTP_墨镜飞行者.png', desc: '听说哪家辣得够劲就立刻出发，绝不内耗。' },
+    HRCE: { name: '皇冠星星', sub: '效率干饭人', img: '/assets/mbti/14_INTJ_皇冠星星.png', desc: '重口也要讲究性价比，出餐速度和口味都在评分表里。' },
+    HRCL: { name: '牛仔品鉴官', sub: '老字号忠实粉', img: '/assets/mbti/10_ISTJ_牛仔品鉴官.png', desc: '认准那几家重口老店，十年如一日地信任。' },
+    HRAE: { name: '船长认证官', sub: '隐藏菜单猎人', img: '/assets/mbti/12_ENTP_船长认证官.png', desc: '专攻菜单上没有的重口隐藏吃法，越辣越兴奋。' },
+    HRAL: { name: '好奇美食家', sub: '万物皆可试', img: '/assets/mbti/09_ENFP_好奇美食家.png', desc: '没吃过的重口味都想来一口，冒险精神满分。' },
+    SMCE: { name: '清甜守护者', sub: '温柔甜品挂', img: '/assets/mbti/02_ISFJ_清甜守护者.png', desc: '胃的角落永远留给一份温柔清甜的甜品。' },
+    SMCL: { name: '爱心厨师', sub: '投喂型选手', img: '/assets/mbti/15_ESFJ_爱心厨师.png', desc: '最大的快乐是看朋友吃光你推荐的清淡小菜。' },
+    SMAE: { name: '花艺甜品', sub: '颜值至上者', img: '/assets/mbti/08_ISFP_花艺甜品.png', desc: '先拍照后开动，清甜又好看的甜品才是本命。' },
+    SMAL: { name: '梦境云朵', sub: '氛围感食客', img: '/assets/mbti/07_INFP_梦境云朵.png', desc: '吃饭吃的是心情，窗边座位和一块小蛋糕缺一不可。' },
+    SRCE: { name: '新菜灵感', sub: '新品首发官', img: '/assets/mbti/05_ENFJ_新菜灵感.png', desc: '档口一上新就冲，甜口新品必须第一个尝。' },
+    SRCL: { name: '紫斗篷云朵', sub: '深夜食堂党', img: '/assets/mbti/13_INFJ_紫斗篷云朵.png', desc: '夜宵时段的灵魂食客，一份浓郁甜品越晚越清醒。' },
+    SRAE: { name: '贝雷帽菜单', sub: '极简点单流', img: '/assets/mbti/16_ISTP_贝雷帽菜单.png', desc: '点单不超过三十秒，招牌甜口直接拿下。' },
+    SRAL: { name: '分析家', sub: '冷静拆解派', img: '/assets/mbti/01_INTP_分析家.png', desc: '点单前先看遍测评，配料表都研究明白了。' },
+};
+
+// 12 道题：每维 3 题，每题两个选项分别命中维度两极
 const QUESTIONS = [
-    { key: 'spicy', title: '你的辣度容忍是？', options: [
-        { label: '完全不辣', stars: 1, score: { ISFJ: 2, INFP: 1 } },
-        { label: '微辣刚好', stars: 2, score: { ESFJ: 2, ISFJ: 1 } },
-        { label: '中辣过瘾', stars: 4, score: { ESFP: 2, ENTP: 1 } },
-        { label: '重辣才爽', stars: 5, score: { ESTJ: 2, ESTP: 1 } },
-    ] },
-    { key: 'flavor', title: '更偏爱的口味风格？', options: [
-        { label: '清淡本味', stars: 1, score: { ISTJ: 2, ISFJ: 1 } },
-        { label: '家常下饭', stars: 2, score: { ESFJ: 2, ESTJ: 1 } },
-        { label: '酸甜脑洞', stars: 3, score: { INFP: 2, ISFP: 1 } },
-        { label: '猎奇混搭', stars: 5, score: { ENTP: 2, ENFP: 1 } },
-    ] },
-    { key: 'scene', title: '最常见的就餐场景？', options: [
-        { label: '一人食安静干饭', stars: 2, score: { INTP: 2, ISTJ: 1, INFJ: 1 } },
-        { label: '好友围桌热闹', stars: 5, score: { ESFJ: 2, ESFP: 1, ENFJ: 1 } },
-        { label: '掐点快取不停留', stars: 1, score: { ISTP: 2, INTJ: 1 } },
-        { label: '周末慢慢探店', stars: 4, score: { ENFP: 2, ENFJ: 1 } },
-    ] },
-    { key: 'budget', title: '单餐预算更多是？', options: [
-        { label: '¥10 内精打细算', stars: 1, score: { ISTJ: 2, INTP: 1 } },
-        { label: '¥15 左右刚刚好', stars: 2, score: { ISFJ: 1, ESFJ: 1 } },
-        { label: '¥20 想吃点好的', stars: 4, score: { ENTJ: 2, ESTP: 1 } },
-        { label: '遇到好吃的价格不限', stars: 5, score: { ENFP: 2, ESFP: 1 } },
-    ] },
-    { key: 'queue', title: '遇到网红店你一般？', options: [
-        { label: '绝不排队绕道走', stars: 1, score: { ISTP: 2, INTJ: 1 } },
-        { label: '10 分钟内可以等', stars: 2, score: { ISTJ: 2, ISFJ: 1 } },
-        { label: '30 分钟看情况', stars: 3, score: { ESTP: 2, ENTP: 1 } },
-        { label: '必打卡绝不错过', stars: 5, score: { ESFP: 2, ENFJ: 1 } },
-    ] },
+    { key: 'q1', dim: 'taste', title: '心情低落时，你更想吃什么？', options: [{ label: '一份甜甜的蛋糕 / 糖水', pole: 'S' }, { label: '一碗麻辣烫 / 火锅', pole: 'H' }] },
+    { key: 'q2', dim: 'taste', title: '早餐摊前你会选？', options: [{ label: '豆浆油条 / 芋泥包', pole: 'S' }, { label: '胡辣汤 / 辣汤面', pole: 'H' }] },
+    { key: 'q3', dim: 'taste', title: '夜宵时间，你伸手拿的是？', options: [{ label: '双皮奶 / 红豆汤', pole: 'S' }, { label: '烤串加辣 / 小龙虾', pole: 'H' }] },
+    { key: 'q4', dim: 'rich', title: '同一道菜，你偏爱哪种做法？', options: [{ label: '清蒸 / 白灼，吃本味', pole: 'M' }, { label: '红烧 / 干锅，要浓香', pole: 'R' }] },
+    { key: 'q5', dim: 'rich', title: '点汤粉时，你的默认选项是？', options: [{ label: '清汤少油', pole: 'M' }, { label: '浓汤加料', pole: 'R' }] },
+    { key: 'q6', dim: 'rich', title: '调味台上你会？', options: [{ label: '只加一点盐和葱', pole: 'M' }, { label: '辣油、酱料都来一勺', pole: 'R' }] },
+    { key: 'q7', dim: 'explore', title: '站在没吃过的档口前，你会？', options: [{ label: '直接点招牌试试', pole: 'A' }, { label: '还是回常去的那家', pole: 'C' }] },
+    { key: 'q8', dim: 'explore', title: '菜单上的「隐藏吃法」你会？', options: [{ label: '立刻问老板怎么点', pole: 'A' }, { label: '按常规点法就好', pole: 'C' }] },
+    { key: 'q9', dim: 'explore', title: '新品上市时，你通常？', options: [{ label: '第一天就去尝', pole: 'A' }, { label: '等别人试过再说', pole: 'C' }] },
+    { key: 'q10', dim: 'budget', title: '一顿饭的预算，你更接近？', options: [{ label: '15 元以内精打细算', pole: 'E' }, { label: '好吃就值得，价格不限', pole: 'L' }] },
+    { key: 'q11', dim: 'budget', title: '点外卖时你会？', options: [{ label: '凑满减、比三家', pole: 'E' }, { label: '直接点最想吃的', pole: 'L' }] },
+    { key: 'q12', dim: 'budget', title: '选店时你更看重？', options: [{ label: '性价比和份量', pole: 'E' }, { label: '环境和体验', pole: 'L' }] },
 ];
 
 const answers = ref({});
@@ -166,111 +157,112 @@ const generating = ref(false);
 const hint_lack = ref(false);
 const share_open = ref(false);
 
-/** 已答题数与进度条百分比 */
-const answered_count = computed(() => QUESTIONS.filter((q) => answers.value[q.key]).length);
+const answered_count = computed(() => QUESTIONS.filter((q) => answers.value[q.key] !== undefined).length);
 const progress = computed(() => Math.round((answered_count.value / QUESTIONS.length) * 100));
+const share_url = computed(() => `${window.location.origin}/ai/mbti`);
 
 /**
  * 选择某题选项
- * @param {string} key - 题目键
- * @param {string} label - 选项文案
+ * @param {string} key
+ * @param {number} idx
  */
-function pick(key, label) {
-    answers.value[key] = label;
-    // 重新作答后撤销「数据不足」提示
-    if (answered_count.value >= 3) hint_lack.value = false;
+function pick(key, idx) {
+    answers.value[key] = idx;
+    if (answered_count.value >= MIN_ANSWER) hint_lack.value = false;
 }
 
 /**
- * 按已选答案生成五维口味画像（辣度偏好/口味风格/消费倾向/常见场景/排队接受度）
+ * 统计每个维度的多数极
+ * @returns {{code:string, counts:Object}}
  */
-function build_traits() {
-    const find_opt = (key) => {
-        const q = QUESTIONS.find((x) => x.key === key);
-        return q ? q.options.find((o) => o.label === answers.value[key]) : null;
-    };
-    const spicy = find_opt('spicy');
-    const flavor = find_opt('flavor');
-    const scene = find_opt('scene');
-    const budget = find_opt('budget');
-    const queue = find_opt('queue');
-    return [
-        { label: '辣度偏好', stars: spicy ? spicy.stars : 3, text: spicy ? spicy.label : '待积累' },
-        { label: '口味风格', stars: flavor ? flavor.stars : 3, text: flavor ? flavor.label : '待积累' },
-        { label: '消费倾向', stars: budget ? budget.stars : 3, text: budget ? budget.label : '待积累' },
-        { label: '常见场景', stars: scene ? scene.stars : 3, text: scene ? scene.label : '待积累' },
-        { label: '排队接受度', stars: queue ? queue.stars : 3, text: queue ? queue.label : '待积累' },
-    ];
+function calc_code() {
+    let code = '';
+    const counts = {};
+    for (const d of DIMENSIONS) {
+        let a = 0; let b = 0;
+        for (const q of QUESTIONS.filter((x) => x.dim === d.key)) {
+            const idx = answers.value[q.key];
+            if (idx === undefined) continue;
+            if (q.options[idx].pole === d.poles[0]) a += 1; else b += 1;
+        }
+        const pole = b > a ? d.poles[1] : d.poles[0];
+        code += pole;
+        counts[d.key] = { a, b, pole, total: a + b };
+    }
+    return { code, counts };
 }
 
 /**
- * 生成饭MBTI：积分法映射 16 型（累加各题选项分数取最高）；
- * 答题数 < 3 时提示继续积累，不强制生成
+ * 生成 4 维画像
+ * @param {Object} counts
+ * @returns {Array}
+ */
+function build_traits(counts) {
+    return DIMENSIONS.map((d) => {
+        const c = counts[d.key] || { a: 0, b: 0, pole: d.poles[0], total: 0 };
+        const n = c.pole === d.poles[0] ? c.a : c.b;
+        const stars = c.total ? Math.max(1, Math.min(5, 1 + Math.round((n / c.total) * 4))) : 3;
+        return {
+            label: d.name,
+            stars,
+            text: `${d.labels[c.pole]} ${n}/${c.total || 0}`,
+        };
+    });
+}
+
+/**
+ * 生成饭BTI（至少答 8 题）
  */
 function generate() {
-    if (answered_count.value < 3) {
+    if (answered_count.value < MIN_ANSWER) {
         hint_lack.value = true;
-        ElMessage.warning(`画像数据还不够（已答 ${answered_count.value}/5），继续积累会更准哦`);
+        ElMessage.warning(`再答 ${MIN_ANSWER - answered_count.value} 题就能生成啦`);
         return;
     }
     generating.value = true;
-    // 模拟短耗时，增强「生成」反馈
     setTimeout(() => {
-        const total = {};
-        for (const q of QUESTIONS) {
-            const opt = q.options.find((o) => o.label === answers.value[q.key]);
-            if (!opt) continue;
-            for (const [code, s] of Object.entries(opt.score)) {
-                total[code] = (total[code] || 0) + s;
-            }
+        const { code, counts } = calc_code();
+        const t = TYPE_BY_CODE[code];
+        if (!t) {
+            generating.value = false;
+            ElMessage.error('画像生成失败，请重试');
+            return;
         }
-        let best = MBTI_TYPES[0];
-        let best_score = -1;
-        for (const t of MBTI_TYPES) {
-            const s = total[t.code] || 0;
-            if (s > best_score) { best_score = s; best = t; }
-        }
-        result.value = { ...best, traits: build_traits(), created_at: Date.now() };
-        // TODO: 待后端接口，当前仅本地持久化
+        const sub = code.split('').map((ch, i) => DIMENSIONS[i].labels[ch]).join(' · ');
+        result.value = { ...t, code, sub, traits: build_traits(counts), created_at: Date.now() };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(result.value));
         generating.value = false;
-        ElMessage.success(`测出来啦：${best.name} ${best.code}`);
-    }, 500);
+        ElMessage.success(`测出来啦：${t.name} ${code}`);
+    }, 400);
 }
 
-/**
- * 重新测试：清空作答回到题目态（旧画像保留到重新生成时覆盖）
- */
+/** 重新测试 */
 function retest() {
     answers.value = {};
     result.value = null;
     hint_lack.value = false;
 }
 
-/**
- * 删除画像：清空 localStorage(dafu_mbti) 并回到答题态
- */
+/** 删除画像 */
 async function remove_profile() {
     try {
         await ElMessageBox.confirm('删除后画像与本地记录都会清空，需要重新测试。确定删除吗？', '删除口味画像', {
             confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning',
         });
-    } catch { return; /* 取消 */ }
+    } catch { return; }
     localStorage.removeItem(STORAGE_KEY);
     result.value = null;
     answers.value = {};
     ElMessage.success('口味画像已删除');
 }
 
-/** 分享文案（复制文案用） */
+/** 分享文案（带可点击测试网址） */
 const share_text = computed(() => {
     if (!result.value) return '';
-    return `我在大福食刻测出了饭MBTI：${result.value.name} ${result.value.code}（${result.value.sub}）！快来测测你的口味人格~`;
+    return `我在大福食刻测出了饭BTI：${result.value.code} ${result.value.name}（${result.value.sub}）！你也来测测：${share_url.value}`;
 });
 
-/**
- * 复制分享文案到剪贴板
- */
+/** 复制分享文案 */
 async function copy_share_text() {
     try {
         await navigator.clipboard.writeText(share_text.value);
@@ -280,9 +272,7 @@ async function copy_share_text() {
     }
 }
 
-/**
- * 手绘圆角矩形（canvas 2D 兼容写法）
- */
+/** 手绘圆角矩形 */
 function round_rect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -293,40 +283,40 @@ function round_rect(ctx, x, y, w, h, r) {
     ctx.closePath();
 }
 
-/**
- * 用 canvas 合成分享海报（插画 + 类型名 + 品牌与声明小字），返回 PNG dataURL
- */
+/** canvas 合成分享海报（含测试网址） */
 function draw_poster() {
     return new Promise((resolve, reject) => {
         const c = document.createElement('canvas');
         c.width = 640;
-        c.height = 800;
+        c.height = 860;
         const ctx = c.getContext('2d');
-        // 页底纸色
         ctx.fillStyle = '#FAF4E3';
-        ctx.fillRect(0, 0, 640, 800);
-        // 卡面
+        ctx.fillRect(0, 0, 640, 860);
         ctx.fillStyle = '#FFFDF5';
-        round_rect(ctx, 40, 60, 560, 620, 24);
+        round_rect(ctx, 40, 50, 560, 660, 24);
         ctx.fill();
         const img = new Image();
         img.onload = () => {
-            ctx.drawImage(img, 200, 120, 240, 240);
+            ctx.drawImage(img, 200, 90, 240, 240);
             ctx.textAlign = 'center';
             ctx.fillStyle = '#B0A18A';
             ctx.font = '24px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.fillText('我的口味人格是', 320, 424);
+            ctx.fillText('我的饭BTI是', 320, 390);
             ctx.fillStyle = '#3A2E1A';
-            ctx.font = '800 52px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.fillText(result.value.name, 320, 496);
+            ctx.font = '800 50px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.fillText(result.value.name, 320, 458);
             ctx.fillStyle = '#8A6A3A';
-            ctx.font = '600 28px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.fillText(`${result.value.code} · ${result.value.sub}`, 320, 552);
+            ctx.font = '600 26px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.fillText(`${result.value.code} · ${result.value.sub}`, 320, 510);
             ctx.fillStyle = '#B0A18A';
             ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.fillText('大福食刻 · 饭MBTI', 320, 646);
+            ctx.fillText('大福食刻 · 饭BTI', 320, 590);
+            ctx.fillStyle = '#8A6A3A';
+            ctx.font = '600 18px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.fillText(`来测测你的：${share_url.value}`, 320, 660);
+            ctx.fillStyle = '#B0A18A';
             ctx.font = '18px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.fillText('以上内容仅供参考，不替代专业建议', 320, 762);
+            ctx.fillText('以上内容仅供参考，不替代专业建议', 320, 800);
             resolve(c.toDataURL('image/png'));
         };
         img.onerror = reject;
@@ -334,15 +324,13 @@ function draw_poster() {
     });
 }
 
-/**
- * 保存海报：canvas 合成后触发下载
- */
+/** 保存海报 */
 async function save_poster() {
     try {
         const url = await draw_poster();
         const a = document.createElement('a');
         a.href = url;
-        a.download = `饭MBTI_${result.value.code}.png`;
+        a.download = `饭BTI_${result.value.code}.png`;
         a.click();
         ElMessage.success('海报已保存');
     } catch {
@@ -350,19 +338,16 @@ async function save_poster() {
     }
 }
 
-/**
- * 返回 AI 助手主页
- */
+/** 返回 AI 助手主页 */
 function go_back() {
     router.push('/ai');
 }
 
 onMounted(() => {
-    // 已有画像则直接展示结果（下次进入不再答题）
     try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-        if (saved && saved.code && saved.traits) result.value = saved;
-    } catch { /* 本地数据损坏时按未测处理 */ }
+        if (saved && saved.code && TYPE_BY_CODE[saved.code] && saved.traits) result.value = saved;
+    } catch { /* 忽略损坏数据 */ }
 });
 </script>
 
@@ -435,6 +420,7 @@ onMounted(() => {
 .poster-brand { display: block; font-size: 10.5px; color: var(--ink-2); letter-spacing: 1px; }
 .poster-img { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radius); margin: 12px auto 0; display: block; }
 .poster-name { display: block; font-size: 22px; font-weight: 800; margin-top: 8px; }
+.poster-url { margin: 6px 0 0; font-size: 10.5px; color: #8A6A3A; word-break: break-all; }
 .poster-line { margin: 10px 0 0; font-size: 11px; color: var(--ink-2); font-weight: 400; }
 .share-ops { display: flex; justify-content: flex-end; gap: 8px; }
 

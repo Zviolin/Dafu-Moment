@@ -28,6 +28,22 @@
                     class="pchip" :class="{ on: form.avoids.includes(a) }"
                     @click="toggle_item(form.avoids, a)"
                 >{{ a }}</span>
+                <!-- 档案里保存过、但不在预设列表里的自定义忌口 -->
+                <span
+                    v-for="a in custom_avoids" :key="'c-' + a"
+                    class="pchip" :class="{ on: form.avoids.includes(a) }"
+                    @click="toggle_item(form.avoids, a)"
+                >{{ a }}</span>
+            </div>
+            <div class="add-row">
+                <el-input
+                    v-model="avoid_input"
+                    size="small"
+                    maxlength="8"
+                    placeholder="自定义忌口，如「不吃苦瓜」"
+                    @keyup.enter="add_avoid"
+                />
+                <button class="add-btn" type="button" @click="add_avoid">添加</button>
             </div>
         </div>
 
@@ -40,6 +56,22 @@
                     class="pchip danger" :class="{ on: form.severe_allergy.includes(g) }"
                     @click="toggle_item(form.severe_allergy, g)"
                 >{{ g }}</span>
+                <!-- 档案里保存过、但不在预设列表里的自定义过敏原（与忌口口径一致） -->
+                <span
+                    v-for="g in custom_severe" :key="'cs-' + g"
+                    class="pchip danger" :class="{ on: form.severe_allergy.includes(g) }"
+                    @click="toggle_item(form.severe_allergy, g)"
+                >{{ g }}</span>
+            </div>
+            <div class="add-row">
+                <el-input
+                    v-model="severe_input"
+                    size="small"
+                    maxlength="8"
+                    placeholder="自定义过敏原，如「腰果」"
+                    @keyup.enter="add_severe"
+                />
+                <button class="add-btn" type="button" @click="add_severe">添加</button>
             </div>
         </div>
 
@@ -52,6 +84,22 @@
                     class="pchip" :class="{ on: form.mild_dislike.includes(g) }"
                     @click="toggle_item(form.mild_dislike, g)"
                 >{{ g }}</span>
+                <!-- 档案里保存过、但不在预设列表里的自定义不喜欢项 -->
+                <span
+                    v-for="g in custom_mild" :key="'cm-' + g"
+                    class="pchip" :class="{ on: form.mild_dislike.includes(g) }"
+                    @click="toggle_item(form.mild_dislike, g)"
+                >{{ g }}</span>
+            </div>
+            <div class="add-row">
+                <el-input
+                    v-model="mild_input"
+                    size="small"
+                    maxlength="8"
+                    placeholder="自定义不喜欢，如「苦瓜」"
+                    @keyup.enter="add_mild"
+                />
+                <button class="add-btn" type="button" @click="add_mild">添加</button>
             </div>
         </div>
 
@@ -97,12 +145,12 @@
 
         <!-- 饮食目标 -->
         <div class="card group fade-up" style="animation-delay:.28s">
-            <div class="gt">饮食目标 <small>单选</small></div>
+            <div class="gt">饮食目标 <small>可多选，推荐与计划会同时兼顾</small></div>
             <div class="chips">
                 <span
                     v-for="g in GOAL_OPTIONS" :key="g"
-                    class="pchip" :class="{ on: form.goal === g }"
-                    @click="form.goal = g"
+                    class="pchip" :class="{ on: form.goals.includes(g) }"
+                    @click="toggle_goal(g)"
                 >{{ g }}</span>
             </div>
         </div>
@@ -125,7 +173,7 @@
  * 保存 → localStorage(dafu_diet_profile)，供 AI 推荐 / 榜单 / 饮食计划读取。
  * TODO: 待后端接口（当前仅本地持久化）
  */
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 
@@ -153,8 +201,79 @@ const form = reactive({
     budget_min: 8,         // 单餐预算下限
     budget_max: 20,        // 单餐预算上限
     tastes: [],            // 口味偏好
-    goal: '无',            // 饮食目标
+    goals: [],             // 饮食目标（多选；'无' 与其他互斥）
 });
+
+const avoid_input = ref('');
+const severe_input = ref('');
+const mild_input = ref('');
+const custom_avoids = computed(() =>
+    form.avoids.filter((a) => !AVOID_OPTIONS.includes(a))
+);
+// 已保存但不在预设里的自定义过敏原 / 不喜欢项（回显时单独渲染，避免被预设覆盖）
+const custom_severe = computed(() =>
+    form.severe_allergy.filter((g) => !SEVERE_OPTIONS.includes(g))
+);
+const custom_mild = computed(() =>
+    form.mild_dislike.filter((g) => !MILD_OPTIONS.includes(g))
+);
+
+/**
+ * 添加自定义项（统一口径：去重、最多 8 字、空值忽略）
+ * @param {string[]} arr - form 内的多选数组（引用传递，直接 push）
+ * @param {{value: string}} input - 对应输入框的 ref
+ * @param {string} label - 类别名（忌口 / 严重过敏 / 一般不喜欢），用于提示文案
+ */
+function add_custom(arr, input, label) {
+    const v = (input.value || '').trim();
+    if (!v) return;
+    if (arr.includes(v)) {
+        ElMessage.info(`这个${label}已经在列表里了`);
+        input.value = '';
+        return;
+    }
+    arr.push(v);
+    input.value = '';
+    ElMessage.success(`已添加${label}「${v}」`);
+}
+
+/**
+ * 添加自定义忌口（去重、最多 8 字）
+ */
+function add_avoid() {
+    add_custom(form.avoids, avoid_input, '忌口');
+}
+
+/**
+ * 添加自定义严重过敏原（硬性过滤口径与预设一致）
+ */
+function add_severe() {
+    add_custom(form.severe_allergy, severe_input, '过敏原');
+}
+
+/**
+ * 添加自定义「一般不喜欢」
+ */
+function add_mild() {
+    add_custom(form.mild_dislike, mild_input, '不喜欢的');
+}
+
+/**
+ * 饮食目标多选；「无」与其他目标互斥
+ * @param {string} g
+ */
+function toggle_goal(g) {
+    if (g === '无') {
+        form.goals = ['无'];
+        return;
+    }
+    const i = form.goals.indexOf(g);
+    if (i >= 0) form.goals.splice(i, 1);
+    else form.goals.push(g);
+    const none = form.goals.indexOf('无');
+    if (none >= 0) form.goals.splice(none, 1);
+    if (!form.goals.length) form.goals.push('无');
+}
 
 /**
  * 通用多选切换
@@ -191,7 +310,20 @@ onMounted(() => {
     // 回显已保存档案
     try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-        if (saved) Object.assign(form, saved);
+        if (saved) {
+            Object.assign(form, saved);
+            // 兼容旧版单选 goal 字段 → 多选 goals
+            if (!Array.isArray(form.goals)) {
+                form.goals = saved.goal && saved.goal !== '无' ? [saved.goal] : ['无'];
+            }
+            delete form.goal;
+            // 兼容旧版本缺失字段：三个多选组一律兜底为数组（避免 .includes 抛错）
+            for (const k of ['avoids', 'severe_allergy', 'mild_dislike', 'tastes']) {
+                if (!Array.isArray(form[k])) form[k] = [];
+            }
+        } else {
+            form.goals = ['无'];
+        }
     } catch { /* 本地数据损坏时按默认表单 */ }
 });
 </script>
@@ -214,6 +346,12 @@ onMounted(() => {
 .gt { font-size: 13.5px; font-weight: 700; margin-bottom: 11px; }
 .gt small { font-size: 10px; color: var(--ink-2); font-weight: 400; margin-left: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.add-row .el-input { flex: 1; }
+.add-btn {
+    flex: none; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--brand); color: #FFFDF5; font-size: 12px; font-weight: 700; cursor: pointer;
+}
 /* 选项 chip：微圆角 + 墨色选中 */
 .pchip {
     font-size: 12px; padding: 6px 14px; border-radius: var(--radius-sm);

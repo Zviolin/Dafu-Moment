@@ -115,13 +115,12 @@
  * - 作者头（头像/昵称/校内已认证签/关注钮）、多维评分（按场景显示适用维度）、正文、图片
  * - 互动条：点赞可切换 / 收藏 / 评论数 / 举报 → /report / 分享 → 复制链接弹窗
  * - 评论列表 + 底部固定评论输入条（登录后可发）
- * - 数据：数字 id 优先 api_review.list 匹配；否则页内 mock（与点评圈 mock 同源同 id）
- * TODO: 待后端帖子详情接口
+ * - 数据：动态 id 形如 p-12 走 /posts/12；点评为纯数字 id 走 /reviews/12
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { api_review } from '../api';
+import { api_review, api_post } from '../api';
 import { useAuthStore } from '../stores/auth';
 import { time_ago } from '../utils/format';
 
@@ -139,6 +138,8 @@ const input_ref = ref(null);
 const share_open = ref(false);
 // 数据来源标记：来自接口的点评 id（评论/点赞走真实接口）
 const review_id = ref(null);
+// 动态 id：来自 /posts/{id}（点评圈会以 p-{id} 形式跳转）
+const post_id = ref(null);
 
 /** 维度定义：口味/份量/包装通用；排队体验堂食适用、配送速度外卖适用 */
 const DIM_DEFS = [
@@ -151,7 +152,7 @@ const DIM_DEFS = [
 
 /** 我的头像（评论输入条展示） */
 const my_avatar = '/assets/avatar-user.png';
-/** 分享链接（当前页完整地址） */
+/** 分享链接（History 路由，直接拼当前页地址） */
 const share_link = computed(() => `${location.origin}/post/${route.params.id}`);
 
 /** 适用维度行：堂食不显示配送速度，外卖不显示排队体验 */
@@ -166,16 +167,42 @@ const dim_rows = computed(() => {
 });
 
 /**
- * 加载详情：按数字 id 直查接口点评，未命中即失败态（无假数据兜底）
+ * 头像/图片地址归一：对象键走 /img 代理，站内路径与完整链接原样返回
+ * @param {string|null} key
+ * @returns {string}
+ */
+function avatar_url(key) {
+    if (!key) return '/assets/avatar-user.png';
+    const s = String(key);
+    if (s.startsWith('/') || s.startsWith('http')) return s;
+    return `/img/${s}`;
+}
+
+/**
+ * 加载详情：
+ * - 动态 id 形如 p-12（点评圈跳转口径）→ /posts/12
+ * - 点评 id 为纯数字 → /reviews/12
+ * 两类都加载真实评论列表，未命中即失败态（无假数据兜底）
  */
 async function load_post() {
     failed.value = false;
     const id = String(route.params.id || '');
+    if (/^p-\d+$/.test(id)) {
+        try {
+            const d = await api_post.get(id.slice(2));
+            if (d && d.id) {
+                apply_post(d);
+                await load_comments();
+                return;
+            }
+        } catch { /* 接口不可用 → 失败态 */ }
+    }
     if (/^\d+$/.test(id)) {
         try {
             const d = await api_review.get(id);
             if (d && d.id) {
                 apply_review(d);
+                await load_comments();
                 return;
             }
         } catch { /* 接口不可用 → 失败态 */ }
@@ -189,21 +216,64 @@ async function load_post() {
  */
 function apply_review(r) {
     review_id.value = r.id;
+    post_id.value = null;
     const scores = r.dimensionScores || {};
     post.value = {
         author: r.nickname || '福大同学',
-        avatar: '/assets/avatar-user.png',
+        avatar: avatar_url(r.avatar_object_key),
         time: time_ago(r.createdAt),
         scene: Number(scores.delivery) > 0 ? '外卖' : '堂食',
         overall: Number(r.overallScore) || 0,
         content: r.content || '（纯图点评）',
-        images: (r.images || []).slice(0, 3).map((k) => `/img/${k}`),
+        images: (r.images || []).slice(0, 3).map((k) => avatar_url(k)),
         topics: (r.tags || []).map((t) => `#${t}#`),
         scores,
     };
     comments.value = [];
     liked.value = !!r.liked;
     like_count.value = Number(r.likeCount) || 0;
+}
+
+/**
+ * 将接口动态映射为详情数据（无评分维度，不展示星级）
+ * @param {Object} p
+ */
+function apply_post(p) {
+    post_id.value = p.id;
+    review_id.value = null;
+    post.value = {
+        author: p.author?.nickname || '福大同学',
+        avatar: avatar_url(p.author?.avatar_object_key),
+        time: time_ago(p.created_at),
+        scene: '动态',
+        overall: 0,
+        content: p.content || '（纯图动态）',
+        images: (p.images || []).slice(0, 3).map((k) => avatar_url(k)),
+        topics: (p.topics || []).map((t) => `#${t}#`),
+        scores: {},
+    };
+    comments.value = [];
+    liked.value = !!p.liked;
+    like_count.value = Number(p.like_count) || 0;
+}
+
+/**
+ * 加载评论列表（点评/动态共用单层评论服务）
+ */
+async function load_comments() {
+    try {
+        const d = post_id.value
+            ? await api_post.comments(post_id.value)
+            : await api_review.comments(review_id.value);
+        const rows = Array.isArray(d) ? d : (d && Array.isArray(d.list) ? d.list : []);
+        comments.value = rows.map((c) => ({
+            id: c.id,
+            author: c.nickname || '福大同学',
+            avatar: avatar_url(c.avatar_object_key),
+            content: c.content,
+            time: time_ago(c.created_at),
+        }));
+    } catch { /* 评论接口不可用时保持空列表，不影响正文展示 */ }
 }
 
 /**
@@ -247,23 +317,34 @@ async function copy_link() {
 }
 
 /**
- * 点赞切换：接口点评走 api_review.like，mock 帖子本地切换
+ * 点赞切换：动态走 api_post.like，点评走 api_review.like
  */
 async function toggle_like() {
-    if (review_id.value && auth.is_login) {
-        try {
+    if (!auth.is_login) {
+        ElMessage.warning('登录后才能点赞');
+        router.push({ path: '/login', query: { redirect: route.fullPath } });
+        return;
+    }
+    try {
+        if (post_id.value) {
+            const d = await api_post.like(post_id.value);
+            liked.value = !!d.liked;
+            like_count.value = Number(d.like_count ?? d.likeCount) || 0;
+            return;
+        }
+        if (review_id.value) {
             const d = await api_review.like(review_id.value);
             liked.value = !!d.liked;
-            like_count.value = Number(d.likeCount) || 0;
+            like_count.value = Number(d.likeCount ?? d.like_count) || 0;
             return;
-        } catch { /* 失败回落本地切换 */ }
-    }
+        }
+    } catch { /* 失败回落本地切换 */ }
     liked.value = !liked.value;
     like_count.value += liked.value ? 1 : -1;
 }
 
 /**
- * 发送评论：未登录先去登录；已登录本地追加（接口点评同时同步服务端）
+ * 发送评论：未登录先去登录；已登录写入服务端后重新拉取评论列表
  */
 async function send_comment() {
     const text = draft.value.trim();
@@ -273,19 +354,19 @@ async function send_comment() {
         router.push({ path: '/login', query: { redirect: route.fullPath } });
         return;
     }
-    comments.value.push({
-        id: `me_${Date.now()}`,
-        author: auth.user?.nickname || '我',
-        avatar: '/assets/avatar-user.png',
-        content: text,
-        time: '刚刚',
-    });
-    draft.value = '';
-    if (review_id.value) {
-        try {
-            await api_review.reply(review_id.value, text);
-        } catch { /* 服务端失败不影响本地展示 */ }
+    if (!post.value) return;
+    try {
+        if (post_id.value) {
+            await api_post.comment(post_id.value, { content: text });
+        } else if (review_id.value) {
+            await api_review.comment(review_id.value, { content: text });
+        }
+    } catch (e) {
+        ElMessage.error(e?.message || '评论失败，请稍后再试');
+        return;
     }
+    draft.value = '';
+    await load_comments();
 }
 
 onMounted(load_post);

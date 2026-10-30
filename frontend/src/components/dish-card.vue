@@ -3,7 +3,7 @@
         <!-- 推荐角标：左上贴纸小签（果酱橙底墨字，微旋转） -->
         <span v-if="is_reco" class="reco-badge">推荐</span>
         <div class="thumb img-fallback">
-            <img v-if="cover" :src="cover" loading="lazy" alt="" />
+            <img v-if="cover" :src="cover" loading="lazy" decoding="async" alt="" />
             <span v-else class="fallback-char">{{ dish.name.slice(0, 1) }}</span>
         </div>
         <div class="info">
@@ -23,7 +23,10 @@
                 <span v-for="t in tag_list" :key="t" class="tag">{{ t }}</span>
             </div>
             <div class="line-5">
-                <span class="price"><i>¥</i><b class="score-num">{{ price_text }}</b><i class="per">/人</i></span>
+                <span class="price">
+                    <i>¥</i><b class="score-num">{{ price_text }}</b><i class="per">/{{ unit_text }}</i>
+                    <em v-if="is_est" class="est" title="价格依据公开人均与招牌菜估算，仅供参考">估算</em>
+                </span>
                 <button class="fav-btn" :class="{ on: fav === 0 }" @click.stop="toggle_fav">
                     <el-icon :size="11"><Check v-if="fav === 0" /><Plus v-else /></el-icon>{{ fav === 0 ? '已想吃' : '想吃' }}
                 </button>
@@ -66,6 +69,9 @@ const tag_list = computed(() =>
     (props.dish.taste_tags || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, 2)
 );
 const price_text = computed(() => Number(props.dish.price).toFixed(1).replace(/\.0$/, ''));
+// 价格单位与估算标记：兼容档口详情（camelCase）与菜品列表（snake_case）两种返回
+const unit_text = computed(() => props.dish.price_unit || props.dish.priceUnit || '人');
+const is_est = computed(() => !!(props.dish.is_estimated ?? props.dish.isEstimated));
 const loc_text = computed(() => {
     const canteen = String(props.dish.canteen_name || '').replace('旗山校区·', '');
     const station = props.dish.station_name || '';
@@ -128,6 +134,12 @@ async function toggle_fav() {
 .price i { font-style: normal; font-size: 12px; }
 .price b { font-size: 18px; }
 .price .per { color: var(--ink-2); font-size: 11px; margin-left: 1px; }
+.price .est {
+    font-style: normal; font-size: 9px; font-weight: 700;
+    color: var(--ink-2); background: #F1E7D0;
+    border-radius: 3px; padding: 1px 4px; margin-left: 5px;
+    vertical-align: 2px;
+}
 .fav-btn {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: var(--radius-sm);

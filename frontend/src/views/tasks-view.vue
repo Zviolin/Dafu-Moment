@@ -9,7 +9,7 @@
             <i class="t-hold"></i>
         </div>
 
-        <!-- 1. 金币卡：插画 + 粗大数字 + 兑换说明 -->
+        <!-- 1. 金币卡：余额来自后端真实流水 -->
         <div class="card coinpanel fade-up">
             <div class="coin-row">
                 <b class="cp-title">赚金币</b>
@@ -18,7 +18,7 @@
                     <b class="score-num">{{ coins }}</b>
                 </div>
             </div>
-            <p class="cp-tip">金币用于喂食与装扮解锁 · 每日 0 点刷新 · 已获金币不追回</p>
+            <p class="cp-tip">金币用于喂食与装扮解锁 · 每日 0 点刷新 · 领取后实时入账</p>
         </div>
 
         <!-- 2. 任务分类 Tab -->
@@ -27,65 +27,62 @@
             <span :class="{ on: tab === 'grow' }" @click="tab = 'grow'">成长任务</span>
         </div>
 
-        <!-- 3a. 每日任务列表（6 条） -->
+        <!-- 3a. 每日任务 -->
         <template v-if="tab === 'daily'">
-            <div class="card task fade-up" v-for="t in DAILY" :key="t.key">
+            <div class="card task fade-up" v-for="t in tasks.daily" :key="t.id">
                 <span class="tico">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[t.icon]"></svg>
-                    <i class="coin">+{{ t.reward }}</i>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[icon_of(t.action_type)]"></svg>
+                    <i class="coin">+{{ t.reward_coins }}</i>
                 </span>
                 <div class="tinfo">
                     <b>{{ t.name }}</b>
-                    <span>{{ t.desc }} · 已完成 {{ t.base }}/1</span>
+                    <span>{{ desc_of(t.action_type) }} · 今日 {{ t.current }}/{{ t.target }}</span>
                 </div>
-                <!-- 进度满且未领 → 领取；已领 → 灰态；未完成 → 去完成 -->
-                <span v-if="t.base >= 1 && !claim_map[t.key]" class="tbtn go" @click="claim_daily(t)">领取</span>
-                <span v-else-if="claim_map[t.key]" class="tbtn done">已领取</span>
-                <span v-else class="tbtn go" @click="router.push(t.to)">去完成</span>
+                <span v-if="t.claimable" class="tbtn go" @click="claim(t)">领取</span>
+                <span v-else-if="t.claimed" class="tbtn done">已领取</span>
+                <span v-else class="tbtn go" @click="router.push(route_of(t.action_type))">去完成</span>
             </div>
-            <p class="list-tip">每日任务合计可得 {{ DAILY_TOTAL }} 金币 · 单项每日限领一次</p>
+            <p class="list-tip">每日任务合计可得 {{ daily_total }} 金币 · 单项每日限领一次</p>
         </template>
 
-        <!-- 3b. 成长任务列表（5 条，进度条型） -->
+        <!-- 3b. 成长任务 -->
         <template v-else>
-            <div class="card task fade-up" v-for="g in grow_list" :key="g.key">
+            <div class="card task fade-up" v-for="g in tasks.growth" :key="g.id">
                 <span class="tico">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[g.icon]"></svg>
-                    <i class="coin">+{{ g.reward }}</i>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[icon_of(g.action_type)]"></svg>
+                    <i class="coin">+{{ g.reward_coins }}</i>
                 </span>
                 <div class="tinfo">
                     <b>{{ g.name }}</b>
-                    <span class="grow-bar"><i :style="{ width: g.pct + '%' }"></i></span>
-                    <span class="grow-val">{{ g.cur }} / {{ g.target }}</span>
+                    <span class="grow-bar"><i :style="{ width: pct(g) + '%' }"></i></span>
+                    <span class="grow-val">{{ g.current }} / {{ g.target }}</span>
                 </div>
-                <span v-if="g.cur >= g.target && !grow_claim[g.key]" class="tbtn go" @click="claim_grow(g)">领取</span>
-                <span v-else-if="grow_claim[g.key]" class="tbtn done">已领取</span>
-                <span v-else class="tbtn go" @click="router.push(g.to)">去完成</span>
+                <span v-if="g.claimable" class="tbtn go" @click="claim(g)">领取</span>
+                <span v-else-if="g.claimed" class="tbtn done">已领取</span>
+                <span v-else class="tbtn go" @click="router.push(route_of(g.action_type))">去完成</span>
             </div>
             <p class="list-tip">成长任务一次性达成，不可重复领取 · 与成就口径一致，同步推进成就进度</p>
         </template>
+
+        <p v-if="!tasks.available && loaded" class="list-tip">任务服务暂不可用，请确认数据库已执行 006 迁移</p>
     </div>
 </template>
 
 <script setup>
 /**
- * 任务中心页（对齐 P32 + C23）：
- * 金币卡（插画 + 粗大数字 + 兑换说明）→
- * 每日任务 6 条（26px 圆底自绘 SVG + 金币角标，领取/去完成/已领取灰态）→
- * 成长任务 5 条（进度条型，达成可领）。领取态按「今日」持久化 localStorage，
- * 跨日自动重置；金币余额同步累加。
- * 任务数据后端暂无接口 → mock + localStorage（TODO: 待后端接口）
+ * 任务中心（r78 修正）：
+ * 全部改为后端真实任务接口（/me/tasks、/tasks/:id/claim），金币余额取金币流水，
+ * 任务进度实时统计打卡/点评/喂食/收藏/互动/分享，领取后立刻入账并刷新。
+ * 不再使用 localStorage 假数据，避免「任务已完成但金币/道具不到账」。
  */
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { load_json, save_json } from '../utils/storage.js';
+import { api_task } from '../api';
 
 const router = useRouter();
 
-/* ---------------- mock 常量（TODO: 待后端接口） ---------------- */
-
-// 自绘 SVG 图标表（C23：打卡=日历勾、点评=星形笔、喂食=碗、收藏=书签、互动=气泡、分享=箭头）
+// 自绘 SVG 图标表（打卡=日历勾、点评=星形笔、喂食=碗、收藏=书签、互动=气泡、分享=箭头）
 const ICONS = {
     cal: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 9.5h17"/><path d="M9 14.5l2.2 2.2 4-4.5"/>',
     starpen: '<path d="M12 3.5l2.5 5.2 5.7.7-4.2 4 1.1 5.6-5.1-2.8-5.1 2.8 1.1-5.6-4.2-4 5.7-.7z"/>',
@@ -98,103 +95,72 @@ const ICONS = {
     shirt: '<path d="M8.5 4L12 5.5 15.5 4l4.5 3.5-2.5 2.5-1.5-1V20h-8v-11l-1.5 1L4 7.5z"/>',
 };
 
-// 每日任务 6 条：base 为「今日已完成次数」（mock 静态值）
-const DAILY = [
-    { key: 'checkin', name: '每日打卡', desc: '任意档口完成一次就餐打卡', reward: 10, icon: 'cal', to: '/checkin', base: 1 },
-    { key: 'review', name: '写一条点评', desc: '发布 1 条有效点评', reward: 20, icon: 'starpen', to: '/publish', base: 0 },
-    { key: 'feed', name: '给宠物喂食一次', desc: '宠物页完成一次投喂', reward: 5, icon: 'bowl', to: '/pet', base: 0 },
-    { key: 'fav', name: '收藏一道菜', desc: '收藏任意菜品进想吃清单', reward: 5, icon: 'mark', to: '/search', base: 0 },
-    { key: 'interact', name: '互动一次', desc: '点赞 / 评论 / 回复任意一次', reward: 5, icon: 'chat', to: '/circle', base: 1 },
-    { key: 'share', name: '分享一条动态', desc: '发一条动态并生成分享卡', reward: 10, icon: 'up', to: '/post-publish', base: 0 },
-];
-
-// 成长任务 5 条（进度条型，口径与成就页一致）
-const GROW_DEFS = [
-    { key: 'g_checkin', name: '累计打卡 10 天', target: 10, curKey: 'checkins', reward: 50, icon: 'cal', to: '/checkin' },
-    { key: 'g_review', name: '发布 20 条点评', target: 20, curKey: 'reviews', reward: 100, icon: 'starpen', to: '/publish' },
-    { key: 'g_likes', name: '获赞 50 次', target: 50, curKey: 'likes', reward: 50, icon: 'heart', to: '/circle' },
-    { key: 'g_spots', name: '点亮 8 个点位', target: 8, curKey: 'spots', reward: 50, icon: 'pin', to: '/' },
-    { key: 'g_dress', name: '装扮收集 3 套', target: 3, curKey: 'dresses', reward: 30, icon: 'shirt', to: '/pet' },
-];
-
-const DEFAULT_ACHV = { checkins: 36, spots: 17, reviews: 12, likes: 312 };
-const DAILY_TOTAL = DAILY.reduce((s, t) => s + t.reward, 0); // 每日合计 55
-
-
-
-/**
- * 今日日期串（本地时区，跨日重置用）
- * @returns {string} 形如 2026-10-15
- */
-function today_str() {
-    const d = new Date();
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
-/* ---------------- 状态 ---------------- */
+const ICON_BY_ACTION = { 1: 'cal', 2: 'starpen', 3: 'bowl', 4: 'mark', 5: 'chat', 6: 'up' };
+const DESC_BY_ACTION = {
+    1: '任意点位完成一次打卡',
+    2: '发布 1 条有效点评',
+    3: '宠物页完成一次投喂',
+    4: '收藏任意菜品/档口',
+    5: '点赞 / 评论 / 回复任意一次',
+    6: '发布一条美食动态',
+};
+const ROUTE_BY_ACTION = { 1: '/checkin', 2: '/publish', 3: '/pet', 4: '/search', 5: '/circle', 6: '/post-publish' };
 
 const tab = ref('daily');
-const coins = ref(86); // 金币余额（mock）
-const achv = ref({ ...DEFAULT_ACHV, dresses: 1 }); // 成就口径进度 + 装扮数
-const claim_map = reactive({}); // 每日任务今日领取态
-const grow_claim = reactive({}); // 成长任务领取态（一次性）
+const loaded = ref(false);
+const tasks = ref({ available: true, daily: [], growth: [], coin_balance: 0 });
 
-// 成长任务列表：合并当前进度 → 百分比
-const grow_list = computed(() =>
-    GROW_DEFS.map((g) => {
-        const cur = Math.min(g.target, Number(achv.value[g.curKey]) || 0);
-        return { ...g, cur, pct: Math.round((cur / g.target) * 100) };
-    })
-);
+const coins = computed(() => Number(tasks.value.coin_balance) || 0);
+const daily_total = computed(() => (tasks.value.daily || []).reduce((s, t) => s + (Number(t.reward_coins) || 0), 0));
 
-/* ---------------- 生命周期 ---------------- */
+/** 动作类型 → 图标 */
+function icon_of(action) { return ICON_BY_ACTION[action] || 'starpen'; }
+/** 动作类型 → 说明 */
+function desc_of(action) { return DESC_BY_ACTION[action] || '完成任务'; }
+/** 动作类型 → 去完成跳转 */
+function route_of(action) { return ROUTE_BY_ACTION[action] || '/'; }
+/** 成长任务百分比 */
+function pct(g) { return g.target ? Math.min(100, Math.round((g.current / g.target) * 100)) : 0; }
 
-onMounted(() => {
-    // 金币余额 + 成就口径进度（缺省兜底）
-    coins.value = Number(load_json('dafu_coins', 86)) || 0;
-    const saved = load_json('dafu_achv_progress', {});
-    Object.keys(DEFAULT_ACHV).forEach((k) => {
-        if (saved[k] !== undefined) achv.value[k] = Number(saved[k]) || 0;
-    });
-    // 每日领取态：跨日自动重置
-    const claim = load_json('dafu_tasks_claim', {});
-    Object.assign(claim_map, claim.date === today_str() ? claim.map : {});
-    // 成长任务领取态（一次性，不随日期重置）
-    Object.assign(grow_claim, load_json('dafu_grow_claim', {}));
-});
+/**
+ * 加载任务列表
+ */
+async function load() {
+    try {
+        const data = await api_task.mine();
+        tasks.value = data;
+    } catch {
+        tasks.value = { available: false, daily: [], growth: [], coin_balance: 0 };
+    } finally {
+        loaded.value = true;
+    }
+}
 
-/* ---------------- 交互 ---------------- */
+/**
+ * 领取奖励并刷新余额
+ * @param {Object} t
+ */
+async function claim(t) {
+    try {
+        const data = await api_task.claim(t.id);
+        ElMessage.success(`已领取 ${t.reward_coins} 金币`);
+        if (data && (data.coin_balance !== undefined || data.balance !== undefined)) {
+            tasks.value.coin_balance = data.coin_balance ?? data.balance;
+            await load();
+        } else {
+            await load();
+        }
+    } catch {
+        await load();
+    }
+}
 
 /**
  * 返回上一页
  */
-function go_back() {
-    router.back();
-}
+function go_back() { router.back(); }
 
-/**
- * 领取每日任务奖励：金币入账 + 今日领取态持久化
- * @param {Object} t 任务项
- */
-function claim_daily(t) {
-    claim_map[t.key] = true;
-    coins.value += t.reward;
-    save_json('dafu_coins', coins.value);
-    save_json('dafu_tasks_claim', { date: today_str(), map: { ...claim_map } });
-    ElMessage.success(`已领取 ${t.reward} 金币`);
-}
-
-/**
- * 领取成长任务奖励：金币入账 + 一次性领取态持久化
- * @param {Object} g 成长任务项
- */
-function claim_grow(g) {
-    grow_claim[g.key] = true;
-    coins.value += g.reward;
-    save_json('dafu_coins', coins.value);
-    save_json('dafu_grow_claim', { ...grow_claim });
-    ElMessage.success(`已领取 ${g.reward} 金币`);
-}
+onMounted(load);
 </script>
 
 <style scoped>

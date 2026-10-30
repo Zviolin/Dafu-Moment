@@ -39,6 +39,10 @@
                 <span class="muted">{{ data.stations.length }} 个窗口 · {{ posts_count }} 条动态</span>
                 <span v-if="has_avg_price" class="avg-price score-num">人均 ¥{{ data.canteen.avg_price }}</span>
             </div>
+            <!-- 真实营业时间：仅展示公开资料里有值的点位，无资料不臆造 -->
+            <div v-if="data.canteen.business_hours" class="info-hours">
+                营业时间 {{ data.canteen.business_hours }}
+            </div>
             <div class="chip-row">
                 <span class="chip">{{ CANTEEN_TYPE_NAME[data.canteen.type] }}</span>
                 <span v-for="t in point_tags" :key="t" class="chip">{{ t }}</span>
@@ -100,7 +104,11 @@
         </div>
         <div v-for="r in reviews" :key="r.id" class="revcard card fade-up">
             <div class="rev-head">
-                <img class="avatar-fix rev-av" src="/assets/avatar-user.png" alt="" />
+                <user-avatar
+                    :anon="r.isAnonymous"
+                    :user="{ id: r.userId, nickname: r.nickname, avatar: r.avatar, avatar_object_key: r.avatar_object_key }"
+                    :size="34" class="rev-av"
+                />
                 <div class="rev-who">
                     <div class="rev-name">
                         <b>{{ r.nickname }}</b>
@@ -146,6 +154,7 @@ import { ElMessage } from 'element-plus';
 import { api_content, api_review, api_favorite } from '../api';
 import { useAuthStore } from '../stores/auth';
 import { CANTEEN_TYPE_NAME, time_ago, fmt_score, cover_url } from '../utils/format';
+import UserAvatar from '../components/user-avatar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -392,6 +401,8 @@ onMounted(async () => {
 .info-score { display: flex; align-items: baseline; gap: 12px; margin-top: 9px; }
 .muted { font-size: 11px; color: var(--ink-2); font-weight: 400; }
 .avg-price { color: var(--brand); font-size: 13px; font-weight: 700; }
+/* 真实营业时间：低调说明行，不与人均抢视觉 */
+.info-hours { margin-top: 6px; font-size: 11.5px; color: var(--ink-2); }
 .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 /* 公告条：1px 虚线淡纸签 */
 .post-bar {

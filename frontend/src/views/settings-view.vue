@@ -9,16 +9,7 @@
             <i class="t-hold"></i>
         </div>
 
-        <!-- ① 互动与内容 -->
-        <div class="card group fade-up">
-            <div class="gt">互动与内容</div>
-            <div class="row" @click="router.push('/report')">
-                <span class="rico" v-html="ICONS.warn"></span>
-                <span class="rn">举报记录</span><span class="arr">›</span>
-            </div>
-        </div>
-
-        <!-- ② 通用 -->
+        <!-- ① 通用 -->
         <div class="card group fade-up">
             <div class="gt">通用</div>
             <div class="row static">
@@ -32,7 +23,7 @@
             </div>
         </div>
 
-        <!-- ③ 隐私（需求 5.1.1(2)：授权可查看、可撤回） -->
+        <!-- ② 隐私（需求 5.1.1(2)：授权可查看、可撤回） -->
         <div class="card group fade-up">
             <div class="gt">隐私</div>
             <div class="row" @click="open_grant('diet')">
@@ -64,11 +55,11 @@
                 <span class="rico" v-html="ICONS.doc"></span>
                 <span class="rn">内容共建规范</span><span class="arr">›</span>
             </div>
-            <div class="row" @click="router.push('/me')">
+            <div class="row" @click="acct_dlg_on = true">
                 <span class="rico" v-html="ICONS.lock"></span>
                 <span class="rn">账号与安全</span><span class="arr">›</span>
             </div>
-            <div class="row" @click="vendor_intro">
+            <div class="row" @click="router.push('/vendor/apply')">
                 <span class="rico" v-html="ICONS.medal"></span>
                 <span class="rn">我是档口</span><span class="arr">›</span>
             </div>
@@ -85,6 +76,20 @@
         <!-- ⑤ 退出登录（确认后清 token → /login） -->
         <button class="logout fade-up" @click="do_logout">退出登录</button>
         <p class="ver">大福食刻 v1.0.0 · 福州大学校园点评</p>
+
+        <!-- 账号与安全：从设置进入后直达具体操作，而不是跳到「我的」首页 -->
+        <el-dialog v-model="acct_dlg_on" title="账号与安全" width="320px" append-to-body>
+            <div class="acct-row" @click="go_account('pwd')">
+                <span>修改密码</span><span class="arr">›</span>
+            </div>
+            <div class="acct-row" @click="go_account('fzu')">
+                <span>福大认证</span><span class="arr">›</span>
+            </div>
+            <!-- 统一身份口令（r80）：学号登录使用，与本地账号密码相互独立 -->
+            <div class="acct-row" @click="go_account('fzu-pwd')">
+                <span>统一身份口令</span><span class="arr">›</span>
+            </div>
+        </el-dialog>
 
         <!-- 授权管理层弹窗：用途说明 + 撤回 / 重新授权 -->
         <el-dialog v-model="grant_dlg_on" :title="grant_cfg.title" width="320px" append-to-body>
@@ -160,6 +165,7 @@ const notify_on = ref(true); // 系统通知开关
 const grants = reactive({ diet: true, behavior: true }); // 授权态（需求 5.1.1(2)）
 const grant_dlg_on = ref(false); // 授权管理弹窗
 const grant_key = ref('diet'); // 当前操作的授权项
+const acct_dlg_on = ref(false); // 账号与安全弹窗
 
 // 当前授权项的文案配置（随弹窗目标切换）
 const grant_cfg = computed(() => GRANT_CFG[grant_key.value] || {});
@@ -273,13 +279,12 @@ function open_terms() {
 }
 
 /**
- * 我是档口：入驻流程说明
+ * 账号与安全：跳转到「我的」并自动打开对应弹窗（修改密码 / 福大认证 / 统一身份口令）
+ * @param {string} kind - pwd | fzu | fzu-pwd
  */
-function vendor_intro() {
-    ElMessageBox.alert(
-        '档主可提交营业执照与档口信息申请入驻，审核通过后获得档口管理后台，用于发布档口动态、维护菜品与回复点评。',
-        '档口入驻流程', { confirmButtonText: '我知道了' }
-    ).catch(() => {});
+function go_account(kind) {
+    acct_dlg_on.value = false;
+    router.push({ path: '/me', query: { dialog: kind } });
 }
 
 /**
@@ -328,6 +333,14 @@ function do_logout() {
 }
 .row .rn { font-size: 12.5px; font-weight: 600; flex: 1; }
 .row .arr { color: #D8CBB0; font-size: 13px; }
+
+/* 账号与安全弹窗操作行 */
+.acct-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 2px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.acct-row + .acct-row { border-top: 1px solid var(--line); }
+.acct-row .arr { color: #D8CBB0; font-size: 13px; }
 
 /* 授权状态签 */
 .grant-tag {

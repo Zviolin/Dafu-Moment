@@ -2,7 +2,9 @@
     <div class="review-card card">
         <div class="head">
             <user-avatar
-                :anon="review.isAnonymous" :user="{ id: review.userId, nickname: review.nickname }" :size="36"
+                :anon="review.isAnonymous"
+                :user="{ id: review.userId, nickname: review.nickname, avatar: review.avatar, avatar_object_key: review.avatar_object_key }"
+                :size="36"
                 :class="{ 'avatar-link': can_visit_author }" @click="go_author"
             />
             <div class="who">
@@ -29,7 +31,7 @@
 
         <!-- 实拍图 -->
         <div v-if="review.images.length" class="imgs">
-            <img v-for="k in review.images" :key="k" :src="`/img/${k}`" loading="lazy" alt="" />
+            <img v-for="k in review.images" :key="k" :src="`/img/${k}`" loading="lazy" decoding="async" alt="" />
         </div>
 
         <!-- 标签 -->

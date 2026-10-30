@@ -39,14 +39,25 @@
             <div class="cnt score-num">{{ form.content.length }} / 500</div>
         </div>
 
-        <!-- 话题 chips（可多选） -->
+        <!-- 话题 chips（可多选 + 支持手动自定义） -->
         <div class="sec-row">
-            <div class="row-title">添加话题</div>
+            <div class="row-title">添加话题 <span class="hint">最多 8 个，可自定义</span></div>
             <div class="chip-row">
                 <span
                     v-for="t in TOPICS" :key="t" class="chip topic-chip" :class="{ on: form.topics.includes(t) }"
                     @click="toggle_topic(t)"
                 >{{ t }}</span>
+                <span
+                    v-for="t in custom_topics" :key="t" class="chip topic-chip custom" :class="{ on: form.topics.includes(t) }"
+                    @click="toggle_topic(t)"
+                >{{ t }}</span>
+            </div>
+            <div class="topic-add">
+                <input
+                    v-model="topic_input" class="topic-input" type="text" maxlength="14"
+                    placeholder="自定义话题，如「宿舍夜宵」" @keyup.enter="add_topic"
+                />
+                <button class="topic-add-btn" type="button" @click="add_topic">添加</button>
             </div>
         </div>
 
@@ -100,15 +111,15 @@
 /**
  * 发动态（/post-publish）：对齐 P10a 原型
  * - 正文 textarea（500 字计数）、图片九宫格上传（api_upload.image，失败本地预览占位）
+ * - 话题：6 个预设 + 手动自定义（去重、最多 8 个，后端再次规范化）
  * - 关联点位/菜品：api_content.search_all 搜索多选，展示为可删 chips
  * - 可见范围（公开/仅关注）；存草稿（localStorage）+ 恢复提示
- * - 发布成功 → /circle
- * TODO: 待后端动态（帖子）接口，当前发布为页内 mock
+ * - 发布成功 → /circle（真实写入 post 表）
  */
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { api_content, api_upload } from '../api';
+import { api_content, api_upload, api_post } from '../api';
 import { compress_image } from '../utils/compress';
 
 const router = useRouter();
@@ -122,6 +133,10 @@ const VISIBILITY = [
 ];
 
 const DRAFT_KEY = 'fk_post_draft';
+/** 话题数量上限（与后端 normalize_topics 保持一致） */
+const TOPICS_MAX = 8;
+/** 话题名（去掉 # 后）最大字数 */
+const TOPIC_NAME_MAX = 12;
 
 const form = reactive({
     content: '',
@@ -132,6 +147,10 @@ const form = reactive({
 const previews = ref([]); // [{key, url, local}] key 为 objectKey，local 表示本地占位
 const publishing = ref(false);
 const draft_tip = ref(false);
+
+// 自定义话题输入框 + 已自定义话题（不在预设列表里的）
+const topic_input = ref('');
+const custom_topics = computed(() => form.topics.filter((t) => !TOPICS.includes(t)));
 
 const keyword = ref('');
 const search_open = ref(false);
@@ -190,6 +209,31 @@ function toggle_topic(t) {
     const i = form.topics.indexOf(t);
     if (i >= 0) form.topics.splice(i, 1);
     else form.topics.push(t);
+}
+
+/**
+ * 手动添加自定义话题：统一 #xxx# 形态、去重、上限 8 个
+ */
+function add_topic() {
+    // 去掉用户输入的首尾空白与 # / ＃，限制话题名 12 字
+    const name = String(topic_input.value || '').replace(/[#＃]/g, '').trim().slice(0, TOPIC_NAME_MAX);
+    if (!name) {
+        ElMessage.warning('请输入话题名');
+        return;
+    }
+    const tag = `#${name}#`;
+    if (form.topics.includes(tag)) {
+        ElMessage.info('这个话题已经添加了');
+        topic_input.value = '';
+        return;
+    }
+    if (form.topics.length >= TOPICS_MAX) {
+        ElMessage.warning(`最多添加 ${TOPICS_MAX} 个话题`);
+        return;
+    }
+    form.topics.push(tag);
+    topic_input.value = '';
+    ElMessage.success(`已添加话题「${tag}」`);
 }
 
 /**
@@ -288,18 +332,27 @@ function discard_draft() {
 }
 
 /**
- * 发布：校验正文 → 清草稿 → 回点评圈（帖子接口就绪后接入真实提交）
- * TODO: 待后端动态（帖子）接口
+ * 发布：真实写入 post 表（分享任务据此计数）
+ * 仅提交上传成功的 objectKey；上传失败的本地占位图不写库
  */
 async function do_publish() {
-    if (!form.content.trim() && previews.value.length === 0) {
-        ElMessage.warning('写点什么或传张图再发布吧');
+    const images = previews.value.filter((p) => p.key && !p.local).map((p) => p.key);
+    if (!form.content.trim() && images.length === 0) {
+        ElMessage.warning('写点什么或成功上传一张图再发布吧');
+        return;
+    }
+    if (!form.content.trim() && previews.value.length && !images.length) {
+        ElMessage.warning('图片上传未成功，请重试或只发文字');
         return;
     }
     publishing.value = true;
     try {
-        // 模拟提交：帖子接口就绪后替换为真实 create 调用
-        await new Promise((r) => setTimeout(r, 400));
+        await api_post.create({
+            content: form.content.trim(),
+            images,
+            topics: form.topics.slice(0, TOPICS_MAX),
+            links: form.links,
+        });
         localStorage.removeItem(DRAFT_KEY);
         ElMessage.success('发布成功，已进入点评圈');
         router.push('/circle');
@@ -416,6 +469,23 @@ onBeforeUnmount(() => {
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .topic-chip { cursor: pointer; padding: 5px 11px; font-size: 10.5px; transition: background .12s ease, color .12s ease; }
 .topic-chip.on { background: var(--ink); color: #FFFDF5; }
+/* 自定义话题：虚线描边区分预设 */
+.topic-chip.custom { border-style: dashed; }
+/* 自定义话题输入行 */
+.topic-add { display: flex; gap: 8px; margin-top: 10px; }
+.topic-input {
+    flex: 1; min-width: 0; height: 34px;
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    background: var(--paper); padding: 0 12px;
+    font-size: 12px; color: var(--ink); outline: none; font-family: inherit;
+}
+.topic-input::placeholder { color: var(--ink-2); }
+.topic-input:focus { border-color: var(--brand); }
+.topic-add-btn {
+    flex: none; padding: 0 16px; height: 34px;
+    border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--brand); color: #FFFDF5; font-size: 12px; font-weight: 700; cursor: pointer;
+}
 
 /* 关联搜索 */
 .link-box { position: relative; }

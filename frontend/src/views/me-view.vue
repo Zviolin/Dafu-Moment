@@ -1,13 +1,19 @@
 <template>
     <div class="page-wrap">
-        <!-- 顶部账号区（C16：删除左上角返回键，位置留空不补） -->
+        <!-- 顶部账号区（C16：删除左上角返回键，位置留空不补；头像与导航栏共用 UserAvatar，随资料编辑实时同步） -->
         <div class="me-head">
-            <img class="avatar-fix head-av" src="/assets/avatar-user.png" alt="头像" />
+            <user-avatar class="head-av" :user="auth.user" :size="44" />
             <b class="nick">{{ nick_text }}</b>
             <!-- 校内已认证签（C17 头像防压扁由 avatar-fix 保证） -->
             <span v-if="auth.user?.fzu_verified" class="vbadge" :title="`学号 ${auth.user?.fzu_uid || ''}`">校内已认证</span>
             <el-tag v-if="auth.user?.role === 1" size="small">管理员</el-tag>
             <button class="edit-btn" @click="open_profile">编辑资料</button>
+        </div>
+
+        <!-- 初始口令提示条（r80）：仍用统一初始口令时置顶提醒尽快改密 -->
+        <div v-if="auth.user?.fzu_must_change_password" class="pwd-tip fade-up">
+            <span class="pt-txt">当前仍在使用统一初始口令，为保障账号安全请尽快修改「统一身份口令」。</span>
+            <button class="pt-btn" @click="open_fzu_pwd">立即修改</button>
         </div>
 
         <!-- 社交入口（关注 / 粉丝）：后端暂无关注关系数据，仅保留跳转入口，不展示数字 -->
@@ -52,10 +58,11 @@
                     <span class="row-name">{{ r.label }}</span>
                     <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7" /></svg>
                 </router-link>
-                <!-- 弹窗动作行（修改密码 / 福大认证）：结构与跳转行一致 -->
-                <a v-else class="row" @click="r.action === 'pwd' ? open_pwd() : open_fzu()">
+                <!-- 弹窗动作行（修改密码 / 福大认证 / 统一身份口令）：结构与跳转行一致 -->
+                <a v-else class="row" @click="on_action(r)">
                     <span class="rico">
                         <svg v-if="r.icon === 'lock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>
+                        <svg v-else-if="r.icon === 'key'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="14.5" r="3.5" /><path d="M10 12l8-8M15.5 6.5l3 3M13 9l2.5 2.5" /></svg>
                         <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="6" /><path d="M9.7 10l1.7 1.7 3-3.2M9.2 15.2L8.2 21l3.8-2 3.8 2-1-5.8" /></svg>
                     </span>
                     <span class="row-name">{{ r.label }}</span>
@@ -138,6 +145,33 @@
                 <el-button type="danger" :loading="fzu_saving" @click="do_fzu_unbind">解绑认证</el-button>
             </template>
         </el-dialog>
+
+        <!-- 统一身份口令（r80）：当前口令 + 新口令 + 确认新口令（双重输入，两次新口令必须一致） -->
+        <el-dialog v-model="fpwd_open" title="修改统一身份口令" width="420px">
+            <div class="fpwd-hint">
+                <template v-if="auth.user?.fzu_must_change_password">
+                    首次登录使用的是统一初始口令，请在此设置只属于自己的口令。
+                </template>
+                <template v-else>
+                    修改后学号登录（统一身份认证）需使用新口令，本地账号密码不受影响。
+                </template>
+            </div>
+            <el-form ref="fpwd_ref" :model="fpwd_form" :rules="fpwd_rules" label-width="92px" @submit.prevent="save_fzu_pwd">
+                <el-form-item label="当前口令" prop="oldPassword">
+                    <el-input v-model="fpwd_form.oldPassword" type="password" show-password placeholder="当前统一身份口令" />
+                </el-form-item>
+                <el-form-item label="新口令" prop="newPassword">
+                    <el-input v-model="fpwd_form.newPassword" type="password" show-password placeholder="至少 6 位，建议字母 + 数字" />
+                </el-form-item>
+                <el-form-item label="确认新口令" prop="confirmPassword">
+                    <el-input v-model="fpwd_form.confirmPassword" type="password" show-password placeholder="再输一遍新口令" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="fpwd_open = false">取消</el-button>
+                <el-button type="primary" :loading="fpwd_saving" @click="save_fzu_pwd">确认修改</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -151,8 +185,8 @@
  * - C21 三功能入口纵向：图标 30px 在上、文字在下
  * - 我的点评/收藏清单已拆分至 my-reviews-view / collection-view 独立页
  */
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import UserAvatar from '../components/user-avatar.vue';
 import CoverUploader from '../components/cover-uploader.vue';
@@ -160,6 +194,7 @@ import { api_auth } from '../api';
 import { useAuthStore } from '../stores/auth';
 import { pwd_strength, PWD_STRENGTH_TEXT } from '../utils/format';
 
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
@@ -195,6 +230,8 @@ const MENU_ROWS = [
     { key: 'wheel', label: '美食转盘', icon: 'pie', to: '/ai/wheel' },
     { key: 'pwd', label: '修改密码', icon: 'lock', action: 'pwd' },
     { key: 'fzu', label: '福大认证', icon: 'badge', action: 'fzu' },
+    // 统一身份口令（r80）：学号登录用的 SSO 口令，与本地账号密码相互独立
+    { key: 'fzu_pwd', label: '统一身份口令', icon: 'key', action: 'fzu_pwd' },
     { key: 'settings', label: '设置与隐私', icon: 'sliders', to: '/settings' },
 ];
 
@@ -289,6 +326,43 @@ function open_pwd() {
 }
 
 /**
+ * 响应 ?dialog=pwd|fzu|fzu-pwd：从设置页「账号与安全」跳转后自动打开对应弹窗
+ */
+function open_by_query() {
+    const d = route.query.dialog;
+    if (d === 'pwd') open_pwd();
+    else if (d === 'fzu') open_fzu();
+    else if (d === 'fzu-pwd') open_fzu_pwd();
+}
+
+/**
+ * 弹窗动作分发：修改密码 / 福大认证 / 统一身份口令
+ * @param {Object} r - 菜单行配置（含 action 字段）
+ */
+function on_action(r) {
+    if (r.action === 'pwd') return open_pwd();
+    if (r.action === 'fzu') return open_fzu();
+    if (r.action === 'fzu_pwd') return open_fzu_pwd();
+}
+
+/**
+ * 挂载：拉一次 /auth/me 刷新认证态（初始口令标记 fzu_must_change_password 只在此接口下发）
+ */
+async function refresh_me() {
+    if (!auth.token) return;
+    try {
+        const u = await api_auth.me();
+        auth.apply_user(u);
+    } catch { /* 静默降级：不影响页面其他内容 */ }
+}
+
+onMounted(() => {
+    refresh_me();
+    open_by_query();
+});
+watch(() => route.query.dialog, open_by_query);
+
+/**
  * 保存新密码（后端验旧密码；成功后保持当前登录态）
  */
 async function save_password() {
@@ -352,6 +426,65 @@ async function do_fzu_unbind() {
         fzu_saving.value = false;
     }
 }
+
+/* ================= 统一身份口令（r80） ================= */
+const fpwd_open = ref(false);
+const fpwd_ref = ref(null);
+const fpwd_saving = ref(false);
+const fpwd_form = ref({ oldPassword: '', newPassword: '', confirmPassword: '' });
+const fpwd_rules = {
+    oldPassword: [{ required: true, message: '请输入当前统一身份口令', trigger: 'blur' }],
+    newPassword: [
+        { required: true, message: '请设置新口令', trigger: 'blur' },
+        { min: 6, message: '新口令至少 6 位', trigger: 'blur' },
+        {
+            validator: (_r, v, cb) => (v && v === fpwd_form.value.oldPassword ? cb(new Error('新口令不能与当前口令相同')) : cb()),
+            trigger: 'blur',
+        },
+    ],
+    confirmPassword: [
+        { required: true, message: '请再次输入新口令', trigger: 'blur' },
+        {
+            validator: (_r, v, cb) => (v === fpwd_form.value.newPassword ? cb() : cb(new Error('两次输入的新口令不一致'))),
+            trigger: 'blur',
+        },
+    ],
+};
+
+/**
+ * 打开「统一身份口令」弹窗：未绑定统一身份认证的账号先提示去绑定
+ * （口令随学号托管在 fzu_account，没有学号就没有可改的对象）
+ */
+function open_fzu_pwd() {
+    if (!auth.user?.fzu_verified) {
+        ElMessage.warning('请先完成福大统一身份认证绑定，再修改统一身份口令');
+        return;
+    }
+    fpwd_form.value = { oldPassword: '', newPassword: '', confirmPassword: '' };
+    fpwd_open.value = true;
+}
+
+/**
+ * 保存统一身份口令：三重输入（当前 + 新 + 确认），后端二次校验并清除初始口令标记
+ */
+async function save_fzu_pwd() {
+    const valid = await fpwd_ref.value.validate().catch(() => false);
+    if (!valid) return;
+    fpwd_saving.value = true;
+    try {
+        const d = await api_auth.fzu_update_password({
+            oldPassword: fpwd_form.value.oldPassword,
+            newPassword: fpwd_form.value.newPassword,
+            confirmPassword: fpwd_form.value.confirmPassword,
+        });
+        // 口令已改：本地标记同步清除，顶部初始口令提示条随之消失
+        auth.apply_user({ fzu_must_change_password: !!d.must_change });
+        ElMessage.success('统一身份口令已更新，下次学号登录请使用新口令');
+        fpwd_open.value = false;
+    } catch { /* 拦截器已提示（当前口令错误 / 两次不一致等） */ } finally {
+        fpwd_saving.value = false;
+    }
+}
 </script>
 
 <style scoped>
@@ -388,6 +521,45 @@ async function do_fzu_unbind() {
     transition: background .12s ease, color .12s ease;
 }
 .edit-btn:hover { background: var(--brand-light); color: var(--brand-dark); }
+
+/* ===== 初始口令提示条（r80）：淡纸底 + 虚线描边，与全站提示语言一致 ===== */
+.pwd-tip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 9px 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    background: var(--page);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+}
+.pt-txt { flex: 1; }
+.pt-btn {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--brand-dark);
+    background: var(--brand-light);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
+    cursor: pointer;
+}
+.pt-btn:hover { color: var(--paper); background: var(--brand); }
+/* 统一身份口令弹窗说明条 */
+.fpwd-hint {
+    margin-bottom: 14px;
+    padding: 9px 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    background: var(--page);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+}
 
 /* ===== 社交入口（C18 去胶囊、去数字：纯文字留白分隔） ===== */
 .statrow {
@@ -482,19 +654,38 @@ async function do_fzu_unbind() {
 .fzu-rows i { font-style: normal; color: var(--ink-2); width: 60px; flex-shrink: 0; }
 .fzu-rows b { font-weight: 700; }
 
-/* ===== 桌面适配（≥769）：头卡横向舒展 + 统计/宫格/列表放大 ===== */
+/* ===== 桌面适配（≥769）：头卡横向舒展 + 统计/宫格/列表放大 =====
+   视觉对齐：关注/粉丝行、三功能宫格、列表入口组共用同一套 3 列栅格
+   （repeat(3, 1fr) + gap 20px），三行左边缘逐列对齐、内容按列中心对齐 */
 @media (min-width: 769px) {
     /* 头卡保持现状（横向布局天然适配宽屏），仅加大顶部呼吸感 */
     .me-head { padding: 16px 0 0; }
-    /* 功能入口（fnrow 横向三项）桌面拉开间距、加大点击区，不改列结构 */
-    .fnrow { gap: 18px; margin-top: 20px; }
+    /* 社交入口：改用与下方一致的 3 列栅格，「关注」对齐「收藏」列、「粉丝」对齐「足迹」列 */
+    .statrow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px 20px;
+        justify-content: stretch;
+        justify-items: center;
+        padding: 20px 0 0;
+    }
+    /* 功能入口（fnrow 横向三项）桌面改同款栅格，列宽与列表入口组逐列对齐 */
+    .fnrow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px 20px;
+        margin-top: 22px;
+    }
     .fn-item { padding: 18px 0; font-size: 12px; }
-    /* 列表行入口组：桌面由纵向列表改 3 列网格；行间 hr 分隔线分列后失去意义，隐藏改用网格留白 */
-    .rowlist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 20px; padding: 12px 14px; }
+    /* 列表行入口组：桌面由纵向列表改 3 列网格；行间 hr 分隔线分列后失去意义，隐藏改用网格留白。
+       横向内边距下移到行内，使三行（关注/粉丝、功能宫格、列表入口）列边界完全一致 */
+    .rowlist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 20px; padding: 12px 0; margin-top: 22px; }
     .rowlist .list-hairline { display: none; }
     /* 网格内每行加淡金悬浮反馈，强化可点区 */
-    .row { border-radius: var(--radius-sm); padding: 12px 8px; transition: background .12s ease; }
+    .row { border-radius: var(--radius-sm); padding: 12px 14px; transition: background .12s ease; }
     .row:hover { background: #FBF3DC; }
+    /* 底部签名与列表卡拉开呼吸感 */
+    .foot-hint { margin-top: 26px; }
 }
 
 /* ===== 桌面适配（≥1200）：超宽档进一步舒展 ===== */

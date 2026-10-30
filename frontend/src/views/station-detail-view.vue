@@ -132,7 +132,11 @@
         </div>
         <div v-for="r in reviews" :key="r.id" class="revcard card fade-up">
             <div class="rev-head">
-                <img class="avatar-fix rev-av" src="/assets/avatar-user.png" alt="" />
+                <user-avatar
+                    :anon="r.isAnonymous"
+                    :user="{ id: r.userId, nickname: r.nickname, avatar: r.avatar, avatar_object_key: r.avatar_object_key }"
+                    :size="34" class="rev-av"
+                />
                 <div class="rev-who">
                     <div class="rev-name">
                         <b>{{ r.nickname }}</b>
@@ -178,6 +182,7 @@ import { ElMessage } from 'element-plus';
 import { api_content, api_review, api_favorite } from '../api';
 import { useAuthStore } from '../stores/auth';
 import { time_ago, fmt_score, cover_url } from '../utils/format';
+import UserAvatar from '../components/user-avatar.vue';
 
 const route = useRoute();
 const router = useRouter();

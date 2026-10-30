@@ -48,8 +48,11 @@
         <!-- 智能推荐对话区（入口卡锚点落点；操作入口收敛进对话卡会话头） -->
         <div id="ai-chat" class="sec"><b>智能推荐</b></div>
 
-        <!-- 降级提示（AC24：AI 接口不可用或后端标记降级时展示） -->
-        <div v-if="degraded" class="degrade-tip">AI 暂不可用，已为你切换为热门推荐</div>
+        <!-- 降级提示（AC24：AI 接口不可用或后端标记降级时展示；r89 追加具体原因，便于用户自查配置） -->
+        <div v-if="degraded" class="degrade-tip">
+            AI 暂不可用，已为你切换为热门推荐
+            <span v-if="degraded_reason" class="degrade-why">{{ degraded_reason }}</span>
+        </div>
 
         <!-- 快捷提问 chips（点击即发送；原型 P16 顺序：问候 → 快捷词 → 对话） -->
         <div v-if="auth.is_login" class="quick">
@@ -158,6 +161,10 @@
                             <div v-for="m in models" :key="m.id" class="mp-item" :class="{ sel: m.isSelected }" :title="m.modelId" @click="!m.isSelected && use_model(m)">
                                 <b class="mp-name">{{ m.displayName || m.modelId }}</b>
                                 <span v-if="m.isSelected" class="mp-using">使用中</span>
+                                <!-- 测试连通性（r89）：不发消息，只验一次真实请求；点后行内反馈 -->
+                                <span class="mp-test" :class="{ busy: testing_id === m.id }" title="测试这个模型能否正常调用" @click.stop="test_saved(m)">
+                                    {{ testing_id === m.id ? '测试中' : '测试' }}
+                                </span>
                                 <el-icon class="mp-del" title="删除" @click.stop="remove_model(m)"><Delete /></el-icon>
                             </div>
                         </div>
@@ -182,6 +189,16 @@
             </div>
             <div class="cfg-tip">
                 平台模型由官方提供，点「使用」直接生效；自配模型选供应商自动带出接口地址，密钥加密存储，福宝只依据平台真实数据作答。
+            </div>
+
+            <!-- 连通性测试结果（列表态，r89）：成功给延迟，失败给原因与排查建议（不落库、不计费） -->
+            <div v-if="test_result && !mode" class="test-box" :class="test_result.ok ? 'ok' : 'bad'">
+                <b class="tb-title">{{ test_result.ok ? '连接成功' : '连接失败' }}</b>
+                <span v-if="test_result.ok" class="tb-main">{{ test_result.model }} · 延迟 {{ test_result.latencyMs }}ms</span>
+                <template v-else>
+                    <span class="tb-main">{{ test_result.hint }}</span>
+                    <span v-if="test_result.error" class="tb-err">{{ test_result.error }}</span>
+                </template>
             </div>
 
             <!-- 平台托管模型：官方配置免密钥，点「使用」即切换 -->
@@ -215,6 +232,10 @@
                     </div>
                     <span v-if="m.isSelected" class="mi-using">使用中</span>
                     <span v-else class="mi-use" @click="use_model(m)">使用</span>
+                    <!-- 连通性测试（r89）：直接测已保存配置，密钥不必重填 -->
+                    <span class="mi-test" :class="{ busy: testing_id === m.id }" @click="test_saved(m)">
+                        {{ testing_id === m.id ? '测试中' : '测试' }}
+                    </span>
                     <el-icon class="mi-op" title="编辑" @click="start_edit(m)"><EditPen /></el-icon>
                     <el-icon class="mi-op danger" title="删除" @click="remove_model(m)"><Delete /></el-icon>
                 </div>
@@ -255,7 +276,21 @@
                                 :placeholder="mode === 'edit' && edit_mask ? `已保存：${edit_mask}（输入新值覆盖，留空保留）` : 'sk-...'"
                             />
                         </el-form-item>
+                        <!-- 保存前先验一次：用表单当前值真实请求（不落库；编辑态留空密钥自动复用已保存密文） -->
+                        <el-form-item label="连通测试">
+                            <el-button size="small" :loading="testing_form" @click="test_form">测试连接</el-button>
+                            <span class="form-test-tip">发一次真实请求确认可用，不保存配置</span>
+                        </el-form-item>
                     </el-form>
+                    <!-- 表单内测试结果（r89）：紧跟操作位置，避免结果出现在列表顶部需回滚查看 -->
+                    <div v-if="test_result && mode" class="test-box form" :class="test_result.ok ? 'ok' : 'bad'">
+                        <b class="tb-title">{{ test_result.ok ? '连接成功' : '连接失败' }}</b>
+                        <span v-if="test_result.ok" class="tb-main">{{ test_result.model }} · 延迟 {{ test_result.latencyMs }}ms</span>
+                        <template v-else>
+                            <span class="tb-main">{{ test_result.hint }}</span>
+                            <span v-if="test_result.error" class="tb-err">{{ test_result.error }}</span>
+                        </template>
+                    </div>
                     <div v-if="cur_provider && (cur_provider.consoleUrl || cur_provider.modelDocUrl)" class="doc-links">
                         <span class="doc-label">官方文档：</span>
                         <a v-if="cur_provider.consoleUrl" :href="cur_provider.consoleUrl" target="_blank" rel="noopener" class="doc-link">接口控制台</a>
@@ -267,7 +302,7 @@
 
             <template #footer>
                 <div class="cfg-ops">
-                    <el-button v-if="mode" size="small" @click="mode = null">取消</el-button>
+                    <el-button v-if="mode" size="small" @click="cancel_form">取消</el-button>
                     <el-button v-if="mode === 'add' || mode === 'edit'" type="primary" size="small" :loading="ai_saving" @click="save_model">
                         {{ mode === 'edit' ? '保存修改' : '添加模型' }}
                     </el-button>
@@ -321,6 +356,8 @@ const messages = ref([]);
 const draft = ref('');
 const sending = ref(false);
 const degraded = ref(false);
+/** 降级原因（r89：后端回传的中文排障提示，展示在降级提示条内） */
+const degraded_reason = ref('');
 const ask_input = ref(null);
 let msg_seq = 0;
 
@@ -341,6 +378,10 @@ const cfg_open = ref(false);
 /** 输入条模型快切面板可见性（展开时 @show 重拉列表保新鲜） */
 const picker_open = ref(false);
 const ai_saving = ref(false);
+/** 连通性测试（r89）：testing_id = 正在测的已保存模型 id；testing_form = 表单测试中；test_result = 最近一次结果 */
+const testing_id = ref(0);
+const testing_form = ref(false);
+const test_result = ref(null);
 /** 已添加模型列表（含 isSelected 标记）与表单态：null 列表态 / 'pick' 选供应商 / 'add' / 'edit' */
 const models = ref([]);
 /** 平台托管模型（后台配置官方提供，免密钥直接选用；selected=使用中标记） */
@@ -409,6 +450,7 @@ async function use_platform(p) {
  */
 function start_form(p) {
     mode.value = 'add';
+    test_result.value = null;
     form.value = {
         id: null, provider: p.providerKey, protocol: p.protocol,
         baseUrl: p.baseUrl || '', modelId: '', displayName: '', apiKey: '',
@@ -422,6 +464,7 @@ function start_form(p) {
  */
 function start_edit(m) {
     mode.value = 'edit';
+    test_result.value = null;
     form.value = {
         id: m.id, provider: m.provider, protocol: m.protocol,
         baseUrl: m.baseUrl, modelId: m.modelId, displayName: m.displayName, apiKey: '',
@@ -442,13 +485,104 @@ async function save_model() {
         };
         // 仅输入了新密钥才携带 apiKey 字段
         if (form.value.apiKey) payload.apiKey = form.value.apiKey.trim();
-        if (mode.value === 'edit') await api_ai.update_model(form.value.id, payload);
-        else await api_ai.add_model(payload);
-        ElMessage.success(mode.value === 'edit' ? '模型配置已保存' : '模型已添加');
+        const editing = mode.value === 'edit';
+        const res = editing
+            ? await api_ai.update_model(form.value.id, payload)
+            : await api_ai.add_model(payload);
+        if (editing) ElMessage.success('模型配置已保存');
+        // r89：首个配置后端会自动置为使用中，其余配置需手动点「使用」，提示口径区分开
+        else ElMessage.success(res && res.isSelected ? '模型已添加，并自动切换为使用中' : '模型已添加，点「使用」后生效');
         mode.value = null;
+        test_result.value = null;
         await load_models();
     } catch { /* 拦截器已提示 */ } finally {
         ai_saving.value = false;
+    }
+}
+
+/**
+ * 取消添加/编辑：回到列表态并清掉上一次测试结果
+ */
+function cancel_form() {
+    mode.value = null;
+    test_result.value = null;
+}
+
+/**
+ * 组装「测试连接」结果（成功给延迟，失败给中文原因 + 原始错误片段）
+ * @param {{ok:boolean, latencyMs?:number, model?:string, hint?:string, error?:string}} r - 后端返回
+ * @returns {Object} 视图用结果对象
+ */
+function shape_test_result(r) {
+    return {
+        ok: !!r.ok,
+        latencyMs: r.latencyMs || 0,
+        model: r.model || '',
+        hint: r.hint || '',
+        error: r.error || '',
+    };
+}
+
+/**
+ * 测试已保存的模型配置（复用服务端密文，无需重填密钥）
+ * @param {{id:number, displayName:string, modelId:string}} m
+ */
+async function test_saved(m) {
+    if (testing_id.value) return;
+    testing_id.value = m.id;
+    try {
+        const r = await api_ai.test_model({ id: m.id });
+        test_result.value = shape_test_result(r || { ok: false, hint: '未收到测试结果' });
+        if (test_result.value.ok) {
+            ElMessage.success(`「${m.displayName || m.modelId}」连接成功（${test_result.value.latencyMs}ms）`);
+        } else {
+            ElMessage.warning(test_result.value.hint || '连接失败，请检查配置');
+        }
+    } catch (e) {
+        // 参数校验失败等业务错误：拦截器已提示，这里同步写进结果块便于对照
+        test_result.value = {
+            ok: false, latencyMs: 0, model: m.modelId, error: '',
+            hint: (e && (e.msg || e.response?.data?.msg || e.message)) || '测试请求未完成，请稍后重试',
+        };
+    } finally {
+        testing_id.value = 0;
+    }
+}
+
+/**
+ * 测试当前表单（不保存）：编辑态密钥留空时后端自动复用已保存密文
+ */
+async function test_form() {
+    if (testing_form.value) return;
+    const f = form.value;
+    const editing = mode.value === 'edit' && !!f.id;
+    if (!f.apiKey && !editing) {
+        test_result.value = { ok: false, latencyMs: 0, model: '', error: '', hint: '请先填写 API Key 再测试' };
+        ElMessage.warning('请先填写 API Key 再测试');
+        return;
+    }
+    const payload = {
+        provider: f.provider, protocol: f.protocol,
+        baseUrl: (f.baseUrl || '').trim(), modelId: (f.modelId || '').trim(),
+    };
+    if (editing) payload.id = f.id;
+    if (f.apiKey) payload.apiKey = f.apiKey.trim();
+    testing_form.value = true;
+    try {
+        const r = await api_ai.test_model(payload);
+        test_result.value = shape_test_result(r || { ok: false, hint: '未收到测试结果' });
+        if (test_result.value.ok) {
+            ElMessage.success(`连接成功（${test_result.value.latencyMs}ms），可以保存启用`);
+        } else {
+            ElMessage.warning(test_result.value.hint || '连接失败，请检查配置');
+        }
+    } catch (e) {
+        test_result.value = {
+            ok: false, latencyMs: 0, model: payload.modelId, error: '',
+            hint: (e && (e.msg || e.response?.data?.msg || e.message)) || '测试请求未完成，请稍后重试',
+        };
+    } finally {
+        testing_form.value = false;
     }
 }
 
@@ -487,10 +621,9 @@ async function remove_model(m) {
  */
 async function open_cfg() {
     cfg_open.value = true;
-    try {
-        const [list] = await Promise.all([api_ai.models(), load_providers()]);
-        models.value = (list && list.list) || [];
-    } catch { /* 拦截器已提示 */ }
+    test_result.value = null;
+    // 每次打开重拉「我的模型 + 平台模型」与供应商注册表（后台改动即刻可见）
+    await Promise.all([load_models(), load_providers()]);
     if (!models.value.length && !mode.value) mode.value = 'pick';
 }
 
@@ -676,6 +809,8 @@ async function do_ask() {
     try {
         const data = await api_ai.ask(question);
         degraded.value = !!data.degraded;
+        // r89：把后端的中文降级原因（密钥无效 / 404 / 超时 / 网络不可达）带回提示条
+        degraded_reason.value = (data && data.degradedReason) || '';
         messages.value.push({
             id: ++msg_seq, role: 'ai',
             text: data.answer || '（福宝没答上来，换个问法试试？）',
@@ -684,6 +819,7 @@ async function do_ask() {
     } catch {
         // AI 接口不可用 → 切换为按时段规则化热门推荐，并明确提示已降级
         degraded.value = true;
+        degraded_reason.value = '请求未完成：请检查网络，或到「模型设置」点「测试」确认配置可用';
         const fb = await fallback_reply();
         messages.value.push({ id: ++msg_seq, role: 'ai', text: fb.text, recs: fb.recs });
         ElMessage.warning('AI 暂不可用，已为你切换为热门推荐');
@@ -740,6 +876,7 @@ onActivated(() => {
         messages.value = [];
         msg_seq = 0;
         degraded.value = false;
+        degraded_reason.value = '';
         // 带着已保存位置进入时，先引导再恢复位置（覆盖 boot 的滚底）
         const has_saved = sessionStorage.getItem(AI_SCROLL_KEY) !== null;
         boot_session().then(() => { if (has_saved) restore_scroll(); });
@@ -786,6 +923,8 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
     background: #FBF0D8; border: 1px dashed var(--line); border-radius: var(--radius-sm);
     color: #a06a10; font-size: 12px; padding: 8px 12px; margin-bottom: 10px;
 }
+/* 降级原因（r89）：换行小字，避免与主提示挤在一行 */
+.degrade-why { display: block; margin-top: 2px; font-size: 11px; color: #a06a10; opacity: .85; }
 
 /* ===== 对话流：页面流排布（原型 P16 同款，随页面滚动不做内滚动） ===== */
 /* 区块标题间距微调：入口卡与对话区之间收紧一档，快捷词紧随其后 */
@@ -898,6 +1037,21 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
     background: var(--paper); border: 1px dashed var(--line); border-radius: var(--radius-sm);
     padding: 9px 12px; margin: 10px 0 14px; font-size: 12px; color: var(--ink-2); line-height: 1.7; font-weight: 400;
 }
+/* 连通性测试结果块（r89）：成功淡绿 / 失败淡红，失败附排查建议与原始错误片段 */
+.test-box {
+    display: flex; flex-direction: column; gap: 2px;
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 8px 12px; margin: -4px 0 12px; font-size: 12px; line-height: 1.6; font-weight: 400;
+}
+.test-box.ok { background: #EDF6E9; border-color: #cfe4c4; color: #3d6b32; }
+.test-box.bad { background: #FBEDEB; border-color: #f0d3cd; color: #a63b2d; }
+/* 表单态结果块（r89）：与表单留一点间距 */
+.test-box.form { margin: 8px 0 0; }
+.tb-title { font-size: 12px; font-weight: 700; }
+.tb-main { font-size: 12px; }
+.tb-err { font-size: 11px; opacity: .8; word-break: break-all; }
+/* 表单内测试入口说明（r89） */
+.form-test-tip { margin-left: 8px; font-size: 11px; color: var(--ink-2); font-weight: 400; }
 .cfg-ops { display: flex; justify-content: flex-end; gap: 8px; }
 /* 已添加模型列表：无框行卡 + 使用中琥珀签 */
 .model-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
@@ -925,6 +1079,13 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
     padding: 0 8px; border-radius: 6px; border: 1px dashed var(--line); color: var(--ink-2); background: var(--paper);
 }
 .mi-use:hover { color: var(--brand-dark); border-color: var(--brand); background: #FBF3DC; }
+/* 已保存配置的测试钮（r89）：与「使用」同尺寸的描边小签 */
+.mi-test {
+    flex-shrink: 0; font-size: 11px; font-weight: 600; line-height: 18px; cursor: pointer;
+    padding: 0 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--ink-2); background: var(--page);
+}
+.mi-test:hover { color: var(--brand-dark); border-color: var(--brand); }
+.mi-test.busy { opacity: .6; cursor: progress; }
 .mi-op { flex-shrink: 0; color: var(--ink-2); cursor: pointer; }
 .mi-op:hover { color: var(--brand-dark); }
 .mi-op.danger:hover { color: var(--bad); }
@@ -982,6 +1143,13 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
 .mp-using { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; flex-shrink: 0; background: var(--brand); color: #FFFDF5; }
 .mp-del { color: var(--ink-2); flex-shrink: 0; font-size: 16px; }
 .mp-del:hover { color: var(--bad); }
+/* 快切面板测试钮（r89）：小号描边，避免与「使用中」琥珀签抢视线 */
+.mp-test {
+    flex-shrink: 0; font-size: 11px; font-weight: 600; line-height: 18px; cursor: pointer;
+    padding: 0 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--page); color: var(--ink-2);
+}
+.mp-test:hover { color: var(--brand-dark); border-color: var(--brand); }
+.mp-test.busy { opacity: .6; cursor: progress; }
 .mp-empty { font-size: 12px; color: var(--ink-2); padding: 10px 2px; }
 /* 面板分组小标题（平台模型 / 我的模型） */
 .mp-group { font-size: 11px; font-weight: 700; color: var(--ink-2); margin: 8px 2px 4px; letter-spacing: .5px; }

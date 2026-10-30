@@ -51,12 +51,12 @@
             </div>
             <hr class="hairline" />
             <div class="fgroup">
-                <span class="flabel">饮食目标</span>
+                <span class="flabel">饮食目标 <i class="fnote">可多选</i></span>
                 <div class="chips">
                     <span
                         v-for="g in GOALS" :key="g.key"
-                        class="pchip" :class="{ on: form.goal === g.key }"
-                        @click="form.goal = g.key"
+                        class="pchip" :class="{ on: form.goals.includes(g.key) }"
+                        @click="toggle_goal(g.key)"
                     >{{ g.label }}</span>
                 </div>
             </div>
@@ -85,13 +85,13 @@
                         <b class="mtitle">{{ meal.slot }} · 约 ¥{{ meal.dish.price }}</b>
                         <span class="mstation">{{ meal.dish.station }}</span>
                     </div>
-                    <!-- 菜品行：仅展示（无真实详情 id，不做跳转） -->
-                    <div class="dish-row">
+                    <!-- 菜品行：真实菜品 id，可点击进入详情 -->
+                    <div class="dish-row" @click="go_dish(meal.dish)">
                         <img v-if="meal.dish.img" class="dish-img" :src="meal.dish.img" :alt="meal.dish.name" />
                         <span v-else class="dish-img img-fallback">{{ meal.dish.name[0] }}</span>
                         <div class="dish-main">
                             <b class="dish-name">{{ meal.dish.name }}</b>
-                            <span class="dish-meta">¥{{ meal.dish.price }} · {{ meal.dish.desc }}</span>
+                            <span class="dish-meta">¥{{ meal.dish.price }}{{ meal.dish.estimated ? '（估）' : '' }} · {{ meal.dish.desc }}</span>
                         </div>
                     </div>
                 </div>
@@ -127,6 +127,8 @@
 import { ref, onMounted, h } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { api_content } from '../api';
+import { cover_url } from '../utils/format';
 
 const router = useRouter();
 
@@ -148,7 +150,7 @@ const AVOID_KEY_MAP = {
     不吃香菜: '香菜', 不吃辣: '辣', 不吃内脏: '内脏',
     不吃生冷: '生冷', 不吃花生: '花生', 不吃海鲜: '海鲜',
 };
-// 目标 → 池内标签
+// 目标 → 池内标签（多选目标取并集，用于排序加权）
 const GOAL_TAG_MAP = { light: '清淡', muscle: '高蛋白', save: '省钱', novel: '尝鲜' };
 // 餐次名（早/午/晚 用自绘 SVG 图标，禁汉字图标）
 const SLOTS = [
@@ -157,22 +159,7 @@ const SLOTS = [
     { slot: '晚餐', offset: 2, icon: 'icon-moon' },
 ];
 
-// 菜品池模板（TODO: 待后端接口；avoid_tags 供忌口硬过滤；无真实详情 id 故不提供跳转）
-const DISH_POOL = [
-    { name: '豆浆 + 馒头套餐', price: 6, meal: 'breakfast', tags: ['清淡', '省钱'], avoid_tags: [], img: '/assets/food/tangshui.png', station: '京元食堂', desc: '温热早班档 · 出餐快' },
-    { name: '皮蛋瘦肉粥', price: 7, meal: 'breakfast', tags: ['清淡'], avoid_tags: ['内脏'], img: '/assets/food/tangshui.png', station: '紫荆园食堂', desc: '清晨暖胃 · 好评率 95%' },
-    { name: '茶叶蛋 + 燕麦奶', price: 5, meal: 'breakfast', tags: ['高蛋白', '省钱'], avoid_tags: ['花生'], img: '', station: '京元食堂', desc: '高蛋白轻早餐' },
-    { name: '香锅宽粉', price: 20, meal: 'lunch', tags: ['微辣', '尝鲜'], avoid_tags: ['辣'], img: '/assets/food/kuanfen.png', station: '川味麻辣香锅', desc: '本月校园热榜第 1' },
-    { name: '兰州拉面', price: 13, meal: 'lunch', tags: ['家常', '省钱'], avoid_tags: [], img: '/assets/food/lamian.png', station: '京元食堂', desc: '手工拉面 · 经典款' },
-    { name: '三巷手打面', price: 15, meal: 'lunch', tags: ['家常'], avoid_tags: [], img: '/assets/food/shoudamian.png', station: '学生街', desc: '现做手打 · 口感筋道' },
-    { name: '香辣麻辣香锅', price: 12, meal: 'lunch', tags: ['重辣', '尝鲜'], avoid_tags: ['辣', '花生'], img: '/assets/food/xiangguo.png', station: '紫荆园食堂', desc: '自选配菜 · 重口党最爱' },
-    { name: '鸡胸轻食沙拉', price: 14, meal: 'lunch', tags: ['高蛋白', '清淡'], avoid_tags: ['生冷'], img: '', station: '永嘉天地', desc: '增肌常点 · 免长队' },
-    { name: '杨枝甘露', price: 9, meal: 'dinner', tags: ['甜口', '尝鲜'], avoid_tags: ['生冷'], img: '/assets/food/yangzhi.png', station: '粤式糖水铺', desc: '下午茶人气王' },
-    { name: '双皮奶 + 糖水', price: 8, meal: 'dinner', tags: ['甜口', '省钱'], avoid_tags: ['生冷'], img: '/assets/food/tangshui.png', station: '甜心坊', desc: '夜宵温和款' },
-    { name: '番茄鸡蛋汤面', price: 11, meal: 'dinner', tags: ['家常', '清淡'], avoid_tags: [], img: '', station: '京元食堂', desc: '汤宽料足 · 暖胃' },
-    { name: '轻食鸡肉便当', price: 16, meal: 'dinner', tags: ['清淡', '高蛋白'], avoid_tags: [], img: '', station: '永嘉天地', desc: '荤素配比均衡' },
-];
-
+// 真实菜品池由 /dishes 接口按预算/忌口/目标拉取，不再使用虚构菜品模板
 // 自绘餐次 SVG（24 viewBox / stroke currentColor / 1.7 / round，禁汉字图标）
 const MEAL_ICONS = {
     'icon-sun': () => h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
@@ -187,7 +174,7 @@ const MEAL_ICONS = {
     ]),
 };
 
-const form = ref({ days: 1, budget: 20, avoids: [], goal: 'light' });
+const form = ref({ days: 1, budget: 20, avoids: [], goals: ['light'] });
 const generating = ref(false);
 const failed = ref(false);
 const fail_reason = ref('');
@@ -206,66 +193,141 @@ function toggle_avoid(a) {
 }
 
 /**
- * 按表单条件过滤菜品池：预算 + 忌口硬过滤 + 目标取向
+ * 饮食目标多选（允许全不选 = 不限目标）
+ * @param {string} key
  */
-function pick_pool() {
-    const banned = form.value.avoids.map((a) => AVOID_KEY_MAP[a]).filter(Boolean);
-    const goal_tag = GOAL_TAG_MAP[form.value.goal];
-    return DISH_POOL.filter((d) => d.price <= form.value.budget)
-        .filter((d) => !banned.some((b) => d.avoid_tags.includes(b)))
-        // 尝鲜目标不设标签门槛；其余目标优先匹配标签，无匹配时回退家常款
-        .filter((d) => form.value.goal === 'novel' || d.tags.includes(goal_tag) || d.tags.includes('家常'));
+function toggle_goal(key) {
+    const i = form.value.goals.indexOf(key);
+    if (i >= 0) form.value.goals.splice(i, 1);
+    else form.value.goals.push(key);
+}
+
+/** 忌口文案 → 名称关键词（「不吃苦瓜」→「苦瓜」） */
+function avoid_keywords() {
+    return form.value.avoids
+        .map((a) => String(a).replace(/^不吃/, '').replace(/^少/, '').trim())
+        .filter(Boolean);
 }
 
 /**
- * 生成计划：规则模板输出每日三餐；池不足或模拟失败（12% 概率）时提示降级
+ * 真实菜品行 → 计划卡结构
+ * @param {Object} d
+ * @returns {Object}
  */
-function generate() {
+function normalize_dish(d) {
+    const tags = String(d.taste_tags || '').split(',').filter(Boolean);
+    const name = d.name || '';
+    const is_breakfast = /粥|包|豆浆|油条|饼|馒|蛋|面|粉|饺|馄饨|烧麦|吐司|三明治|奶|咖啡|甜品|糖水/.test(name);
+    return {
+        id: Number(d.id),
+        name,
+        price: Number(d.price) || 0,
+        estimated: Number(d.is_estimated) === 1,
+        img: cover_url(d.cover_object_key),
+        station: d.station_name || d.canteen_name || '',
+        desc: tags.length ? tags.join(' · ') : '真实在架菜品',
+        tags,
+        first_seen_at: d.first_seen_at || '',
+        meal: is_breakfast ? 'breakfast' : 'main',
+    };
+}
+
+/**
+ * 目标排序分：多目标加权，保证「清淡 / 高蛋白 / 省钱 / 尝鲜」都能被兼顾
+ * @param {Object} d
+ * @returns {number}
+ */
+function goal_score(d) {
+    let score = 0;
+    if (form.value.goals.includes('light') && (d.tags.includes('清淡') || /汤|粥|蒸|菜|豆花/.test(d.name))) score += 3;
+    if (form.value.goals.includes('muscle') && /鸡|牛|肉|蛋|鱼|虾|豆/.test(d.name)) score += 3;
+    if (form.value.goals.includes('save')) score += Math.max(0, 3 - d.price / 10);
+    if (form.value.goals.includes('novel') && d.first_seen_at) score += 1;
+    return score;
+}
+
+/**
+ * 从后端拉取真实菜品池（预算 + 忌口 + 目标）
+ * @returns {Promise<Array>}
+ */
+async function fetch_pool() {
+    const sort = form.value.goals.includes('novel') ? 'new'
+        : (form.value.goals.includes('save') ? 'priceAsc' : 'comprehensive');
+    const res = await api_content.dishes({
+        priceMax: form.value.budget,
+        pageSize: 50,
+        sort,
+        businessStatus: 'open',
+    });
+    const rows = Array.isArray(res) ? res : (res.list || []);
+    const keywords = avoid_keywords();
+    const list = rows.map(normalize_dish)
+        .filter((d) => d.name)
+        .filter((d) => !keywords.some((k) => d.name.includes(k) || d.desc.includes(k)))
+        .map((d) => ({ ...d, goal_score: goal_score(d) }));
+    return list.sort((a, b) => b.goal_score - a.goal_score);
+}
+
+/**
+ * 生成计划：真实菜品池 + 每日三餐轮转，不再模拟随机失败
+ */
+async function generate() {
+    if (generating.value) return;
     generating.value = true;
-    // 模拟生成耗时
-    setTimeout(() => {
-        const pool = pick_pool();
-        const by_meal = (meal) => pool.filter((d) => d.meal === meal);
-        // 条件无解 / 模拟服务失败 → 降级提示
-        if (by_meal('breakfast').length === 0 || by_meal('lunch').length === 0 || by_meal('dinner').length === 0) {
-            fail_reason.value = '当前预算与忌口条件下可选菜品不足，试着放宽预算或减少忌口';
+    failed.value = false;
+    plan.value = null;
+    try {
+        const pool = await fetch_pool();
+        const breakfast = pool.filter((d) => d.meal === 'breakfast');
+        const main = pool.filter((d) => d.meal === 'main');
+        if (pool.length < 3 || (breakfast.length === 0 && main.length < 3)) {
+            fail_reason.value = '当前预算与忌口条件下可选的真实菜品不足，试着放宽预算或减少忌口';
             failed.value = true;
-            plan.value = null;
-            generating.value = false;
             ElMessage.error(fail_reason.value);
             return;
         }
-        if (Math.random() < 0.12) {
-            fail_reason.value = '生成服务开小差了，再试一次通常就好了';
-            failed.value = true;
-            plan.value = null;
-            generating.value = false;
-            ElMessage.error(fail_reason.value);
-            return;
-        }
-        // 逐日轮转取菜（不同天错开，避免 3/7 日计划完全重复）
         const days = [];
         let total = 0;
         for (let di = 0; di < form.value.days; di++) {
             let day_sum = 0;
-            const meals = SLOTS.map((s) => {
-                const list = by_meal(s.slot === '早餐' ? 'breakfast' : s.slot === '午餐' ? 'lunch' : 'dinner');
-                const dish = list[(di + s.offset) % list.length];
+            const meals = SLOTS.map((sl, si) => {
+                // 早餐优先早餐类；不足时回退主菜池，避免无解
+                const bf = breakfast.length ? breakfast : main;
+                const list = sl.slot === '早餐' ? bf : main;
+                const dish = list[(di * 2 + si) % list.length];
                 day_sum += dish.price;
-                return { slot: s.slot, icon: MEAL_ICONS[s.icon], dish };
+                return { slot: sl.slot, icon: MEAL_ICONS[sl.icon], dish };
             });
             total += day_sum;
             days.push({
                 title: form.value.days > 1 ? `第 ${di + 1} 天` : '今日计划',
-                tag_line: `${GOALS.find((g) => g.key === form.value.goal).label}目标 · 全天约 ¥${day_sum}`,
+                tag_line: `${goal_labels()} · 全天约 ¥${day_sum.toFixed(0)}`,
                 meals,
             });
         }
-        plan.value = { days, total, avg: Math.round(total / form.value.days) };
-        failed.value = false;
+        plan.value = { days, total: Number(total.toFixed(1)), avg: Math.round(total / form.value.days) };
+        ElMessage.success(`已按真实在架菜品生成 ${form.value.days} 日计划`);
+    } catch (e) {
+        fail_reason.value = e?.message || '计划生成失败，请稍后重试';
+        failed.value = true;
+        ElMessage.error(fail_reason.value);
+    } finally {
         generating.value = false;
-        ElMessage.success(`已生成 ${form.value.days} 日计划`);
-    }, 600);
+    }
+}
+
+/** 目标文案（多选用 + 连接） */
+function goal_labels() {
+    const labels = GOALS.filter((g) => form.value.goals.includes(g.key)).map((g) => g.label);
+    return labels.length ? `${labels.join(' + ')}目标` : '不限目标';
+}
+
+/**
+ * 打开真实菜品详情
+ * @param {Object} dish
+ */
+function go_dish(dish) {
+    if (dish.id) router.push(`/dish/${dish.id}`);
 }
 
 /**
@@ -276,19 +338,28 @@ function go_back() {
 }
 
 onMounted(() => {
-    // 默认读偏好档案的忌口（dafu_diet_profile），档案未设置则给默认忌口示例
+    // 默认读偏好档案（dafu_diet_profile）：忌口 / 严重过敏 / 多选目标 / 预算
     try {
         const profile = JSON.parse(localStorage.getItem('dafu_diet_profile') || 'null');
-        if (profile && Array.isArray(profile.avoids) && profile.avoids.length) {
-            form.value.avoids = [...profile.avoids];
-        }
-        const parts = [];
         if (profile) {
-            if (profile.severe_allergy && profile.severe_allergy.length) parts.push(`严重过敏：${profile.severe_allergy.join('、')}（硬性过滤）`);
-            if (profile.vegetarian) parts.push(profile.vegan_type || '素食');
-            if (profile.budget_max) parts.push(`预算约 ¥${profile.budget_min || 0}~¥${profile.budget_max}`);
+            const avoids = Array.isArray(profile.avoids) ? [...profile.avoids] : [];
+            if (Array.isArray(profile.severe_allergy)) {
+                for (const a of profile.severe_allergy) avoids.push(`不吃${a}`);
+            }
+            form.value.avoids = [...new Set(avoids)];
+            const goals = Array.isArray(profile.goals)
+                ? profile.goals.filter((g) => GOALS.some((x) => x.key === g || x.label === g))
+                : (profile.goal ? [profile.goal] : []);
+            // 档案里可能存的是中文标签，映射成 key
+            form.value.goals = goals.map((g) => (GOALS.some((x) => x.key === g) ? g : (GOALS.find((x) => x.label === g) || {}).key)).filter(Boolean);
+            if (!form.value.goals.length) form.value.goals = ['light'];
+            if (profile.budget_max) form.value.budget = Math.max(10, Number(profile.budget_max) || 20);
+            const parts = [];
+            if (form.value.avoids.length) parts.push(`忌口：${form.value.avoids.join('、')}`);
+            parts.push(goal_labels());
+            if (profile.budget_max) parts.push(`预算约 ¥${profile.budget_min || 0}~¥${profile.budget_max}/餐`);
+            profile_summary.value = parts.join(' · ');
         }
-        profile_summary.value = parts.join(' · ');
     } catch { /* 档案损坏时按默认条件 */ }
 });
 </script>

@@ -93,15 +93,15 @@
  * 候选可自定义：管理弹层内删除 / 从收藏夹添加（菜品/档口/点位），localStorage 持久化；
  * 转完自动平滑滚到结果卡（页面竖直顺序阅读结果）；结果按收藏类型跳对应详情。
  */
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api_favorite } from '../api';
+import { api_favorite, api_content } from '../api';
 
 const router = useRouter();
 
 /* ---------------- 候选数据（默认 8 项 + localStorage 持久化） ---------------- */
 
-// 默认候选：img 为空时结果卡用首字占位；默认项无真实详情 id，故不可跳详情
+// 兜底候选：真实菜品接口不可用时使用；无详情 id，结果跳搜索
 const DEFAULT_ITEMS = [
     { name: '香锅宽粉', img: '/assets/food/kuanfen.png', station: '川味麻辣香锅 · 紫荆园二层12号', rating: 4.9 },
     { name: '兰州拉面', img: '/assets/food/lamian.png', station: '京元食堂 · 一楼', rating: 4.7 },
@@ -133,6 +133,40 @@ const items = ref(load_items());
  */
 function save_items() {
     localStorage.setItem(LS_KEY, JSON.stringify(items.value));
+}
+
+/**
+ * 图片地址归一：对象键走 /img 代理
+ * @param {string|null} key
+ * @returns {string}
+ */
+function img_url(key) {
+    if (!key) return '';
+    const s = String(key);
+    return s.startsWith('/') || s.startsWith('http') ? s : `/img/${s}`;
+}
+
+/**
+ * 首次进入且用户未自定义时，用真实菜品接口填充候选（带 dish id，结果可直达详情）
+ */
+async function load_real_items() {
+    if (localStorage.getItem(LS_KEY)) return; // 用户自定义候选优先，不覆盖
+    try {
+        const res = await api_content.dishes({ pageSize: 12, sort: 'comprehensive', businessStatus: 'open' });
+        const rows = res && Array.isArray(res.list) ? res.list : (Array.isArray(res) ? res : []);
+        const real = rows.map((d) => ({
+            name: d.name,
+            img: img_url(d.cover_object_key),
+            station: d.station_name || d.canteen_name || '',
+            rating: Number(d.rating_avg) > 0 ? Number(d.rating_avg).toFixed(1) : '—',
+            fav_type: 0,
+            fav_id: d.id,
+        }));
+        if (real.length >= 2) {
+            items.value = real.slice(0, 12);
+            save_items();
+        }
+    } catch { /* 接口不可用时保留兜底候选 */ }
 }
 
 /* ---------------- 转盘几何（随候选数量动态变化） ---------------- */
@@ -170,7 +204,11 @@ function spin() {
     spinning.value = true;
     result.value = null;
     const seg = Math.floor(Math.random() * items.value.length);
-    deg.value += 5 * 360 + (360 - seg * SEG.value);
+    // 按当前累计角度求增量，保证最终绝对角度恰好把目标扇区中心停在指针下方
+    // （旧实现直接累加 360 - seg*SEG，多转几次后余数与目标扇区不一致，导致指针与结果卡不符）
+    const cur = ((deg.value % 360) + 360) % 360;
+    const target = ((360 - seg * SEG.value) % 360 + 360) % 360;
+    deg.value += 5 * 360 + ((target - cur + 360) % 360);
     // 与 CSS transition 3s 对齐，停稳后再出结果卡
     setTimeout(() => {
         result.value = items.value[seg];
@@ -180,18 +218,24 @@ function spin() {
 }
 
 /**
- * 结果是否可跳详情（仅从收藏夹添加的候选带真实 fav_type/fav_id；默认候选无真实 id 不可跳）
+ * 结果是否可跳转：真实收藏/菜品走详情，兜底候选走搜索
  */
-const can_go = computed(() => result.value?.fav_type != null && result.value?.fav_id != null);
+const can_go = computed(() => !!result.value);
 
 /**
- * 结果跳转：收藏项按类型跳对应详情（0 菜品 / 1 档口 / 2 点位）；默认候选无真实 id 不跳
+ * 结果跳转：有真实 id 时按类型跳详情（0 菜品 / 1 档口 / 2 点位）；否则按菜名搜索
  */
 function go_result() {
     const r = result.value;
-    if (!r || r.fav_type == null || r.fav_id == null) return;
-    const path = [`/dish/${r.fav_id}`, `/station/${r.fav_id}`, `/canteen/${r.fav_id}`][r.fav_type];
-    if (path) router.push(path);
+    if (!r) return;
+    if (r.fav_type != null && r.fav_id != null) {
+        const path = [`/dish/${r.fav_id}`, `/station/${r.fav_id}`, `/canteen/${r.fav_id}`][r.fav_type];
+        if (path) {
+            router.push(path);
+            return;
+        }
+    }
+    router.push({ path: '/search', query: { kw: r.name } });
 }
 
 /**
@@ -270,6 +314,8 @@ function reset_items() {
     items.value = [...DEFAULT_ITEMS];
     save_items();
 }
+
+onMounted(load_real_items);
 </script>
 
 <style scoped>

@@ -8,15 +8,19 @@
                     <brand-logo :size="30" />
                     <span class="logo-text">大福食刻</span>
                 </router-link>
-                <div class="search-box" @click="go_search">
+                <!-- 发现页（/search）：搜索框不删除、原位保留占位，仅透明且不可点击，
+                     这样铃铛与头像仍在右上角原位，顶栏其余内容完全不变（r90） -->
+                <div class="search-box" :class="{ ghost: !show_header_search }" @click="go_search">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B0A18A" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-                    <span class="search-placeholder">搜食堂、档口、菜品<span class="ph-tip">，如「麻辣香锅」</span></span>
+                    <span class="search-placeholder">搜食堂、档口、菜品<span class="ph-tip">，如「闽菜」</span></span>
                 </div>
                 <nav class="nav-links">
                     <router-link to="/map">导览图</router-link>
                     <router-link to="/rank">口碑榜</router-link>
                     <router-link to="/circle">点评圈</router-link>
                     <router-link to="/ai">AI 助手</router-link>
+                    <!-- 桌面端「我的」入口：与移动端底部 Tab 同目标；未登录由 go_me 引导去登录 -->
+                    <a @click="go_me" class="me-link">我的</a>
                     <a @click="go_publish" class="publish-link">写点评</a>
                 </nav>
                 <div class="user-zone">
@@ -31,7 +35,9 @@
                             </span>
                             <template #dropdown>
                                 <el-dropdown-menu>
+                                    <!-- 「我的档案」= 个人中心 /me；「我的主页」= 本人公开主页 /user/:id（与移动端底部「我的」Tab 同目标） -->
                                     <el-dropdown-item command="me">我的档案</el-dropdown-item>
+                                    <el-dropdown-item command="home">我的主页</el-dropdown-item>
                                     <el-dropdown-item v-if="auth.is_admin" command="admin">管理后台</el-dropdown-item>
                                     <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
@@ -118,6 +124,12 @@ const unread = ref(0);
 /** 管理后台路由：桌面端不套「手机机身」外壳，保持宽幅全屏布局 */
 const is_admin_route = computed(() => route.path.startsWith('/admin'));
 
+/**
+ * 顶栏搜索框是否可见：发现页（/search）页面自带搜索条，
+ * 顶栏搜索框改为透明占位（见 .search-box.ghost），不再重复出现（r90）
+ */
+const show_header_search = computed(() => route.path !== '/search');
+
 
 /**
  * 去搜索页
@@ -172,7 +184,10 @@ async function open_notify() {
  * @param {string} cmd
  */
 function on_user_cmd(cmd) {
+    // 「我的档案」：跳个人中心（/me），与移动端底部「我的」Tab 目标一致
     if (cmd === 'me') router.push('/me');
+    // 「我的主页」：本人公开主页（/user/:id）；无 id 时回落到「我的」
+    else if (cmd === 'home') router.push(auth.user?.id ? `/user/${auth.user.id}` : '/me');
     else if (cmd === 'admin') router.push('/admin');
     else if (cmd === 'logout') {
         auth.logout();
@@ -213,6 +228,9 @@ onMounted(async () => {
     transition: background .12s ease;
 }
 .search-box:hover { background: #FBF3DC; }
+/* 透明占位（发现页）：保留原宽度与位置，让右侧铃铛/头像仍在右上角；
+   visibility:hidden 同时屏蔽点击，pointer-events:none 再兜一层（r90） */
+.search-box.ghost { visibility: hidden; pointer-events: none; }
 .search-placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nav-links { display: flex; gap: 16px; margin-left: auto; font-size: 13.5px; font-weight: 600; }
 .nav-links a {
@@ -292,6 +310,9 @@ onMounted(async () => {
     .tab img { width: 34px; height: 34px; object-fit: contain; opacity: .6; }
     .tab.on { color: var(--brand); }
     .tab.on img { opacity: 1; }
+
+    /* 发现页（/search）：顶栏所有元素保持原位，仅顶栏搜索框透明不可点（.search-box.ghost），
+       铃铛与头像因此仍在右上角；此处无需额外规则（r90） */
 }
 /* 超窄屏（≤380）：只留 Logo 图标，把宽度让给搜索框 */
 @media (max-width: 380px) {
