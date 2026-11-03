@@ -29,7 +29,7 @@
                                         v-if="captcha.img" :src="captcha.img" class="captcha-img"
                                         title="看不清？点击刷新" alt="图形验证码" @click="refresh_captcha"
                                     />
-                                    <span v-else class="captcha-img captcha-empty" title="点击获取" @click="refresh_captcha">点击获取</span>
+                                    <span v-else class="captcha-img captcha-empty" :title="captcha_failed ? '获取失败，点这里重试' : '点击获取'" @click="refresh_captcha">{{ captcha_failed ? '获取失败·重试' : '点击获取' }}</span>
                                 </div>
                             </el-form-item>
                             <div class="aux-row">
@@ -78,7 +78,7 @@
                                         v-if="captcha.img" :src="captcha.img" class="captcha-img"
                                         title="看不清？点击刷新" alt="图形验证码" @click="refresh_captcha"
                                     />
-                                    <span v-else class="captcha-img captcha-empty" title="点击获取" @click="refresh_captcha">点击获取</span>
+                                    <span v-else class="captcha-img captcha-empty" :title="captcha_failed ? '获取失败，点这里重试' : '点击获取'" @click="refresh_captcha">{{ captcha_failed ? '获取失败·重试' : '点击获取' }}</span>
                                 </div>
                             </el-form-item>
                             <el-button type="primary" size="large" class="submit-btn" native-type="submit" :loading="loading">注 册</el-button>
@@ -135,6 +135,8 @@ const remember = ref(false);
 
 // 图形验证码（登录/注册共用）：imageBase64 为完整 data URL，可直接绑 img src
 const captcha = ref({ id: '', img: '' });
+// 出图失败标记：接口挂了还能提示「获取失败·重试」，不然只有一个「点击获取」让人误以为没反应
+const captcha_failed = ref(false);
 
 /**
  * 拉取/刷新图形验证码（换图后旧输入必然失效，同步清空两个验证码输入框）
@@ -143,9 +145,12 @@ async function refresh_captcha() {
     try {
         const d = await api_auth.get_captcha();
         captcha.value = { id: d.captchaId, img: d.imageBase64 };
+        captcha_failed.value = false;
         login_form.value.captchaCode = '';
         reg_form.value.captchaCode = '';
-    } catch { /* 拦截器已提示 */ }
+    } catch {
+        captcha_failed.value = true;
+    }
 }
 
 /**
@@ -362,7 +367,8 @@ onMounted(() => {
 .pwd-tip { font-size: 11px; color: var(--ink-2); margin-top: 6px; width: 100%; }
 
 @media (max-width: 480px) {
-    .login-page { padding: 20px 12px 48px; }
+    /* 底部留出 tabbar 高度，否则「登录即代表同意…」会被底部导航压住 */
+    .login-page { padding: 20px 12px 100px; }
     .brand-head { padding-bottom: 20px; }
 }
 
