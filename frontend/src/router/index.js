@@ -13,7 +13,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
     // ---- 找吃的 ----
     { path: '/', name: 'home', component: () => import('../views/home-view.vue') },
-    { path: '/search', name: 'search', component: () => import('../views/search-view.vue') },
+    // fullbleed：地图页要满屏铺开，移动端不套顶栏、不显示页脚（见 App.vue）
+    { path: '/search', name: 'search', component: () => import('../views/search-view.vue'), meta: { fullbleed: true } },
     { path: '/list', name: 'list', component: () => import('../views/list-view.vue') },
     { path: '/rank', name: 'rank', component: () => import('../views/rank-view.vue') },
     { path: '/compare', name: 'compare', component: () => import('../views/compare-view.vue') },
@@ -63,6 +64,7 @@ const routes = [
     { path: '/auth/fzu/callback', name: 'fzu-callback', component: () => import('../views/fzu-callback.vue') },
     // 福大统一身份认证 · 授权页（r51c，demo 模式）：与真实 CAS 跳转流程形态一致
     { path: '/auth/fzu/authorize', name: 'fzu-authorize', component: () => import('../views/fzu-authorize.vue') },
+    // ---- 后台管理（原型占位页，放假数据，不接真实接口） ----
     {
         path: '/admin',
         component: () => import('../views/admin/admin-layout.vue'),

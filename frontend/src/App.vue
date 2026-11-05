@@ -1,16 +1,11 @@
 <template>
-    <div class="app-shell" :class="{ wide: is_admin_route }">
-        <!-- 顶部导航（对齐原型：卡面通栏 + 1px 淡描边 + 微圆角搜索框）；
+    <div class="app-shell" :class="{ wide: is_admin_route, fullbleed: is_fullbleed }">
+        <!-- 顶部导航（4.5 轮改版·11-02 会议去 Logo；十四批按需求方澄清恢复顶部搜索框——
+             顶栏白边保留一个搜索入口，点击进地图搜索页；移动端顶栏 = 搜索框 + 右侧铃铛头像；
              管理后台（/admin）隐藏前台顶栏，由 admin-layout 自管后台专用头部 -->
         <header v-if="!is_admin_route" class="topbar">
             <div class="topbar-inner">
-                <router-link to="/" class="logo">
-                    <brand-logo :size="30" />
-                    <span class="logo-text">大福食刻</span>
-                </router-link>
-                <!-- 发现页（/search）：搜索框不删除、原位保留占位，仅透明且不可点击，
-                     这样铃铛与头像仍在右上角原位，顶栏其余内容完全不变（r90） -->
-                <div class="search-box" :class="{ ghost: !show_header_search }" @click="go_search">
+                <div class="search-box" @click="go_search">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B0A18A" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
                     <span class="search-placeholder">搜食堂、档口、菜品<span class="ph-tip">，如「闽菜」</span></span>
                 </div>
@@ -51,7 +46,7 @@
             </div>
         </header>
 
-        <main class="app-main">
+        <main class="app-main" :class="{ fullbleed: is_fullbleed }">
             <router-view v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                     <!-- 仅缓存 AI 助手页：跳详情/其他页再返回，对话、草稿与发送态原位保留 -->
@@ -62,8 +57,8 @@
             </router-view>
         </main>
 
-        <!-- 页脚：一行淡色签名（后台不显示，后台有自管头部与侧栏布局） -->
-        <footer v-if="!is_admin_route" class="footer">
+        <!-- 页脚：一行淡色签名（后台不显示，后台有自管头部与侧栏布局；满屏地图页也不显示，避免挤压地图高度） -->
+        <footer v-if="!is_admin_route && !is_fullbleed" class="footer">
             <span><b>大福食刻</b> · 「知食份子」出品 · 纯内容平台，不做交易</span>
         </footer>
 
@@ -73,14 +68,12 @@
                 <img src="/assets/icons/tab-home.png" alt="首页"><span>首页</span>
             </router-link>
             <router-link to="/search" class="tab" :class="{ on: is_tab('/search') || is_tab('/list') }">
-                <img src="/assets/icons/tab-find.png" alt="发现"><span>发现</span>
+                <img src="/assets/icons/tab-find.png" alt="地图"><span>地图</span>
             </router-link>
             <router-link to="/circle" class="tab" :class="{ on: is_tab('/circle') || is_tab('/post') }">
                 <img src="/assets/icons/tab-circle.png" alt="点评圈"><span>点评圈</span>
             </router-link>
-            <router-link to="/ai" class="tab" :class="{ on: is_tab('/ai') }">
-                <img src="/assets/icons/tab-ai.png" alt="AI助手"><span>AI 助手</span>
-            </router-link>
+            <!-- 4.5 轮改版：AI 助手不再占底部 tab（全局悬浮小包子入口已覆盖），底部导航精简至四个 -->
             <a class="tab" :class="{ on: is_tab('/me') }" @click="go_me">
                 <img src="/assets/icons/tab-me.png" alt="我的"><span>我的</span>
             </a>
@@ -97,6 +90,10 @@
                 <div class="notify-content">{{ n.content }}</div>
             </div>
         </el-drawer>
+
+        <!-- 全局悬浮 AI 助手快捷入口（小包子，可拖动，点击跳 /ai）。
+             满屏地图页也保留（用户要求每页都能看到），落点会停在底部「附近推荐」抽屉的上沿 -->
+        <FloatingAiButton :reserve-sheet="is_fullbleed" />
     </div>
 </template>
 
@@ -104,6 +101,11 @@
 /**
  * App 壳：顶部导航 + 通知抽屉 + 全局布局
  * 视觉对齐原型定稿：卡面通栏 / 淡描边 / 琥珀强调 / 底部五 Tab 素材线稿图标
+ *
+ * r60 注意：<transition mode="out-in"> 要求每个路由页组件「只有一个元素根」。
+ * 页面模板若在根元素之前写 HTML 注释（或出现多根标签），开发态组件根会变成 Fragment，
+ * 离开该页时 out-in 会永久卡在占位注释上——表现为「从菜品 / 食堂 / 档口详情返回首页一片空白」。
+ * 新增页面请把说明注释写在根元素内部，不要写在根元素之前。
  */
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -111,7 +113,7 @@ import { Bell } from '@element-plus/icons-vue';
 import { useAuthStore } from './stores/auth';
 import { api_notification } from './api';
 import UserAvatar from './components/user-avatar.vue';
-import BrandLogo from './components/brand-logo.vue';
+import FloatingAiButton from './components/floating-ai-button.vue';
 import { time_ago } from './utils/format';
 
 const router = useRouter();
@@ -124,19 +126,8 @@ const unread = ref(0);
 /** 管理后台路由：桌面端不套「手机机身」外壳，保持宽幅全屏布局 */
 const is_admin_route = computed(() => route.path.startsWith('/admin'));
 
-/**
- * 顶栏搜索框是否可见：发现页（/search）页面自带搜索条，
- * 顶栏搜索框改为透明占位（见 .search-box.ghost），不再重复出现（r90）
- */
-const show_header_search = computed(() => route.path !== '/search');
-
-
-/**
- * 去搜索页
- */
-function go_search() {
-    router.push('/search');
-}
+/** 满屏页（当前只有地图页 /search）：移动端不套顶栏、不显示页脚，地图铺满整个视口 */
+const is_fullbleed = computed(() => !!route.meta.fullbleed);
 
 /**
  * 底部导航选中态（首页精确匹配，其余前缀匹配）
@@ -144,6 +135,13 @@ function go_search() {
  */
 function is_tab(p) {
     return p === '/' ? route.path === '/' : route.path.startsWith(p);
+}
+
+/**
+ * 去搜索页（顶部搜索框点击；十四批恢复）
+ */
+function go_search() {
+    router.push('/search');
 }
 
 /**
@@ -217,20 +215,15 @@ onMounted(async () => {
     max-width: 1080px; margin: 0 auto; padding: 10px 16px;
     display: flex; align-items: center; gap: 16px;
 }
-.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.logo-text { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: 1px; }
-/* 搜索框：微圆角 + 极淡弥散阴影（去胶囊去墨描边） */
+/* 搜索框（十四批恢复）：微圆角 + 极淡弥散阴影，flex:1 吃掉 Logo 腾出的空间 */
 .search-box {
-    flex: 1; max-width: 360px; min-width: 0; display: flex; align-items: center; gap: 8px;
+    flex: 1; max-width: 420px; min-width: 0; display: flex; align-items: center; gap: 8px;
     background: var(--paper); border-radius: var(--radius-sm); padding: 8px 14px;
     box-shadow: var(--shadow-soft);
     color: var(--ink-2); cursor: pointer; font-size: 12.5px;
     transition: background .12s ease;
 }
-.search-box:hover { background: #FBF3DC; }
-/* 透明占位（发现页）：保留原宽度与位置，让右侧铃铛/头像仍在右上角；
-   visibility:hidden 同时屏蔽点击，pointer-events:none 再兜一层（r90） */
-.search-box.ghost { visibility: hidden; pointer-events: none; }
+.search-box:hover { background: var(--brand-light); }
 .search-placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nav-links { display: flex; gap: 16px; margin-left: auto; font-size: 13.5px; font-weight: 600; }
 .nav-links a {
@@ -239,7 +232,7 @@ onMounted(async () => {
 }
 .nav-links a:hover { color: var(--brand); }
 .publish-link { color: var(--brand) !important; font-weight: 700; }
-.user-zone { display: flex; align-items: center; gap: 14px; }
+.user-zone { display: flex; align-items: center; gap: 14px; margin-left: auto; } /* 铃铛/头像恒靠右（4.5 轮：顶栏左侧已清空） */
 .user-zone :deep(.el-badge) { display: inline-flex; align-items: center; vertical-align: middle; }
 .bell { display: block; cursor: pointer; color: var(--ink-2); }
 .user-chip { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13.5px; color: var(--ink); }
@@ -253,6 +246,8 @@ onMounted(async () => {
 /* flex 列容器：填充型页面以 flex:1 吃掉剩余高度 */
 .app-main { flex: 1; display: flex; flex-direction: column; }
 .app-main > * { width: 100%; }
+/* 满屏页（地图页）：子页面自己撑满剩余高度并内部绝对定位，父层不能再有最小高度撑开 */
+.app-main.fullbleed { min-height: 0; overflow: hidden; }
 /* 页脚：一行淡色签名（去卡片化，G3-1 通栏留白） */
 .footer {
     display: flex;
@@ -283,13 +278,15 @@ onMounted(async () => {
 .notify-time { color: var(--ink-2); font-weight: 400; font-size: 12px; }
 .notify-content { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
 @media (max-width: 768px) {
+    /* 满屏地图页：移动端不套顶栏，顶部搜索浮层由页面自己画（对齐美团地图） */
+    .app-shell.fullbleed .topbar { display: none; }
     .topbar-inner { padding: 8px 12px; gap: 10px; }
-    .search-box { flex: 1; max-width: none; min-width: 0; padding: 7px 12px; } /* min-width:0 允许收缩，防 nowrap 占位文本撑破窄屏 */
+    .search-box { flex: 1; max-width: none; min-width: 0; padding: 7px 12px; } /* min-width:0 允许收缩 */
     .ph-tip { display: none; } /* 窄屏占位文案收短 */
     .nav-links { display: none; } /* 顶部链接由底部导航接管 */
-    .user-zone { gap: 10px; }
+    .user-zone { gap: 10px; margin-left: 0; } /* 移动端：搜索框吃满，用户区紧随其后 */
     .user-chip .nick { display: none; } /* 窄屏只留头像 */
-    .logo-text { font-size: 15px; }
+    .user-chip .nick { display: none; } /* 窄屏只留头像 */
     .footer { padding-bottom: 96px; } /* 让位悬浮 tabbar */
     /* 通栏 tabbar：卡面 + 1px 上描边（对齐原型，去悬浮胶囊） */
     .tabbar {
@@ -311,17 +308,13 @@ onMounted(async () => {
     .tab.on { color: var(--brand); }
     .tab.on img { opacity: 1; }
 
-    /* 发现页（/search）：顶栏所有元素保持原位，仅顶栏搜索框透明不可点（.search-box.ghost），
-       铃铛与头像因此仍在右上角；此处无需额外规则（r90） */
-}
-/* 超窄屏（≤380）：只留 Logo 图标，把宽度让给搜索框 */
-@media (max-width: 380px) {
-    .logo-text { display: none; }
+    /* 4.5 轮：顶栏已无 Logo（搜索框保留）；移动端顶栏 = 搜索框 + 右侧铃铛 + 头像（地图满屏页整条顶栏隐藏） */
 }
 /* 桌面过渡档（≤950）：搜索框收缩后示例提示显示不全，纯装饰文案直接隐藏 */
 @media (max-width: 950px) {
     .ph-tip { display: none; }
 }
+
 /* ============================================================
    桌面端（≥769）：真正的宽幅桌面布局（与移动端同源设计语言）
    - 顶部导航链接恢复显示（导航走顶栏：导览图/口碑榜/点评圈/AI/写点评）

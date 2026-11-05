@@ -1,6 +1,6 @@
 <template>
-    <!-- 菜品详情（暖纸奶油风，与档口详情同版式）：顶栏 → 封面 → 信息 → 互动行 → 综合分与维度 → 相关评价 -->
     <div class="page-wrap" v-if="data">
+        <!-- 菜品详情（暖纸奶油风，与档口详情同版式）：顶栏 → 封面 → 信息 → 互动行 → 综合分与维度 → 相关评价 -->
         <!-- 顶部栏：返回 + 居中标题 -->
         <div class="topbar">
             <span class="icircle" @click="$router.back()">

@@ -282,10 +282,13 @@ onMounted(() => {
 .title { font-size: 16px; }
 
 /* ===== 场景 chips：微圆角签，选中琥珀底 ===== */
-.scene-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.scene-chips .chip { cursor: pointer; padding: 4px 13px; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; }
+.scene-chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; } /* 五格等宽单行（4.5 轮：修 3+2 换行的凌乱排版） */
+.scene-chips .chip { cursor: pointer; padding: 5px 4px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; }
+.scene-chips .chip span, .scene-chips .chip { white-space: nowrap; }
 .scene-chips .chip.on { background: var(--brand); color: #FFFDF5; }
-.chip-ico { width: 15px; height: 15px; object-fit: contain; }
+.chip-ico { width: 13px; height: 13px; object-fit: contain; }
+/* ≤360 窄屏：图标隐藏保单行 */
+@media (max-width: 360px) { .scene-chips .chip-ico { display: none; } }
 
 /* ===== 下拉筛选栏 ===== */
 .dropbar { display: flex; gap: 10px; margin-top: 12px; }

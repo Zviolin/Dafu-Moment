@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.log
 
+# Vite 加载配置时生成的临时文件（进程没正常退出会残留在 frontend/ 下，每次启动会重新生成）
+vite.config.js.timestamp-*.mjs
+
 # Python 缓存
 __pycache__/
 *.pyc
@@ -14,9 +17,9 @@ __pycache__/
 .env.local
 .env.*.local
 
-# 空壳目录（无代码文件，不上传）
-admin/
-client/
+# 空壳目录（无代码文件，不上传；根目录限定，避免误伤 frontend/src/views/admin）
+/admin/
+/client/
 
 # 系统与编辑器文件
 .DS_Store

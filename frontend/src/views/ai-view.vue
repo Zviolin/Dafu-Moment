@@ -1,52 +1,8 @@
 <template>
     <div class="page-wrap ai-page">
-        <!-- 功能入口：智能推荐通栏大卡 + 2×2 四宫格（每卡 = 插画 + 标题 + 一句描述；对齐 P16 入口卡形态） -->
-        <div class="sec" style="padding-top: 16px;"><b>福宝能帮你</b></div>
-        <div class="entry-grid">
-            <a class="entry card fade-up wide" @click="go_chat_anchor">
-                <img class="ill" src="/assets/pet/e-happy.png" alt="智能推荐" />
-                <div class="et">
-                    <b>智能推荐</b>
-                    <span>说出想法，福宝按全站真实评分帮你挑</span>
-                </div>
-                <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-            </a>
-            <router-link class="entry card fade-up" to="/ai/plan" style="animation-delay:.05s">
-                <img class="ill" src="/assets/icons/ill-checkin.png" alt="个性化饮食计划" />
-                <div class="et">
-                    <b>个性化饮食计划</b>
-                    <span>按预算与忌口生成 1 / 3 / 7 日三餐</span>
-                </div>
-                <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-            </router-link>
-            <router-link class="entry card fade-up" to="/ai/mbti" style="animation-delay:.1s">
-                <img class="ill" src="/assets/icons/ill-mbti.png" alt="口味画像 饭MBTI" />
-                <div class="et">
-                    <b>口味画像 · 饭MBTI</b>
-                    <span>一分钟测出你的口味人格</span>
-                </div>
-                <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-            </router-link>
-            <router-link class="entry card fade-up" to="/ai/wheel" style="animation-delay:.15s">
-                <img class="ill" src="/assets/icons/ill-wheel.png" alt="餐品转盘" />
-                <div class="et">
-                    <b>餐品转盘</b>
-                    <span>选择困难？转一转今晚吃什么</span>
-                </div>
-                <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-            </router-link>
-            <router-link class="entry card fade-up" to="/ai/profile" style="animation-delay:.2s">
-                <img class="ill" src="/assets/icons/icon-want.png" alt="饮食偏好档案" />
-                <div class="et">
-                    <b>饮食偏好档案</b>
-                    <span>忌口 / 过敏 / 预算，一次设置全通用</span>
-                </div>
-                <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-            </router-link>
-        </div>
-
-        <!-- 智能推荐对话区（入口卡锚点落点；操作入口收敛进对话卡会话头） -->
-        <div id="ai-chat" class="sec"><b>智能推荐</b></div>
+        <!-- 2026-11-03：按需求移除顶部「福宝能帮你」功能入口卡（智能推荐/饮食计划/饭MBTI/转盘/偏好档案）
+             与「智能推荐」区块标题，页面直接进入 AI 助手对话。/ai/plan、/ai/mbti、/ai/wheel、/ai/profile
+             子页路由保留，其他页面如有入口仍可访问。 -->
 
         <!-- 降级提示（AC24：AI 接口不可用或后端标记降级时展示；r89 追加具体原因，便于用户自查配置） -->
         <div v-if="degraded" class="degrade-tip">
@@ -55,7 +11,7 @@
         </div>
 
         <!-- 快捷提问 chips（点击即发送；原型 P16 顺序：问候 → 快捷词 → 对话） -->
-        <div v-if="auth.is_login" class="quick">
+        <div class="quick">
             <span v-for="q in QUICK_ASKS" :key="q" @click="quick_ask(q)">{{ q }}</span>
         </div>
 
@@ -83,57 +39,63 @@
                 </div>
             </div>
             <hr class="hairline" />
-            <!-- 未登录引导 -->
-            <div v-if="!auth.is_login" class="login-guide">
-                <img class="guide-pet" src="/assets/icons/grid-avatar.png" alt="福宝" />
-                <p>登录后就能和福宝聊天啦，它会按全平台真实评分给你推荐~</p>
-                <el-button type="primary" class="go-login" @click="go_login">去登录</el-button>
+            <!-- 未登录预览条：不用登录也能看到完整对话界面（下面是示例对话，不是真实会话） -->
+            <div v-if="!auth.is_login" class="preview-tip">
+                <span class="pt-badge">预览</span>
+                <span class="pt-text">下面是示例对话，登录后就能真的和福宝聊</span>
+                <button type="button" class="pt-btn" @click="go_login">去登录</button>
             </div>
-            <template v-else>
-                <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
-                    <span v-if="m.role === 'ai'" class="ai-face"><img src="/assets/icons/grid-avatar.png" alt="福宝" /></span>
-                    <user-avatar v-else :user="auth.user" :size="32" class="avatar-fix" />
-                    <div class="chat-bub">
-                        <p class="text">{{ m.text }}</p>
-                        <!-- 推荐小卡：整卡点击进详情，带推荐理由文案；右上地图钮定位所属餐厅 -->
-                        <div v-if="m.recs && m.recs.length" class="recs">
-                            <div v-for="(r, i) in m.recs" :key="i" class="rec-card" @click="go_rec(r)">
-                                <img v-if="r.img" class="rec-img" :src="r.img" :alt="r.name" />
-                                <span v-else class="img-fallback rec-img">{{ (r.name || '荐')[0] }}</span>
-                                <div class="rec-main">
-                                    <b class="rec-name">{{ r.name }}</b>
-                                    <span v-if="r.station_name" class="rec-sub">{{ r.station_name }}</span>
-                                    <span class="rec-reason">推荐理由：{{ r.reason || '综合评分较高' }}</span>
-                                </div>
-                                <button
-                                    type="button" class="rec-ico"
-                                    title="在地图上查看它所属餐厅的位置"
-                                    aria-label="在地图上查看它所属餐厅的位置"
-                                    @click.stop="go_map(r)"
-                                >
-                                    <el-icon :size="15"><MapLocation /></el-icon>
-                                </button>
+            <div v-for="m in shown_messages" :key="m.id" class="msg" :class="m.role">
+                <span v-if="m.role === 'ai'" class="ai-face"><img src="/assets/icons/grid-avatar.png" alt="福宝" /></span>
+                <user-avatar v-else :user="auth.user" :size="32" class="avatar-fix" />
+                <div class="chat-bub">
+                    <p class="text">{{ m.text }}</p>
+                    <!-- 推荐小卡：整卡点击进详情，带推荐理由文案；右上地图钮定位所属餐厅 -->
+                    <div v-if="m.recs && m.recs.length" class="recs">
+                        <div v-for="(r, i) in m.recs" :key="i" class="rec-card" @click="go_rec(r)">
+                            <img v-if="r.img" class="rec-img" :src="r.img" :alt="r.name" />
+                            <span v-else class="img-fallback rec-img">{{ (r.name || '荐')[0] }}</span>
+                            <div class="rec-main">
+                                <b class="rec-name">{{ r.name }}</b>
+                                <span v-if="r.station_name" class="rec-sub">{{ r.station_name }}</span>
+                                <span class="rec-reason">推荐理由：{{ r.reason || '综合评分较高' }}</span>
                             </div>
+                            <button
+                                type="button" class="rec-ico"
+                                title="在地图上查看它所属餐厅的位置"
+                                aria-label="在地图上查看它所属餐厅的位置"
+                                @click.stop="go_map(r)"
+                            >
+                                <el-icon :size="15"><MapLocation /></el-icon>
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div v-if="sending" class="msg ai">
-                    <span class="ai-face"><img src="/assets/icons/grid-avatar.png" alt="福宝" /></span>
-                    <div class="chat-bub"><p class="text thinking">福宝思考中……</p></div>
-                </div>
-            </template>
+            </div>
+            <div v-if="sending" class="msg ai">
+                <span class="ai-face"><img src="/assets/icons/grid-avatar.png" alt="福宝" /></span>
+                <div class="chat-bub"><p class="text thinking">福宝思考中……</p></div>
+            </div>
         </div>
 
-        <!-- 底部输入区（固定悬浮在 tabbar 上方，原型 .inputbar 同款；两行式：上行 textarea 自动增高，下行模型快切 chip + 发送钮） -->
-        <div v-if="auth.is_login" class="input-bar card">
+        <!-- 底部固定区：合规声明 + 输入条整体固定在 tabbar 上方（AC24 要求声明常驻可见，
+             之前它跟在内容流末尾，短对话时正好被输入条压住，只露出半行字） -->
+        <div class="input-dock">
+        <p class="compliance">以上内容仅供参考，不替代专业医生、营养师的医疗诊断与营养方案。</p>
+
+        <!-- 底部输入区（原型 .inputbar 同款；两行式：上行 textarea 自动增高，下行模型快切 chip + 发送钮）
+             未登录也照常渲染，只是只读 + 提示登录，方便先看界面长什么样 -->
+        <div class="input-bar card">
             <el-input
                 ref="ask_input" v-model="draft" type="textarea" resize="none" maxlength="500"
                 :autosize="{ minRows: 1, maxRows: 4 }"
-                class="ask-input" placeholder="问问福宝：想吃辣的又不贵，有推荐吗？"
+                :readonly="!auth.is_login"
+                class="ask-input" :class="{ guest: !auth.is_login }"
+                :placeholder="auth.is_login ? '问问福宝：想吃辣的又不贵，有推荐吗？' : '登录后就能和福宝提问啦（当前为界面预览）'"
                 @keydown.enter.exact="on_ask_keydown"
             />
             <div class="input-ops">
-                <el-popover v-model:visible="picker_open" placement="top-start" :width="324" trigger="click" :teleported="false" popper-class="model-picker" @show="load_models">
+                <el-popover v-if="auth.is_login" v-model:visible="picker_open" placement="top-start" :width="324" trigger="click" :teleported="false" popper-class="model-picker" @show="load_models">
                     <template #reference>
                         <button type="button" class="model-chip" :class="{ on: ai_ready }" title="切换 / 删除模型">
                             <i class="chip-dot"></i>
@@ -178,9 +140,7 @@
                 />
             </div>
         </div>
-
-        <!-- 合规声明（AC24：AI 输出页面固定展示） -->
-        <p class="compliance">以上内容仅供参考，不替代专业医生、营养师的医疗诊断与营养方案。</p>
+        </div>
 
         <!-- 模型设置弹窗（保留原有多模型配置功能：列表可切换 + 添加/编辑表单） -->
         <el-dialog v-model="cfg_open" title="模型设置" width="480px">
@@ -334,7 +294,7 @@
 <script setup>
 /**
  * AI 助手「福宝」主页（对齐 P16-AI助手.html，暖纸奶油风改版）
- * 结构：顶部横幅（IP + 问候）→ 功能入口卡 → 智能推荐对话区 → 合规声明
+ * 结构：AI 助手对话区（福宝）→ 合规声明（顶部功能入口卡已按需求移除）
  * 保留原 api_ai.ask / history 接线与历史回显逻辑；
  * AC24：接口不可用时降级为按时段规则化热门推荐，并展示降级提示与固定合规声明
  * 会话缓存：App.vue keep-alive(include) 缓存本页——跳详情再返回对话/草稿/发送态全保留，
@@ -363,6 +323,26 @@ let msg_seq = 0;
 
 /** 快捷提问词（点击即发送） */
 const QUICK_ASKS = ['今天吃什么', '不想吃太辣', '30 元以内'];
+
+/**
+ * 未登录预览用的示例对话（只用于展示界面长啥样，不落到真实会话、不请求接口）
+ * 推荐卡配的是本地 mock 占位图，点进去也能看到对应页面
+ */
+const PREVIEW_MSGS = [
+    { id: 1, role: 'ai', text: '我是福宝，你的干饭小向导！今天想吃点什么？也可以点下面的快捷词～' },
+    { id: 2, role: 'user', text: '中午想吃辣一点，30 块以内' },
+    {
+        id: 3, role: 'ai',
+        text: '给你挑了两个辣口、人均 30 以内的档口，评分都在 4.5 以上：',
+        recs: [
+            { name: '紫荆麻辣香锅', station_name: '紫荆园 · 二楼', reason: '均分 4.7 · 128 条评价，微辣可调', img: '/img/mock/s-2.jpg', subjectType: 1, subjectId: 2, canteenId: 1 },
+            { name: '美岐麻辣烫', station_name: '美岐学生街', reason: '均分 4.5 · 自选配料，20 元吃饱', img: '/img/mock/s-13.jpg', subjectType: 1, subjectId: 13, canteenId: 7 },
+        ],
+    },
+];
+
+/** 未登录时展示示例对话，登录后展示真实会话 */
+const shown_messages = computed(() => (auth.is_login ? messages.value : PREVIEW_MSGS));
 
 // AI 降级时段问候语（推荐内容一律取真实口碑接口，不再内置假档口/菜品与假 subjectId）
 const TIME_GREETING = {
@@ -698,20 +678,6 @@ async function clear_all() {
 /* ================= 智能推荐对话（保留 api_ai.ask / history 接线） ================= */
 
 /**
- * 「智能推荐」入口卡：平滑滚动到对话区并聚焦输入框
- */
-function go_chat_anchor() {
-    const el = document.getElementById('ai-chat');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // 登录态聚焦输入框，引导直接提问
-    if (auth.is_login) {
-        nextTick(() => {
-            if (ask_input.value) ask_input.value.focus();
-        });
-    }
-}
-
-/**
  * 对话流滚动到底部（页面流对话：直接滚窗口，输入条固定悬浮不受影响）
  */
 function scroll_bottom() {
@@ -749,11 +715,15 @@ function go_login() {
 }
 
 /**
- * 快捷提问：填入并立即发送
+ * 快捷提问：填入并立即发送（未登录时只提示，不跳走——先让人安心看界面）
  * @param {string} q
  */
 function quick_ask(q) {
-    if (!auth.is_login || sending.value) return;
+    if (!auth.is_login) {
+        ElMessage.info('登录后就能和福宝提问啦，点对话上方的「去登录」即可');
+        return;
+    }
+    if (sending.value) return;
     draft.value = q;
     do_ask();
 }
@@ -800,6 +770,10 @@ async function fallback_reply() {
  * 接口失败时降级为按时段规则化推荐并打开降级提示（AC24）
  */
 async function do_ask() {
+    if (!auth.is_login) {
+        ElMessage.info('登录后就能和福宝提问啦，点对话上方的「去登录」即可');
+        return;
+    }
     const question = draft.value.trim();
     if (!question || sending.value) return;
     draft.value = '';
@@ -901,22 +875,8 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
 <style scoped>
 /* AI 助手主页：480px 手机列（page-wrap），暖纸奶油风；
    底部预留固定输入条 + tabbar 的高度，避免末尾内容被悬浮层盖住 */
-.ai-page { padding-bottom: 168px; }
-
-/* ===== 功能入口卡：通栏大卡 + 2×2 网格 ===== */
-.entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.entry {
-    display: flex; align-items: center; gap: 10px;
-    padding: 14px; cursor: pointer; text-decoration: none; color: inherit;
-    transition: background .12s ease;
-}
-.entry:hover { background: #FBF3DC; }
-.entry.wide { grid-column: 1 / -1; }
-.entry .ill { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
-.entry .et { min-width: 0; }
-.entry .et b { display: block; font-size: 13.5px; font-weight: 700; }
-.entry .et span { display: block; font-size: 10.5px; color: var(--ink-2); margin-top: 3px; font-weight: 400; }
-.entry .arr { margin-left: auto; width: 16px; height: 16px; color: var(--ink-2); flex-shrink: 0; }
+/* 底部预留 = tabbar(72) + 固定区（合规声明 + 输入条，实测约 150），避免末尾内容被悬浮层盖住 */
+.ai-page { padding-bottom: 240px; }
 
 /* ===== 降级提示：淡黄纸条（AC24） ===== */
 .degrade-tip {
@@ -927,8 +887,6 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
 .degrade-why { display: block; margin-top: 2px; font-size: 11px; color: #a06a10; opacity: .85; }
 
 /* ===== 对话流：页面流排布（原型 P16 同款，随页面滚动不做内滚动） ===== */
-/* 区块标题间距微调：入口卡与对话区之间收紧一档，快捷词紧随其后 */
-#ai-chat.sec { padding-top: 24px; padding-bottom: 10px; }
 /* ===== 会话头：福宝身份 + 新对话/历史对话/模型设置 ===== */
 .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .head-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
@@ -984,11 +942,25 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
     transition: background .12s ease, color .12s ease; touch-action: manipulation; padding: 0; font: inherit;
 }
 .rec-ico:hover { background: var(--brand-light); color: var(--brand-dark); }
-/* 未登录引导 */
-.login-guide { text-align: center; padding: 46px 0 40px; color: var(--ink-2); }
-.guide-pet { width: 72px; height: 72px; object-fit: contain; margin: 0 auto 10px; }
-.login-guide p { margin: 0 0 14px; font-size: 13px; }
-.go-login { min-width: 120px; }
+/* 未登录预览条：一条淡金小签，说明下面是示例对话 + 去登录入口 */
+.preview-tip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--brand-light); border-radius: var(--radius-sm);
+    padding: 8px 10px; margin: 12px 0 14px;
+}
+.pt-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 700; line-height: 16px;
+    padding: 0 6px; border-radius: 5px; background: var(--brand); color: #FFFDF5;
+}
+.pt-text { flex: 1; min-width: 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
+.pt-btn {
+    flex-shrink: 0; font-size: 11.5px; font-weight: 700; line-height: 24px;
+    padding: 0 12px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+    background: var(--brand); color: #FFFDF5; font-family: inherit;
+}
+.pt-btn:hover { background: var(--brand-dark); }
+/* 未登录的输入框：只看不用，灰一点提示当前不可输入 */
+.ask-input.guest :deep(.el-textarea__inner) { background: var(--page); color: var(--ink-2); cursor: default; }
 
 /* ===== 快捷提问 chips ===== */
 .quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0; }
@@ -999,12 +971,17 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
 }
 .quick span:hover { background: var(--brand-light); }
 
-/* ===== 底部输入区（两行式）：固定悬浮于 tabbar 上方，与手机列等宽居中（原型 .inputbar 同款） ===== */
-.input-bar {
+/* ===== 底部固定区（合规声明 + 输入条）：整体悬浮于 tabbar 上方，与手机列等宽居中 ===== */
+.input-dock {
     position: fixed; bottom: calc(72px + env(safe-area-inset-bottom));
     left: 50%; transform: translateX(-50%);
     width: 480px; max-width: calc(100% - 20px);
     z-index: 150;
+    display: flex; flex-direction: column;
+}
+/* 输入条：两行式（上行 textarea 自动增高，下行模型快切 chip + 发送钮） */
+.input-bar {
+    width: 100%;
     display: flex; flex-direction: column; gap: 8px;
 }
 .ask-input :deep(.el-textarea__inner) { scrollbar-width: none; -ms-overflow-style: none; }
@@ -1025,7 +1002,12 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
 .model-chip:hover { background: var(--brand-light); }
 
 /* ===== 合规声明（AC24） ===== */
-.compliance { text-align: center; font-size: 10.5px; color: var(--ink-2); margin: 24px 0 8px; line-height: 1.7; }
+/* 合规声明：固定在输入条上方，垫一层页底色避免滚动内容从字缝里透出来 */
+.compliance {
+    text-align: center; font-size: 10.5px; color: var(--ink-2);
+    margin: 0 0 8px; line-height: 1.7;
+    background: var(--page); border-radius: var(--radius-sm); padding: 3px 8px;
+}
 
 /* ===== 模型设置弹窗（保留功能，样式对齐暖纸风） ===== */
 .cfg-state {
@@ -1167,8 +1149,8 @@ onUnmounted(() => window.removeEventListener('beforeunload', save_scroll));
     .degrade-tip { max-width: 900px; margin-left: auto; margin-right: auto; }
     /* 消息气泡：桌面放宽到 70%，并封顶 560px 绝对宽度（min 同时约束两档） */
     .chat-bub { max-width: min(70%, 560px); }
-    /* 底部悬浮输入条：与对话区同宽（900px），输入框加高更舒展 */
-    .input-bar { width: 900px; max-width: calc(100% - 48px); }
+    /* 底部固定区：与对话区同宽（900px），输入框加高更舒展；桌面无 tabbar，贴底 16px 即可 */
+    .input-dock { width: 900px; max-width: calc(100% - 48px); bottom: 16px; }
     .ask-input :deep(.el-textarea__inner) { min-height: 56px; }
 }
 
