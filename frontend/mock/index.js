@@ -1,51 +1,106 @@
 // 本地 mock：仅开发演示用，不依赖真实后端。
 // 后端统一返回 {code,msg,data}，http.js 拦截器取 data 交给页面。
 // 本模块只产出 data，由 vite 插件包成 {code:0,data}。
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+/* 4.5 轮九批（E）：华为仓同步的真图（public/assets/dish-images 150 菜品图、store-images 18 店铺图，
+   文件名即菜名/店名）按名称模糊匹配出图；未命中回落 food/* 素材轮换。真栈下 /img/* 由 MinIO 接管。 */
+const IMG_DIRS = ['dish-images', 'store-images'];
+let IMG_CACHE = null;
+function list_images() {
+    if (IMG_CACHE) return IMG_CACHE;
+    try {
+        const base = join(process.cwd(), 'public', 'assets');
+        IMG_CACHE = IMG_DIRS.flatMap((d) =>
+            readdirSync(join(base, d))
+                .filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
+                .map((f) => ({ dir: d, file: f, stem: f.replace(/\.[^.]+$/, '') }))
+        );
+    } catch { IMG_CACHE = []; }
+    return IMG_CACHE;
+}
+function match_local_image(key) {
+    const stem = String(key).replace(/\.[^.]+$/, '');
+    let best = null;
+    let bestLen = 0;
+    for (const it of list_images()) {
+        if ((stem.includes(it.stem) || it.stem.includes(stem)) && it.stem.length > bestLen) {
+            best = it;
+            bestLen = it.stem.length;
+        }
+    }
+    if (best) return `/assets/${best.dir}/${encodeURIComponent(best.file)}`;
+    const h = [...stem].reduce((a, c) => a + c.codePointAt(0), 0);
+    return `/assets/food/${FOODS[h % FOODS.length]}.png`;
+}
 
 /* ============ 工具 ============ */
 const rnd = (a, b) => Math.round((a + Math.random() * (b - a)) * 10) / 10;
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const cover = (k) => `mock/${k}.jpg`;
+
+// 4.5 轮预览（E）：food/* 素材键回落用素材轮换（见 match_local_image 未命中分支）
+const FOODS = ['yangzhi', 'kuanfen', 'lamian', 'shoudamian', 'tangshui', 'xiangguo'];
+
+// 4.5 轮十二批（E）：mock 全量改接仓库自带真实数据，不再自造菜名/标签/食堂
+// - backend/src/seed/real-data.json      60 真食堂（坐标/评分/标签）+ 70 真档口（品类）
+// - backend/src/seed/dish-image-map.json 158 真菜品（菜名+档口+华为仓图片文件名）
+const REAL = (() => {
+    try {
+        return {
+            places: JSON.parse(readFileSync(join(process.cwd(), '..', 'backend', 'src', 'seed', 'real-data.json'), 'utf8')).places || [],
+            dishes: JSON.parse(readFileSync(join(process.cwd(), '..', 'backend', 'src', 'seed', 'dish-image-map.json'), 'utf8')).dishes || [],
+        };
+    } catch (e) {
+        console.warn('[mock] 真实数据读取失败，回落占位:', e.message);
+        return { places: [], dishes: [] };
+    }
+})();
+const food_img = (i) => `food/${FOODS[((i % FOODS.length) + FOODS.length) % FOODS.length]}.png`;
 const now = () => new Date().toISOString();
 
 /* ============ 食堂（点位） ============ */
-const CANTEENS = [
-    { id: 1, name: '紫荆园', type: 0, avg_score: 4.3, cover_object_key: cover('c-zijing'), location: '生活三区·捷祥餐厅', stations_count: 3, open_status: 1, lat: 26.0528, lng: 119.1926, description: '福大生活三区主食餐厅，平价家常，饭点人多。', tags: ['平价', '家常'] },
-    { id: 2, name: '京元餐厅', type: 0, avg_score: 4.1, cover_object_key: cover('c-jingyuan'), location: '生活一区·京元', stations_count: 2, open_status: 1, lat: 26.0567, lng: 119.1927, description: '生活一区老牌餐厅，套餐和糖水都不错。', tags: ['套餐', '甜品'] },
-    { id: 3, name: '玫瑰园', type: 0, avg_score: 4.0, cover_object_key: cover('c-meigui'), location: '生活三区·玫瑰园', stations_count: 2, open_status: 1, lat: 26.0523, lng: 119.1917, description: '小炒和粥类为主，适合慢慢吃。', tags: ['小炒', '粥'] },
-    { id: 4, name: '丁香园', type: 0, avg_score: 3.9, cover_object_key: cover('c-dingxiang'), location: '生活一区·丁香园', stations_count: 1, open_status: 1, lat: 26.0559, lng: 119.1920, description: '快餐档口，出餐快。', tags: ['快餐'] },
-    { id: 5, name: '永嘉·美食城', type: 1, avg_score: 4.2, cover_object_key: cover('c-yongjia'), location: '永嘉天地', stations_count: 2, open_status: 1, lat: 26.0501, lng: 119.1880, description: '永嘉天地里的美食集合，火锅日料都有。', tags: ['火锅', '日料'] },
-    { id: 6, name: '永嘉·茶饮茶咖', type: 1, avg_score: 4.5, cover_object_key: cover('c-yongjiacha'), location: '永嘉天地', stations_count: 2, open_status: 1, lat: 26.0503, lng: 119.1882, description: '奶茶咖啡一条龙，环境好适合坐着。', tags: ['茶饮', '咖啡'] },
-    { id: 7, name: '美岐学生街·食集', type: 2, avg_score: 4.0, cover_object_key: cover('c-meiqi'), location: '美岐学生街', stations_count: 2, open_status: 1, lat: 26.0595, lng: 119.1920, description: '学生街夜宵天堂，麻辣烫炸鸡管够。', tags: ['麻辣烫', '炸鸡'] },
-    { id: 8, name: '西门·沙县小吃', type: 3, avg_score: 3.8, cover_object_key: cover('c-shaxian'), location: '学校西门外', stations_count: 1, open_status: 1, lat: 26.0580, lng: 119.1860, description: '西门外老牌沙县，拌面蒸饺yyds。', tags: ['小吃'] },
-];
+const CANTEENS = REAL.places.map((pl, i) => ({ // 全量 60 真食堂（真坐标，地图钉即真实位置）
+    id: i + 1,
+    name: pl.name,
+    type: pl.type,
+    avg_score: pl.rating ?? Math.round((4.0 + ((i * 29) % 9) / 10) * 10) / 10, // 无真实评分时按序号固定占位
+    cover_object_key: `store/${pl.name}`, // 名称键 → /img/ 匹配华为仓店铺图
+    location: pl.location || '',
+    lat: pl.lat,
+    lng: pl.lng,
+    stations_count: (pl.stations || []).length,
+    open_status: 1,
+    description: (pl.tags || []).length ? `${pl.tags.join(' · ')} · 真实点位` : '真实点位数据',
+    tags: (pl.tags || []).slice(0, 2),
+}));
 const canteenName = (id) => (CANTEENS.find((c) => c.id === id) || {}).name || '';
 
 /* ============ 档口 ============ */
-const STATION_DEFS = [
-    { id: 1, canteen_id: 1, name: '紫荆盖浇饭', categories: ['盖浇饭', '平价'], price_level: 1 },
-    { id: 2, canteen_id: 1, name: '紫荆麻辣香锅', categories: ['香锅'], price_level: 2 },
-    { id: 3, canteen_id: 1, name: '紫荆面馆', categories: ['面食'], price_level: 1 },
-    { id: 4, canteen_id: 2, name: '京元套餐', categories: ['套餐'], price_level: 1 },
-    { id: 5, canteen_id: 2, name: '京元糖水', categories: ['甜品'], price_level: 1 },
-    { id: 6, canteen_id: 3, name: '玫瑰园小炒', categories: ['小炒'], price_level: 2 },
-    { id: 7, canteen_id: 3, name: '玫瑰园粥铺', categories: ['粥'], price_level: 1 },
-    { id: 8, canteen_id: 4, name: '丁香园快餐', categories: ['快餐'], price_level: 1 },
-    { id: 9, canteen_id: 5, name: '永嘉火锅', categories: ['火锅'], price_level: 3 },
-    { id: 10, canteen_id: 5, name: '永嘉寿司', categories: ['日料'], price_level: 3 },
-    { id: 11, canteen_id: 6, name: '永嘉奶茶', categories: ['茶饮'], price_level: 2 },
-    { id: 12, canteen_id: 6, name: '永嘉咖啡', categories: ['咖啡'], price_level: 2 },
-    { id: 13, canteen_id: 7, name: '美岐麻辣烫', categories: ['麻辣烫'], price_level: 2 },
-    { id: 14, canteen_id: 7, name: '美岐炸鸡', categories: ['炸鸡'], price_level: 2 },
-    { id: 15, canteen_id: 8, name: '沙县小吃', categories: ['小吃'], price_level: 1 },
-];
-const STATIONS = STATION_DEFS.map((s) => ({
-    ...s,
-    avg_score: rnd(3.8, 4.8),
-    cover_object_key: cover(`s-${s.id}`),
-    open_status: 1,
-    description: `${s.name}，主打${s.categories.join('、')}。`,
-}));
+// 真档口：real-data 里每个食堂的 stations（名称+品类），归属其真食堂；封面用该档口首道菜的华为仓真图
+const PLACE_OF = {};
+REAL.places.forEach((pl, pi) => (pl.stations || []).forEach((st) => { PLACE_OF[st.name] = { pi, place: pl, category: st.category || '' }; }));
+const DISH_STATIONS = [...new Set(REAL.dishes.map((d) => d.station))]; // 有真图的档口优先
+const STATION_NAMES = DISH_STATIONS.filter((n) => PLACE_OF[n]).slice(0, 16);
+const STATION_BY_NAME = {};
+const STATIONS = STATION_NAMES.map((name, i) => {
+    const info = PLACE_OF[name];
+    return {
+        id: i + 1,
+        canteen_id: info.pi + 1,
+        name,
+        categories: info.category ? [info.category] : ['综合'],
+        price_level: 1 + (i % 3),
+        avg_score: info.place.rating ?? Math.round((3.8 + ((i * 23) % 11) / 10) * 10) / 10,
+        cover_object_key: `dish/${(REAL.dishes.find((d) => d.station === name) || {}).file || info.place.name}`,
+        open_status: 1,
+        description: `${info.place.name} · ${info.category || '综合'}（真实档口数据）`,
+    };
+});
+STATIONS.forEach((x) => { STATION_BY_NAME[x.name] = x; });
+
+// 4.5 轮九批（E）：食堂/档口封面改名称键（store/<名称> → /img/ 匹配华为仓店铺真图）
 
 /* ============ 菜品（程序化生成） ============ */
 const DISH_POOL = {
@@ -66,25 +121,26 @@ const DISH_POOL = {
     小吃: ['沙县拌面', '鲜肉蒸饺'],
 };
 let dishId = 1;
-const DISHES = [];
-STATION_DEFS.forEach((s) => {
-    const cats = s.categories;
-    const pool = DISH_POOL[cats[0]] || ['招牌菜'];
-    pool.forEach((name) => {
-        DISHES.push({
-            id: dishId++,
-            name,
-            station_id: s.id,
-            station_name: s.name,
-            canteen_name: canteenName(s.canteen_id),
-            avg_score: rnd(3.8, 4.9),
-            cover_object_key: cover(`d-${dishId}`),
-            price: s.price_level * 8 + Math.round(rnd(2, 10)),
-            categories: cats,
-            like_count: Math.round(rnd(10, 200)),
-        });
+// 真菜品：华为仓 158 道（菜名/档口/图片一一对应），归属真档口；评分/价格确定性占位
+const DISHES = REAL.dishes
+    .filter((d) => STATION_BY_NAME[d.station])
+    .map((d, i) => {
+        const st = STATION_BY_NAME[d.station];
+        return {
+            id: 101 + i,
+            name: d.dish,
+            station_id: st.id,
+            station_name: st.name,
+            canteen_id: st.canteen_id,
+            canteen_name: canteenName(st.canteen_id),
+            avg_score: st.avg_score, // 十六批：继承所属真食堂的真实评分（real-data rating；无评分食堂为确定性占位）
+            cover_object_key: `dish/${d.file}`, // 华为仓真图（文件名即菜名）
+            price: 6 + ((i * 13) % 22), // 估算价（真实菜价待菜单数据接入）
+            categories: st.categories,
+            review_count: 60 + ((i * 53) % 240), // 评价条数（与获赞数独立，十六批补）
+            like_count: 30 + ((i * 17) % 170),
+        };
     });
-});
 
 /* ============ 点评 ============ */
 const REVIEWS = [
@@ -180,18 +236,61 @@ function demo_auth(body) {
     };
 }
 
-/* ============ 路由处理 ============ */
-function rankingRows() {
-    return STATIONS.slice(0, 6).map((s) => ({
-        id: s.id,
-        name: s.name,
-        canteenName: canteenName(s.canteen_id),
-        category: s.categories[0],
-        ratingAvg: s.avg_score,
-        reviewCount: Math.round(rnd(50, 300)),
-        avgPrice: s.price_level * 12,
-        coverObjectKey: s.cover_object_key,
+/* ============ 菜品池（4.5 轮预览：首页推荐用真菜品形态，封面接仓库素材图） ============ */
+const DISH_REASONS = ['高分口碑 · 回购率高', '清淡不辣 · 适合正餐', '分量足 · 性价比高', '档口招牌 · 出餐快', '汤底浓郁 · 配菜实惠', '甜口解腻 · 饭后来一份'];
+
+/* 口味标签（4.5 轮十三批）：与 backend/src/seed/seed.js 同规则——按菜名推导，恢复原版口径 */
+function taste_of(name) {
+    if (/辣|麻|椒|川|湘/.test(name)) return '偏辣';
+    if (/甜|奶|糖|蛋糕|泡芙|蛋挞|冰|芋泥|栗/.test(name)) return '甜香';
+    if (/汤|粥|蒸|清|豆花/.test(name)) return '清淡';
+    if (/炸|烤|酥|脆|鸡排|鸡腿/.test(name)) return '香脆';
+    return '咸鲜';
+}
+function flatten_dishes() {
+    // 4.5 轮十二批（E）：全部来自真实数据池（华为仓 158 菜 + real-data 食堂/档口归属），不再自造
+    return DISHES.map((d) => ({
+        subjectType: 0,
+        subjectId: d.id,
+        name: d.name,
+        subtitle: [d.canteen_name, (d.categories || [])[0]].filter(Boolean).join(' · '),
+        avgScore: d.avg_score,
+        reviewCount: d.review_count,
+        likeCount: d.like_count,
+        price: d.price,
+        taste_tags: [taste_of(d.name)], // 口味标签（原版 taste_of 口径）
+        station: d.station_name,
+        canteen: d.canteen_name,
+        category: (d.categories || [])[0] || '',
+        reason: DISH_REASONS[d.id % DISH_REASONS.length],
+        cover: d.cover_object_key,
     }));
+}
+
+/* ============ 路由处理 ============ */
+function rankingRows(q) {
+    // 4.5 轮十一批（E）：榜单改排真菜品（名图对应）；评分为确定性值（同菜品全站一致，不再每次随机）；
+    // dim 口径对齐 /rank 三榜：hot=按评价条数 / score=按平均分（默认）/ like=按获赞数（确定性虚拟值）
+    const rows = flatten_dishes().slice(0, 10).map((d, i) => {
+        const st = STATIONS[i % STATIONS.length];
+        return {
+            subjectType: 0, // 菜品（口碑榜卡据此跳 /dish/:id）
+            id: d.subjectId,
+            name: d.name,
+            canteenName: d.canteen,
+            category: d.category,
+            ratingAvg: d.avgScore,
+            reviewCount: d.reviewCount,
+            likeCount: d.likeCount, // 十六批修正：d 为 flatten 行（驼峰 likeCount），此前误写下划线字段名恒 undefined
+            avgPrice: d.price,
+            coverObjectKey: d.cover,
+        };
+    });
+    const dim = (q && q.dim) || 'score';
+    if (dim === 'hot') rows.sort((a, b) => b.reviewCount - a.reviewCount);
+    else if (dim === 'like') rows.sort((a, b) => b.likeCount - a.likeCount);
+    else rows.sort((a, b) => b.ratingAvg - a.ratingAvg);
+    return rows.slice(0, 12); // 候选池 12（4.5 轮十六批：换一换需要更大池子）
 }
 
 export function mockData(urlPath, method, query, body) {
@@ -210,10 +309,11 @@ export function mockData(urlPath, method, query, body) {
     if ((m = urlPath.match(/^\/api\/canteens\/(\d+)$/))) {
         const id = Number(m[1]);
         const c = CANTEENS.find((x) => x.id === id);
-        if (!c) return { canteen: null, stations: [], reviews: [], stats: {} };
+        if (!c) return { canteen: null, stations: [], posts: [], reviews: [], stats: {} };
         return {
             canteen: { ...c },
             stations: STATIONS.filter((s) => s.canteen_id === id),
+            posts: [], // 契约对齐：后端 canteen_detail 返回 posts（食堂详情页动态条数据源）
             reviews: REVIEWS.filter((r) => r.canteen_name === c.name).slice(0, 3),
             stats: { reviewCount: 128, avgScore: c.avg_score },
         };
@@ -227,10 +327,13 @@ export function mockData(urlPath, method, query, body) {
     if ((m = urlPath.match(/^\/api\/stations\/(\d+)$/))) {
         const id = Number(m[1]);
         const s = STATIONS.find((x) => x.id === id);
-        if (!s) return { station: null, dishes: [], reviews: [], ratings: {} };
+        if (!s) return { station: null, summary: null, dishes: [], posts: [], recommended: [], reviews: [], ratings: {} };
         return {
             station: { ...s, canteen_name: canteenName(s.canteen_id) },
+            summary: null, // 契约对齐：后端 station_detail 返回 summary / posts / recommended
             dishes: DISHES.filter((d) => d.station_id === id),
+            posts: [],
+            recommended: [],
             reviews: REVIEWS.filter((r) => r.canteen_name === canteenName(s.canteen_id)).slice(0, 3),
             ratings: {},
         };
@@ -240,7 +343,23 @@ export function mockData(urlPath, method, query, body) {
     }
     if ((m = urlPath.match(/^\/api\/dishes\/(\d+)$/))) {
         const id = Number(m[1]);
-        const d = DISHES.find((x) => x.id === id);
+        let d = DISHES.find((x) => x.id === id);
+        // 4.5 轮十批（E）：口碑榜/推荐卡指向华为仓真菜品池（flatten_dishes，id 101+），查无时回退
+        if (!d) {
+            const f = flatten_dishes().find((x) => x.subjectId === id);
+            if (f) {
+                const ct = CANTEENS.find((c) => c.name === f.canteen);
+                d = {
+                    id: f.subjectId, name: f.name, price: st.price_level * 12,
+                    avg_score: f.avgScore, cover_object_key: f.cover,
+                    taste_tags: taste_of(f.name), taboo_tags: '', // 口味标签（seed.js taste_of 同规则）
+                    description: '本地预览数据：菜品详情待真实数据接入。',
+                    station_id: (STATION_BY_NAME[f.station] || {}).id ?? 0, station_name: f.station,
+                    canteen_id: ct ? ct.id : 0, canteen_name: f.canteen, canteen_type: ct ? ct.type : 0,
+                    like_count: f.reviewCount,
+                };
+            }
+        }
         if (!d) return { dish: null, station: {}, canteen: {}, reviews: [], ratings: {} };
         return { dish: { ...d }, station: { name: d.station_name }, canteen: { name: d.canteen_name }, reviews: [], ratings: {} };
     }
@@ -263,14 +382,16 @@ export function mockData(urlPath, method, query, body) {
     if (urlPath === '/api/filters/options') {
         return {
             canteenTypes: [{ value: 0, label: '校内食堂' }, { value: 1, label: '永嘉天地' }, { value: 2, label: '学生街' }, { value: 3, label: '周边其他' }],
-            categories: Object.keys(DISH_POOL),
+            categories: [...new Set(STATIONS.flatMap((x) => x.categories))], // 真档口品类（过滤口径）
             openStatus: [{ value: 1, label: '营业中' }],
         };
     }
     if (urlPath === '/api/recommendations') {
-        return { top: CANTEENS.slice(0, 4), forYou: CANTEENS.slice(2, 6) };
+        // 4.5 轮预览（E）：真菜品形态（top=口碑榜回落源、forYou=为你推荐）；真栈下由后端推荐接口接管
+        const dishes = flatten_dishes();
+        return { top: dishes.slice(0, 6), forYou: dishes.slice(2, 8) };
     }
-    if (urlPath === '/api/rankings') return rankingRows();
+    if (urlPath === '/api/rankings') return rankingRows(q);
     if (urlPath === '/api/reviews') {
         const page = Number(q.page || 1);
         const size = Number(q.size || 20);
@@ -315,8 +436,12 @@ export default function dafuMockPlugin() {
             server.middlewares.use((req, res, next) => {
                 const url = req.url || '';
                 if (url.startsWith('/img/')) {
-                    res.setHeader('Content-Type', 'image/svg+xml');
-                    res.end(placeholderSvg(url));
+                    // 4.5 轮九批（E）：封面键按名称模糊匹配华为仓真图 302 出图；未命中回落 food 素材；
+                    // 真栈下 /img/* 由 MinIO 图片服务接管，此段不参与
+                    let key = url.slice('/img/'.length);
+                    try { key = decodeURIComponent(key); } catch { /* 保原样 */ }
+                    res.writeHead(302, { Location: match_local_image(key) });
+                    res.end();
                     return;
                 }
                 if (url.startsWith('/api/')) {

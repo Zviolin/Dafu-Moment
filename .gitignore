@@ -17,9 +17,9 @@ __pycache__/
 .env.local
 .env.*.local
 
-# 空壳目录（无代码文件，不上传）
-admin/
-client/
+# 空壳目录（无代码文件，不上传；根目录限定，避免误伤 frontend/src/views/admin）
+/admin/
+/client/
 
 # 系统与编辑器文件
 .DS_Store
