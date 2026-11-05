@@ -1,6 +1,6 @@
 <template>
-    <!-- 档口详情（对齐 P05-档口详情.html）：顶栏 → 轮播 → 信息 → 互动行 → 推荐菜 → 菜品 → 评分维度 → 同学评价 -->
     <div class="page-wrap" v-if="data">
+        <!-- 档口详情（对齐 P05-档口详情.html）：顶栏 → 轮播 → 信息 → 互动行 → 推荐菜 → 菜品 → 评分维度 → 同学评价 -->
         <!-- 顶部栏：仅「返回 + 分享」两枚圆形浮钮（原型 C7：三点菜单已删） -->
         <div class="topbar">
             <span class="icircle" @click="$router.back()">
