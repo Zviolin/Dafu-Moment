@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.log
 
+# Vite 加载配置时生成的临时文件（进程没正常退出会残留在 frontend/ 下，每次启动会重新生成）
+vite.config.js.timestamp-*.mjs
+
 # Python 缓存
 __pycache__/
 *.pyc

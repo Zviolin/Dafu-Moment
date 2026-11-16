@@ -16,7 +16,16 @@
         </div>
 
         <div class="map-body card">
-            <div ref="map_el" class="map-canvas" aria-label="福州大学旗山校区美食地图"></div>
+            <tile-map
+                ref="map_ref" class="map-canvas"
+                :lat="MAP_CENTER.lat" :lng="MAP_CENTER.lng" :zoom="16"
+                :markers="visible_pins"
+                @marker-click="open_pin" @ready="fit_all" @resize="fit_all"
+            >
+                <template #marker="{ m }">
+                    <span v-html="pin_html({ on: !!active && Number(active.id) === Number(m.id) })" />
+                </template>
+            </tile-map>
 
             <!-- 底部悬浮信息卡（P08 对齐：点位名 / 评分 / 营业状态 / 查看档口） -->
             <transition name="card-pop">
@@ -35,7 +44,7 @@
                                     <svg class="pc-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" /></svg>
                                     <b class="score-num" :class="active.avg_score ? '' : 'dim'">{{ active.avg_score ? fmt_score(active.avg_score) : '—' }}</b>
                                 </span>
-                                <span><b class="score-num">{{ active.station_count ?? 0 }}</b> 档口</span>
+                                <span><b class="score-num">{{ active.station_count ?? active.stations_count ?? 0 }}</b> 档口</span>
                                 <span class="chip">{{ type_name(active.type) }}</span>
                             </div>
                         </div>
@@ -61,22 +70,22 @@
 
 <script setup>
 /**
- * 校内美食地图：高德 JS API 2.0 官方矢量渲染（r42 起，免手拼栅格瓦片）——
- * 文字/图标矢量绘制任意缩放锐利，自带完整中文注记；GCJ-02 坐标与 DB 无缝衔接。
- * 食区标记锚定真实 POI 坐标（高德官方点/官方数据集/POI 库火星坐标），楼栋级为近似落点；?focus=id 直达定位并弹出详情卡
+ * 校内美食地图：自绘瓦片地图（tile-map 组件，高德官方栅格底图，不吃 JS API key）。
+ * 食区标记锚定真实 POI 坐标（GCJ-02），楼栋级为近似落点；?focus=id 直达定位并弹出详情卡
  */
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Close, Location, Search } from '@element-plus/icons-vue';
 import { api_content } from '../api';
 import { fmt_score, CANTEEN_TYPE_NAME } from '../utils/format';
-import { load_amap, pin_html, AMAP_CENTER } from '../utils/amap';
+import { pin_html, place_pins } from '../utils/amap';
+import TileMap from '../components/tile-map.vue';
 
 const route = useRoute();
 const router = useRouter();
 const canteens = ref([]);
 const active = ref(null);
-const map_el = ref(null);
+const map_ref = ref(null);
 const keyword = ref('');
 const active_type = ref('all');
 
@@ -88,34 +97,9 @@ const FILTERS = [
     { label: '周边', type: 3, img: '/assets/icons/scene-sichu.png' },
 ];
 
-// 食区默认落点（GCJ-02 火星坐标）：餐厅名取自福大后勤管理处官网公告（hqc.fzu.edu.cn）。
-// 仅作 DB 无坐标时的兜底——后台「地图点位」拖拽校准后以前端 DB 值为准。
-// 注意美岐必须用火星坐标（poi86 火星 119.191987,26.059497），误用大地坐标 119.187,26.063 会偏约 500 米
-const PIN_POS = [
-    // 生活一区（丁香园·学府北路福大生活1区：119.192162,26.056662）· 海棠园一楼
-    { kw: '京元', lat: 26.0567, lng: 119.1927, short: '京元' },
-    // 丁香园·临青春广场（生活一区中南部，锚点以南数十米）
-    { kw: '丁香园', lat: 26.0559, lng: 119.1920, short: '丁香园' },
-    // 丹桂园朝阳餐厅（原丁香园二楼楼群，丁香园西北侧近似）
-    { kw: '朝阳', lat: 26.0565, lng: 119.1914, short: '朝阳' },
-    // 玫瑰园·生活三区大门旁，与紫荆园并排（临生活二区）
-    { kw: '玫瑰园', lat: 26.0523, lng: 119.1917, short: '玫瑰园' },
-    // 紫荆园（捷祥）·生活三区（百度系 26.05867,119.198516 → GCJ-02 26.0528,119.1926）
-    { kw: '紫荆园', lat: 26.0528, lng: 119.1926, short: '紫荆园' },
-    // 桃李园·教学区东三教学楼旁（图书馆主馆官方 26.056812,119.198453 西侧教学区，楼栋级近似）
-    { kw: '桃李园', lat: 26.0576, lng: 119.1962, short: '桃李园' },
-    // 佳客来西餐厅·源库 map_location 无此点，仅作地图兜底示意（与桃李园同片区，待实地校准）
-    { kw: '佳客来', lat: 26.057, lng: 119.194, short: '佳客来' },
-    // 紫竹园到口餐厅·源库 map_location 无此点，仅作地图兜底示意（生活三区北侧，待实地校准）
-    { kw: '紫竹园', lat: 26.053, lng: 119.192, short: '紫竹园' },
-    // 美岐学生街·岐安村福大学生街（poi86 火星坐标：119.191987,26.059497）
-    { kw: '美岐', lat: 26.0595, lng: 119.1920, short: '美岐学生街' },
-];
-
 const pins = ref([]);
-let map = null;
-const markers = [];
-const marker_pins = [];
+/** 地图初始中心（GCJ-02，福州大学旗山校区） */
+const MAP_CENTER = { lat: 26.0568, lng: 119.1961 };
 
 /**
  * 点位类型名（0 校内食堂 / 1 永嘉天地 / 2 学生街 / 3 周边其他 / 4 外卖）
@@ -143,54 +127,41 @@ function set_type(type) {
     active_type.value = type;
 }
 
-/**
- * 按类型 + 关键字过滤地图标记，并自适应视野
- */
-function apply_filter() {
-    if (!map) return;
+/** 当前筛选（类型 + 关键词）下要显示的点位，直接喂给地图组件 */
+const visible_pins = computed(() => {
     const kw = keyword.value.trim().toLowerCase();
-    const visible = [];
-    let active_visible = false;
-    markers.forEach((m, i) => {
-        const p = marker_pins[i];
+    return pins.value.filter((p) => {
         const type_ok = active_type.value === 'all' || Number(p.type) === Number(active_type.value);
         const tags = Array.isArray(p.tags) ? p.tags.join(' ') : '';
         const hay = `${p.name || ''} ${p.location || ''} ${tags}`.toLowerCase();
-        const kw_ok = !kw || hay.includes(kw);
-        const show = type_ok && kw_ok;
-        m.setMap(show ? map : null);
-        if (show) {
-            visible.push(m);
-            if (active.value && Number(p.id) === Number(active.value.id)) active_visible = true;
-        }
+        return type_ok && (!kw || hay.includes(kw));
     });
-    // 当前详情卡对应点位被筛掉时收起卡片并复位标记
-    if (active.value && !active_visible) {
-        active.value = null;
-        markers.forEach((m) => m.setContent(pin_html()));
-    }
-    if (visible.length) map.setFitView(visible, false, [42, 42, 42, 42], 16);
+});
+
+/** 让地图框住当前可见点位 */
+function fit_all() {
+    map_ref.value?.fit(visible_pins.value, { top: 44, right: 44, bottom: 44, left: 44 });
 }
 
-watch([keyword, active_type], apply_filter);
+// 筛选变化：视野跟着缩放；当前详情卡的点位被筛掉时收起卡片
+watch([keyword, active_type], () => {
+    if (active.value && !visible_pins.value.some((p) => Number(p.id) === Number(active.value.id))) active.value = null;
+    fit_all();
+});
 
 /**
  * 打开标记详情卡（focus 直达时视角移动过去）
  * @param {Object} p
- * @param {boolean} fly
+ * @param {boolean} [fly]
  */
 function open_pin(p, fly = false) {
     active.value = p;
-    markers.forEach((m, i) => m.setContent(pin_html({ on: Number(marker_pins[i].id) === Number(p.id) })));
-    if (fly && map) map.setZoomAndCenter(17, [p.lng, p.lat]);
+    if (fly) map_ref.value?.set_center(Number(p.lat), Number(p.lng), 17);
 }
 
-/**
- * 关闭详情卡并复位标记
- */
+/** 关闭详情卡 */
 function close_card() {
     active.value = null;
-    markers.forEach((m) => m.setContent(pin_html()));
 }
 
 /**
@@ -203,54 +174,15 @@ function go_detail(p) {
 }
 
 onMounted(async () => {
-    canteens.value = await api_content.canteens();
-    // 坐标优先级：DB（后台拖拽校准值）> PIN_POS 关键字兜底；两者皆无才顺排沿线
-    const placed = [];
-    const rest = [];
-    for (const c of canteens.value) {
-        const pos = PIN_POS.find((p) => c.name.includes(p.kw));
-        const db_pos = (c.lat != null && c.lng != null) ? { lat: Number(c.lat), lng: Number(c.lng) } : null;
-        if (pos) placed.push({ ...c, short: pos.short, ...(db_pos || { lat: pos.lat, lng: pos.lng }) });
-        else if (db_pos) placed.push({ ...c, short: c.name.slice(0, 3), ...db_pos });
-        else rest.push(c);
-    }
-    rest.forEach((c, i) => placed.push({ ...c, lat: 26.0602 + i * 0.0008, lng: 119.1940 - i * 0.0012, short: c.name.slice(0, 3) }));
-    pins.value = placed;
-
-    // 初始化高德矢量地图（GCJ-02 原生，key/密钥走 .env 环境变量）
-    const AMap = await load_amap();
-    map = new AMap.Map(map_el.value, { center: AMAP_CENTER, zoom: 16, viewMode: '2D' });
-    // 缩放工具条放右下（信息卡已移至底部悬浮，不再占用右上）
-    map.addControl(new AMap.ToolBar({ position: 'RB' }));
-
-    // 食区标记（品牌橙水滴 pin，AMap 坐标序 [lng, lat]）+ 全点位自适应视野
-    pins.value.forEach((p) => {
-        const m = new AMap.Marker({
-            position: [p.lng, p.lat],
-            content: pin_html(),
-            anchor: 'bottom-center', // 水滴尖对准坐标点
-            title: p.name,
-            map,
-        });
-        m.on('click', () => open_pin(p));
-        markers.push(m);
-        marker_pins.push(p);
-    });
-    // 自适应含全部标记的视野（四边留白 42px，最大 z16）
-    map.setFitView(null, false, [42, 42, 42, 42], 16);
+    const data = await api_content.canteens();
+    const list = Array.isArray(data) ? data : (data?.list || []);
+    pins.value = place_pins(list);
 
     // 支持 /map?focus=id 直达定位并弹出详情卡
     const focusId = Number(route.query.focus);
     if (focusId) {
         const p = pins.value.find((x) => x.id === focusId);
         if (p) open_pin(p, true);
-    }
-});
-
-onBeforeUnmount(() => {
-    if (map) {
-        map.destroy();
-        map = null;
     }
 });
 </script>
@@ -264,10 +196,10 @@ onBeforeUnmount(() => {
 /* 搜索条：地图上方，按名称/位置/标签过滤标记 */
 .map-tools { margin-bottom: 10px; padding: 8px 10px; }
 .map-search { max-width: 420px; }
-/* isolation 隔离高德内部高 z-index，避免盖住吸顶导航；flex:1 让卡片撑满剩余高度 */
-.map-body { position: relative; padding: 10px; isolation: isolate; z-index: 0; flex: 1; display: flex; }
-/* 高德 2.0 自带容器尺寸监听，视口变化自动适配；min-height 兜底矮视口可用性 */
-.map-canvas { flex: 1; min-height: 460px; border-radius: 12px; border: 1px solid var(--line); z-index: 0; }
+/* 地图卡：isolation 隔离底图内部层级，避免盖住吸顶导航；flex:1 撑满剩余高度 */
+.map-body { position: relative; padding: 10px; isolation: isolate; z-index: 0; flex: 1; display: flex; min-height: 420px; }
+/* 自绘瓦片地图是绝对定位的，用 inset 让它落在卡片内边距里并切圆角 */
+.map-canvas { position: absolute; inset: 10px; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; z-index: 0; }
 
 /* 底部悬浮信息卡（桌面/移动端一致落底，浮于地图之上） */
 .pin-card {
@@ -320,7 +252,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
     /* 移动端高度由 flex 填充接管，min-height 兜底 */
-    .map-canvas { min-height: 380px; }
+    .map-body { min-height: 380px; }
     .pin-card { left: 12px; right: 12px; bottom: 12px; }
     .pc-main { align-items: stretch; flex-direction: column; gap: 10px; }
     .pc-btn { width: 100%; }
@@ -328,8 +260,8 @@ onBeforeUnmount(() => {
 
 /* ===== 桌面适配（≥769）===== */
 @media (min-width: 769px) {
-    /* 地图画布：桌面加高到视口主导高度（保持 flex 填充体系，min-height 仅兜底下限） */
-    .map-canvas { min-height: calc(100vh - 220px); }
+    /* 地图卡：桌面加高到视口主导高度（保持 flex 填充体系，min-height 仅兜底下限） */
+    .map-body { min-height: calc(100vh - 220px); }
     /* 底部悬浮信息卡：桌面限宽居中（left/right + margin auto，避免与弹出动画的 transform 冲突） */
     .pin-card {
         left: 0; right: 0; margin-left: auto; margin-right: auto;

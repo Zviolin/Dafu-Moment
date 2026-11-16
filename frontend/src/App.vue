@@ -1,5 +1,5 @@
 <template>
-    <div class="app-shell" :class="{ wide: is_admin_route }">
+    <div class="app-shell" :class="{ wide: is_admin_route, fullbleed: is_fullbleed }">
         <!-- 顶部导航（对齐原型：卡面通栏 + 1px 淡描边 + 微圆角搜索框）；
              管理后台（/admin）隐藏前台顶栏，由 admin-layout 自管后台专用头部 -->
         <header v-if="!is_admin_route" class="topbar">
@@ -51,7 +51,7 @@
             </div>
         </header>
 
-        <main class="app-main">
+        <main class="app-main" :class="{ fullbleed: is_fullbleed }">
             <router-view v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                     <!-- 仅缓存 AI 助手页：跳详情/其他页再返回，对话、草稿与发送态原位保留 -->
@@ -62,8 +62,8 @@
             </router-view>
         </main>
 
-        <!-- 页脚：一行淡色签名（后台不显示，后台有自管头部与侧栏布局） -->
-        <footer v-if="!is_admin_route" class="footer">
+        <!-- 页脚：一行淡色签名（后台不显示，后台有自管头部与侧栏布局；满屏地图页也不显示，避免挤压地图高度） -->
+        <footer v-if="!is_admin_route && !is_fullbleed" class="footer">
             <span><b>大福食刻</b> · 「知食份子」出品 · 纯内容平台，不做交易</span>
         </footer>
 
@@ -73,7 +73,7 @@
                 <img src="/assets/icons/tab-home.png" alt="首页"><span>首页</span>
             </router-link>
             <router-link to="/search" class="tab" :class="{ on: is_tab('/search') || is_tab('/list') }">
-                <img src="/assets/icons/tab-find.png" alt="发现"><span>发现</span>
+                <img src="/assets/icons/tab-find.png" alt="地图"><span>地图</span>
             </router-link>
             <router-link to="/circle" class="tab" :class="{ on: is_tab('/circle') || is_tab('/post') }">
                 <img src="/assets/icons/tab-circle.png" alt="点评圈"><span>点评圈</span>
@@ -97,6 +97,10 @@
                 <div class="notify-content">{{ n.content }}</div>
             </div>
         </el-drawer>
+
+        <!-- 全局悬浮 AI 助手快捷入口（小包子，可拖动，点击跳 /ai）。
+             满屏地图页也保留（用户要求每页都能看到），落点会停在底部「附近推荐」抽屉的上沿 -->
+        <FloatingAiButton :reserve-sheet="is_fullbleed" />
     </div>
 </template>
 
@@ -112,6 +116,7 @@ import { useAuthStore } from './stores/auth';
 import { api_notification } from './api';
 import UserAvatar from './components/user-avatar.vue';
 import BrandLogo from './components/brand-logo.vue';
+import FloatingAiButton from './components/floating-ai-button.vue';
 import { time_ago } from './utils/format';
 
 const router = useRouter();
@@ -123,6 +128,9 @@ const unread = ref(0);
 
 /** 管理后台路由：桌面端不套「手机机身」外壳，保持宽幅全屏布局 */
 const is_admin_route = computed(() => route.path.startsWith('/admin'));
+
+/** 满屏页（当前只有地图页 /search）：移动端不套顶栏、不显示页脚，地图铺满整个视口 */
+const is_fullbleed = computed(() => !!route.meta.fullbleed);
 
 /**
  * 顶栏搜索框是否可见：发现页（/search）页面自带搜索条，
@@ -253,6 +261,8 @@ onMounted(async () => {
 /* flex 列容器：填充型页面以 flex:1 吃掉剩余高度 */
 .app-main { flex: 1; display: flex; flex-direction: column; }
 .app-main > * { width: 100%; }
+/* 满屏页（地图页）：子页面自己撑满剩余高度并内部绝对定位，父层不能再有最小高度撑开 */
+.app-main.fullbleed { min-height: 0; overflow: hidden; }
 /* 页脚：一行淡色签名（去卡片化，G3-1 通栏留白） */
 .footer {
     display: flex;
@@ -283,6 +293,8 @@ onMounted(async () => {
 .notify-time { color: var(--ink-2); font-weight: 400; font-size: 12px; }
 .notify-content { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
 @media (max-width: 768px) {
+    /* 满屏地图页：移动端不套顶栏，顶部搜索浮层由页面自己画（对齐美团地图） */
+    .app-shell.fullbleed .topbar { display: none; }
     .topbar-inner { padding: 8px 12px; gap: 10px; }
     .search-box { flex: 1; max-width: none; min-width: 0; padding: 7px 12px; } /* min-width:0 允许收缩，防 nowrap 占位文本撑破窄屏 */
     .ph-tip { display: none; } /* 窄屏占位文案收短 */
