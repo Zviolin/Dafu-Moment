@@ -27,7 +27,10 @@
 | 存储 | mysql2 + MySQL 8（手写 SQL 唯一真相源）+ Redis（限流/缓存）+ MinIO（图床） |
 | 部署 | Docker Compose 六容器（mysql / redis / minio / matting / backend / frontend） |
 
-## 数据库（35 表，下表列核心业务表）
+## 数据库（两套结构并存）
+
+- **旧链路（默认，35 表）**：`backend/sql/init.sql` → 建库 `dafu`，供 `src/index.js` 使用；下表列其核心业务表。
+- **3.0 链路（78 表 / 545 列 / 106 外键）**：`backend/sql/db3_00_create_tables.sql`（由 `data/db3/source-ddl` 的 6 个模块 DDL 合并，逐表一致）＋ `db3_01_add_foreign_keys.sql`（106 外键）＋ `db3_02/03/06`（字典、公开点位、估算菜单种子）→ 建库 `dafu_shike`，供 `src/index3.js` 使用（`npm run start:db3`）。两库并存、脚本无 DROP 且可重复执行，互不影响。
 
 | 表 | 说明 |
 |--|--|
