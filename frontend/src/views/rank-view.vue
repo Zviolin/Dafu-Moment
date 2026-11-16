@@ -119,6 +119,8 @@ const rest = computed(() => rows.value.slice(1));
  * @returns {{id:number, name:string, info:string, score:string, cover:string}}
  */
 function map_row(r, board) {
+    // 4.5 轮十六批（E）：分数列按榜口径显示对应数值——人气榜显示评价条数、点赞榜显示获赞数，
+    // 口碑榜显示真正的评分（不带文字单位，语义由榜单标题与副标说明）
     const score = board.dim === 'score'
         ? fmt_score(r.ratingAvg)
         : board.dim === 'like'

@@ -1,6 +1,6 @@
 <template>
-    <!-- 发布点评（对齐 P10-发布点评.html）：顶栏 → 对象选择 → 场景化维度包子打分 → 正文 → 图片 → 标签 → 匿名 → 发布 -->
     <div class="page-wrap publish-page">
+        <!-- 发布点评（对齐 P10-发布点评.html）：顶栏 → 对象选择 → 场景化维度包子打分 → 正文 → 图片 → 标签 → 匿名 → 发布 -->
         <!-- 顶部栏：返回 + 居中标题 -->
         <div class="topbar">
             <span class="icircle" @click="$router.back()">
